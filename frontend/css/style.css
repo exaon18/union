@@ -398,3 +398,5 @@ legend { padding: 0 8px; font-size: 12px; letter-spacing: .14em; text-transform:
 th, td.num, td.nowrap { white-space: nowrap; }
 td:first-child { white-space: nowrap; }
 tr.sel td { background: rgba(34, 211, 238, .07); }
+.offline-banner { color: #fecaca; background: rgba(239, 68, 68, .12); border-top-color: rgba(239, 68, 68, .35); letter-spacing: .15em; }
+.alert-item.no-anim { animation: none; }

@@ -362,7 +362,7 @@
       return { count: list.length, checkins: list };
     },
 
-    /* ---- write operations (no backend endpoint yet; mock keeps them in localStorage) ---- */
+    /* ---- write operations (mock mode keeps them in localStorage) ---- */
     submitCheckin: function (data) {
       var a = need(data.astronaut_id);
       var mine = lsGet(LS_CHECKINS, []);
@@ -398,11 +398,11 @@
     resetDemo: function () { [LS_RESOLVED, LS_ACK, LS_CHECKINS, LS_PVT].forEach(function (k) { localStorage.removeItem(k); }); },
     onTick: function (fn) { state.listeners.push(fn); },
     missionDay: function () { return missionDay(Date.now()); },
-    TICK_MS: TICK_MS
+    TICK_MS: TICK_MS,
+    _start: start           // api.js starts the live mock ticker only in mock mode
   };
 
   seed();
-  start();
   global.MockAPI = MockAPI;
   global.MOCK_CREW = CREW;
 })(window);

@@ -127,7 +127,10 @@
   function pill(level, text) { return '<span class="pill pill-' + level + '"><i></i>' + esc(text || statusLabel(level)) + '</span>'; }
   function missionDay() { return global.MockAPI ? MockAPI.missionDay() : 1; }
 
-  /* ---------- session (mock login) ---------- */
+  /* ---------- session ----------
+   * Real mode: POST /api/auth/login/ returns a token; the session (user + token) is kept in
+   * localStorage and the token is sent as "Authorization: Token <key>" on writes.
+   * Mock mode (?api=mock): the demo users below, checked in the browser. */
   var SESSION_KEY = 'astra_session';
   var USERS = {
     abebe: { role: 'astronaut', astronaut_id: 1, name: 'Abebe Kebede' },
@@ -137,21 +140,62 @@
     surgeon: { role: 'surgeon', astronaut_id: null, name: 'Dr. Meron Alemu', title: 'Flight Surgeon' }
   };
   var DEMO_PASSWORD = 'astra2026';
-  function getSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch (e) { return null; } }
-  function login(username, password) {
-    var u = USERS[String(username || '').trim().toLowerCase()];
-    if (!u || password !== DEMO_PASSWORD) return null;
-    var s = { username: String(username).trim().toLowerCase(), role: u.role, astronaut_id: u.astronaut_id, name: u.name, title: u.title || null, at: new Date().toISOString() };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    return s;
+  function getSession() {
+    try {
+      var s = JSON.parse(localStorage.getItem(SESSION_KEY));
+      if (!s) return null;
+      if (!Api.USE_MOCK && !s.token) return null;      // old mock session -> log in again for real
+      return s;
+    } catch (e) { return null; }
   }
-  function logout() { localStorage.removeItem(SESSION_KEY); location.href = 'index.html'; }
+  function saveSession(s) { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); return s; }
+  function clearSession() { localStorage.removeItem(SESSION_KEY); }
+  /** Log in. Always returns a Promise resolving to the session, or rejecting with an Error. */
+  function login(username, password) {
+    var uname = String(username || '').trim().toLowerCase();
+    if (Api.USE_MOCK) {
+      var u = USERS[uname];
+      if (!u || password !== DEMO_PASSWORD) return Promise.reject(new Error('Wrong username or password.'));
+      return Promise.resolve(saveSession({ username: uname, role: u.role, astronaut_id: u.astronaut_id, name: u.name, title: u.title || null, at: new Date().toISOString() }));
+    }
+    return Api.login(uname, password).then(function (res) {
+      var u = res.user || {};
+      if (u.role !== 'astronaut' && u.role !== 'surgeon') throw new Error('This account has no astronaut or flight-surgeon role.');
+      return saveSession({
+        username: u.username, role: u.role, astronaut_id: u.astronaut_id, title: u.title || null,
+        name: (u.role === 'surgeon' ? 'Dr. ' : '') + (u.name || u.username),
+        token: res.token, expires_at: res.expires_at || null, at: new Date().toISOString()
+      });
+    }, function (e) {
+      if (e.status === 401) throw new Error('Wrong username or password.');
+      throw e;
+    });
+  }
+  function logout() {
+    var done = function () { clearSession(); location.href = 'index.html'; };
+    if (Api.USE_MOCK || !getSession()) { done(); return; }
+    Api.logout().catch(function () { /* token already gone or offline */ }).then(done);
+  }
+  function toLogin(denied) {
+    location.replace('login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() + location.search) + (denied ? '&denied=1' : '') );
+  }
+  // Token rejected by the server (expired, logged out elsewhere, DB reset): sign in again.
+  Api.onUnauthorized = function () {
+    if (!getSession()) return;
+    clearSession();
+    toast('Your session expired. Please log in again.', 'yellow');
+    setTimeout(function () { toLogin(false); }, 900);
+  };
   /** Require login; roles = ['astronaut'] etc. Returns session or redirects. */
   function requireLogin(roles) {
     var s = getSession();
     if (!s || (roles && roles.indexOf(s.role) < 0)) {
-      location.replace('login.html?next=' + encodeURIComponent(location.pathname.split('/').pop() + location.search) + (s ? '&denied=1' : ''));
+      toLogin(!!s);
       return null;
+    }
+    // Real mode: check the token in the background (expired tokens -> login page).
+    if (!Api.USE_MOCK) {
+      Api.me().catch(function (e) { if (e.status === 401) Api.onUnauthorized(e); });
     }
     return s;
   }
@@ -207,6 +251,14 @@
     upd(); setInterval(upd, 1000);
   }
 
+  // Alert cards slide in once; re-rendering on the next poll must not replay the animation.
+  var animSeen = {};
+  function animCls(id) {
+    if (id === undefined || id === null) return '';
+    if (animSeen[id]) return ' no-anim';
+    animSeen[id] = 1; return '';
+  }
+
   function toast(msg, level) {
     var wrap = document.getElementById('toasts');
     if (!wrap) { wrap = document.createElement('div'); wrap.id = 'toasts'; document.body.appendChild(wrap); }
@@ -232,7 +284,14 @@
     document.querySelectorAll('[data-conn]').forEach(function (e) {
       e.classList.toggle('bad', !ok);
       e.querySelector('span') && (e.querySelector('span').textContent = ok ? (Api.USE_MOCK ? 'LIVE · SIMULATED' : 'LIVE') : 'OFFLINE');
+      e.title = ok ? 'Connected to ' + Api.API_BASE : 'Cannot reach ' + Api.API_BASE + ' - retrying every few seconds';
     });
+    var bar = document.getElementById('offlineBar');
+    if (!ok && !bar) {
+      bar = document.createElement('div'); bar.id = 'offlineBar'; bar.className = 'mock-banner offline-banner';
+      bar.textContent = 'OFFLINE · cannot reach ' + Api.API_BASE + ' · retrying…';
+      var nav = document.getElementById('topnav'); if (nav) nav.appendChild(bar);
+    } else if (ok && bar) bar.remove();
   }
 
   /* ---------- starfield ---------- */
@@ -261,6 +320,17 @@
     resize(); window.addEventListener('resize', resize); frame();
   }
 
+  // A failed API call that a page didn't handle: log it quietly and show the OFFLINE state
+  // instead of an "Uncaught (in promise)" error.
+  window.addEventListener('unhandledrejection', function (ev) {
+    var e = ev.reason;
+    if (e && (e.offline || e.status !== undefined)) {
+      ev.preventDefault();
+      console.warn('API request failed:', e.message);
+      if (e.offline) setConn(false);
+    }
+  });
+
   function init(active) {
     starfield();
     renderNav(active);
@@ -271,7 +341,7 @@
     COLORS: COLORS, ICONS: ICONS, METRICS: METRICS, SYSTEMS: SYSTEMS, TZ: TZ, USERS: USERS, DEMO_PASSWORD: DEMO_PASSWORD,
     esc: esc, fmtTime: fmtTime, fmtDateTime: fmtDateTime, fmtDate: fmtDate, ago: ago, fmtVal: fmtVal, byMetric: byMetric,
     levelOf: levelOf, statusLabel: statusLabel, initials: initials, pill: pill, missionDay: missionDay,
-    getSession: getSession, login: login, logout: logout, requireLogin: requireLogin, viewedAstronaut: viewedAstronaut,
-    init: init, toast: toast, poll: poll, setConn: setConn
+    getSession: getSession, login: login, logout: logout, requireLogin: requireLogin, viewedAstronaut: viewedAstronaut, clearSession: clearSession,
+    init: init, toast: toast, animCls: animCls, poll: poll, setConn: setConn
   };
 })(window);

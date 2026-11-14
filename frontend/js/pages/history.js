@@ -108,7 +108,7 @@
     var opts = { astronaut: aid, limit: 50 }; if (alertFilter !== 'all') opts.resolved = alertFilter;
     Api.getAlerts(opts).then(function (res) {
       document.getElementById('alertHist').innerHTML = res.alerts.length ? res.alerts.map(function (al) {
-        return '<div class="alert-item l-' + al.level + (al.resolved ? ' resolved' : '') + '"><div class="alert-ico">' + (al.resolved ? A.ICONS.check : A.ICONS.alert) + '</div><div><h4>' + A.esc(al.message) + '</h4><p>' + A.esc(al.recommendation) + '</p>' +
+        return '<div class="alert-item' + A.animCls(al.id) + ' l-' + al.level + (al.resolved ? ' resolved' : '') + '"><div class="alert-ico">' + (al.resolved ? A.ICONS.check : A.ICONS.alert) + '</div><div><h4>' + A.esc(al.message) + '</h4><p>' + A.esc(al.recommendation) + '</p>' +
           '<div class="meta"><span>' + A.fmtDateTime(al.created_at) + ' EAT</span><span>' + A.esc(al.system) + '</span><span>' + (al.resolved ? 'resolved' : 'open') + '</span></div></div>' + A.pill(al.level) + '</div>';
       }).join('') : '<div class="empty">' + A.ICONS.check + 'No alerts</div>';
     });

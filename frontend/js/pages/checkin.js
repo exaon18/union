@@ -91,15 +91,20 @@
     return ok ? data : null;
   }
 
-  function showResult(found) {
+  function showResult(found, opts) {
+    opts = opts || {};
     var lv = R.worst(found.map(function (f) { return f.level; }));
-    document.getElementById('resultPill').innerHTML = A.pill(lv);
-    var head = lv === 'red'
-      ? '<div class="callout red" style="margin-bottom:14px">' + A.ICONS.alert + '<div><h3>Contact mission support</h3><p>A critical rule fired. The flight surgeon has been notified.</p></div></div>'
-      : lv === 'yellow' ? '<div class="callout yellow" style="margin-bottom:14px">' + A.ICONS.alert + '<div><h3>Check-in saved · ' + found.length + ' item' + (found.length > 1 ? 's' : '') + ' to watch</h3><p>Follow the recommendations below.</p></div></div>'
-        : '<div class="callout green" style="margin-bottom:14px">' + A.ICONS.check + '<div><h3>Check-in saved · all nominal</h3><p>No rules fired. Great job keeping your routine.</p></div></div>';
+    document.getElementById('resultPill').innerHTML = opts.pending ? A.pill('yellow', 'Saving…') : A.pill(lv);
+    var saved = opts.pending ? 'Preview' : 'Check-in saved';
+    var head = opts.error
+      ? '<div class="callout red" style="margin-bottom:14px">' + A.ICONS.alert + '<div><h3>Not saved</h3><p>' + A.esc(opts.error) + ' Your answers are still in the form. Try again.</p></div></div>'
+      : lv === 'red'
+      ? '<div class="callout red" style="margin-bottom:14px">' + A.ICONS.alert + '<div><h3>' + (opts.pending ? '' : 'Check-in saved · ') + 'Contact mission support</h3><p>A critical rule fired.' + (opts.pending ? '' : ' The flight surgeon has been notified.') + '</p></div></div>'
+      : lv === 'yellow' ? '<div class="callout yellow" style="margin-bottom:14px">' + A.ICONS.alert + '<div><h3>' + saved + ' · ' + found.length + ' item' + (found.length > 1 ? 's' : '') + ' to watch</h3><p>Follow the recommendations below.</p></div></div>'
+        : '<div class="callout green" style="margin-bottom:14px">' + A.ICONS.check + '<div><h3>' + saved + ' · all nominal</h3><p>No rules fired. Great job keeping your routine.</p></div></div>';
     document.getElementById('result').innerHTML = head + '<div class="alert-list">' + found.map(function (f) {
-      return '<div class="alert-item l-' + f.level + '"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(f.message) + '</h4><p>' + A.esc(f.recommendation) + '</p><div class="meta"><span>' + A.esc(A.SYSTEMS[f.system].label) + '</span></div></div>' + A.pill(f.level) + '</div>';
+      var sys = A.SYSTEMS[f.system] ? A.SYSTEMS[f.system].label : f.system;
+      return '<div class="alert-item l-' + f.level + '"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(f.message) + '</h4><p>' + A.esc(f.recommendation) + '</p><div class="meta"><span>' + A.esc(sys) + '</span>' + (f.id ? '<span>alert #' + f.id + '</span>' : '') + '</div></div>' + A.pill(f.level) + '</div>';
     }).join('') + '</div>';
     document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -107,12 +112,15 @@
   document.getElementById('checkinForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var data = validate(); if (!data) { A.toast('Please fix the highlighted fields.', 'yellow'); return; }
-    var found = R.checkCheckin(data, member ? member.baselines : null);
-    showResult(found);
+    var preview = R.checkCheckin(data, member ? member.baselines : null);
+    showResult(preview, { pending: true });
     var btn = document.getElementById('submitBtn'); btn.disabled = true;
-    Api.submitCheckin(data).then(function () {
+    Api.submitCheckin(data).then(function (res) {
+      // The server ran health/rules.py: show exactly the alerts it created.
+      showResult(res && res.alerts ? res.alerts : preview);
       A.toast('Check-in saved', 'green'); loadRecent();
     }).catch(function (err) {
+      showResult(preview, { error: 'Could not save to the server: ' + err.message + '.' });
       A.toast('Could not save to server: ' + err.message, 'red');
     }).then(function () { btn.disabled = false; });
   });
@@ -131,8 +139,8 @@
         var today = A.fmtDate(res.checkins[0].created_at) === A.fmtDate(new Date().toISOString());
         document.getElementById('lastCheckin').innerHTML = today ? A.pill('green', 'Done today') : A.pill('yellow', 'Due today');
       }
-    });
+    }).catch(function (e) { console.warn('recent check-ins', e); });
   }
 
-  prefill().then(loadRecent);
+  prefill().catch(function (e) { A.toast('Could not load your latest device values: ' + e.message, 'yellow'); }).then(loadRecent);
 })();

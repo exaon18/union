@@ -101,7 +101,7 @@
     recs.sort(function (a, b) { return (b.level === 'red') - (a.level === 'red'); });
     document.getElementById('recsCount').textContent = alerts.length + ' open alert' + (alerts.length === 1 ? '' : 's');
     document.getElementById('recs').innerHTML = recs.length ? recs.slice(0, 7).map(function (al) {
-      return '<div class="alert-item l-' + al.level + '"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(al.recommendation) + '</h4><p>' + A.esc(al.message) + '</p>' +
+      return '<div class="alert-item' + A.animCls(al.id) + ' l-' + al.level + '"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(al.recommendation) + '</h4><p>' + A.esc(al.message) + '</p>' +
         '<div class="meta"><span>' + A.esc(A.SYSTEMS[al.system] ? A.SYSTEMS[al.system].label : al.system) + '</span><span>' + A.ago(al.created_at) + '</span></div>' +
         (al.level === 'red' && !isSurgeon ? '<button class="btn btn-danger btn-sm mt contact-btn" style="margin-top:10px">' + A.ICONS.headset + 'Contact mission support</button>' : '') +
         '</div><span></span></div>';

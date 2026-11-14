@@ -123,7 +123,7 @@
       var tk = document.getElementById('ticker');
       if (tk.dataset.sig !== items) { tk.innerHTML = items + items; tk.dataset.sig = items; }
       document.getElementById('recentAlerts').innerHTML = list.length ? list.slice(0, 5).map(function (al) {
-        return '<div class="alert-item l-' + al.level + '"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(al.message) + '</h4>' +
+        return '<div class="alert-item' + A.animCls(al.id) + ' l-' + al.level + '"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(al.message) + '</h4>' +
           '<div class="meta"><span>' + A.esc(al.astronaut || 'Cabin') + '</span><span>' + A.esc(al.system) + '</span><span>' + A.ago(al.created_at) + '</span></div></div><span></span></div>';
       }).join('') : '<div class="empty">' + A.ICONS.check + 'No open alerts</div>';
       // toast for brand-new red alerts

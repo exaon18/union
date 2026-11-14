@@ -7,11 +7,11 @@
   A.init('support');
   var selected = Number(new URLSearchParams(location.search).get('astronaut')) || null;
   var levelFilter = '';
-  var ackLocal = {};       // acknowledged alert ids (UI state; backend endpoint not built yet)
+  var ackLocal = {};       // acknowledged alert ids (real mode: from the API's "acknowledged" field)
   var SEV = { red: 0, yellow: 1, green: 2 };
   ['crewTitle:users', 'alertsTitle:alert', 'drillTitle:eye'].forEach(function (x) { var p = x.split(':'); document.getElementById(p[0]).insertAdjacentHTML('afterbegin', A.ICONS[p[1]]); });
   document.getElementById('drillOpen').insertAdjacentHTML('beforeend', A.ICONS.arrow);
-  try { (Api.USE_MOCK ? MockAPI.acknowledged() : JSON.parse(localStorage.getItem('astra_ack') || '[]')).forEach(function (id) { ackLocal[id] = 1; }); } catch (e) { /* ignore */ }
+  try { if (Api.USE_MOCK) MockAPI.acknowledged().forEach(function (id) { ackLocal[id] = 1; }); } catch (e) { /* ignore */ }
 
   document.getElementById('levelSeg').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return; levelFilter = b.dataset.l;
@@ -80,14 +80,14 @@
     Api.getAlerts({ astronaut: selected, limit: 4 }).then(function (res) {
       var el = document.getElementById('drillAlerts'); if (!el) return;
       el.innerHTML = res.alerts.length ? res.alerts.map(function (al) {
-        return '<div class="alert-item l-' + al.level + (al.resolved ? ' resolved' : '') + '" style="padding:10px 12px"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(al.message) + '</h4><div class="meta"><span>' + A.ago(al.created_at) + '</span><span>' + (al.resolved ? 'resolved' : 'open') + '</span></div></div><span></span></div>';
+        return '<div class="alert-item' + A.animCls(al.id) + ' l-' + al.level + (al.resolved ? ' resolved' : '') + '" style="padding:10px 12px"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(al.message) + '</h4><div class="meta"><span>' + A.ago(al.created_at) + '</span><span>' + (al.resolved ? 'resolved' : 'open') + '</span></div></div><span></span></div>';
       }).join('') : '<div class="empty">' + A.ICONS.check + 'No alerts</div>';
     });
   }
 
   function alertItem(al) {
     var acked = !!ackLocal[al.id];
-    return '<div class="alert-item l-' + al.level + '" data-alert="' + al.id + '"><div class="alert-ico">' + A.ICONS.alert + '</div>' +
+    return '<div class="alert-item' + A.animCls(al.id) + ' l-' + al.level + '" data-alert="' + al.id + '"><div class="alert-ico">' + A.ICONS.alert + '</div>' +
       '<div><h4>' + A.esc(al.astronaut || 'Cabin') + ' · ' + A.esc(al.message) + '</h4><p>' + A.esc(al.recommendation) + '</p>' +
       '<div class="meta"><span>#' + al.id + '</span><span>' + A.esc(al.system) + '</span><span>' + A.fmtTime(al.created_at, true) + ' EAT · ' + A.ago(al.created_at) + '</span>' + (acked ? '<span style="color:var(--cyan-2)">acknowledged</span>' : '') + '</div></div>' +
       '<div class="alert-actions">' + A.pill(al.level) +
@@ -97,6 +97,7 @@
 
   function refreshAlerts() {
     return Api.getAlerts({ resolved: false, level: levelFilter || undefined, limit: 60 }).then(function (res) {
+      res.alerts.forEach(function (al) { if (al.acknowledged) ackLocal[al.id] = 1; });
       var list = res.alerts.slice().sort(function (p, q) { return SEV[p.level] - SEV[q.level] || Date.parse(q.created_at) - Date.parse(p.created_at); });
       var el = document.getElementById('openAlerts');
       var sig = list.map(function (a) { return a.id + (ackLocal[a.id] ? 'a' : ''); }).join(',');
@@ -111,11 +112,10 @@
     var item = b.closest('[data-alert]'), id = Number(item.dataset.alert);
     b.disabled = true;
     if (b.dataset.act === 'ack') {
-      Api.acknowledgeAlert(id).catch(function () { /* endpoint may not exist yet */ }).then(function () {
+      Api.acknowledgeAlert(id).then(function () {
         ackLocal[id] = 1;
-        if (!Api.USE_MOCK) localStorage.setItem('astra_ack', JSON.stringify(Object.keys(ackLocal).map(Number)));
         A.toast('Alert #' + id + ' acknowledged', 'green'); refreshAlerts();
-      });
+      }).catch(function (err) { b.disabled = false; A.toast('Could not acknowledge: ' + err.message, 'red'); });
     } else {
       Api.resolveAlert(id).then(function () {
         item.style.transition = 'opacity .3s, transform .3s'; item.style.opacity = '0'; item.style.transform = 'translateX(20px)';

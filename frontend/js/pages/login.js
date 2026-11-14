@@ -1,4 +1,4 @@
-/* Login (mock): stores the session in localStorage. */
+/* Login: POST /api/auth/login/ (real) or demo users (mock); stores the session in localStorage. */
 (function () {
   'use strict';
   var A = Astra;
@@ -21,16 +21,22 @@
     u.classList.remove('invalid'); p.classList.remove('invalid'); err.textContent = '';
     if (!u.value.trim()) { u.classList.add('invalid'); err.textContent = 'Enter your username.'; return; }
     if (!p.value) { p.classList.add('invalid'); err.textContent = 'Enter your password.'; return; }
-    // TODO(backend): replace with POST /api/auth/login/ once it exists.
-    var s = A.login(u.value, p.value);
-    if (!s) { p.classList.add('invalid'); err.textContent = 'Wrong username or password.'; return; }
-    var next = params.get('next');
-    var home = s.role === 'surgeon' ? 'support.html' : 'my-health.html';
-    if (next && /^[\w-]+\.html/.test(next)) {
-      var needSurgeon = /^support\.html/.test(next);
-      if (needSurgeon === (s.role === 'surgeon') || /^(my-health|history)\.html/.test(next)) home = next;
-    }
-    A.toast('Welcome, ' + s.name, 'green');
-    setTimeout(function () { location.href = home; }, 350);
+    var btn = this.querySelector('button[type="submit"]'); if (btn) btn.disabled = true;
+    err.textContent = Api.USE_MOCK ? '' : 'Signing in…';
+    A.login(u.value, p.value).then(function (s) {
+      err.textContent = '';
+      var next = params.get('next');
+      var home = s.role === 'surgeon' ? 'support.html' : 'my-health.html';
+      if (next && /^[\w-]+\.html/.test(next)) {
+        var needSurgeon = /^support\.html/.test(next);
+        if (needSurgeon === (s.role === 'surgeon') || /^(my-health|history)\.html/.test(next)) home = next;
+      }
+      A.toast('Welcome, ' + s.name, 'green');
+      setTimeout(function () { location.href = home; }, 350);
+    }).catch(function (e) {
+      if (btn) btn.disabled = false;
+      if (e.offline) { err.textContent = 'Cannot reach the server. Check your connection and try again.'; return; }
+      p.classList.add('invalid'); err.textContent = e.message || 'Login failed.';
+    });
   });
 })();

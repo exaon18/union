@@ -119,8 +119,10 @@
     }).join('');
     var advice = lv === 'red' ? 'Avoid critical tasks (EVA, docking) and rest. Mission support will be notified.' : lv === 'yellow' ? 'Signs of fatigue. Rest before critical tasks.' : 'Alertness looks good for critical tasks.';
     setStage('<div class="msg"><b style="color:' + col + '">' + mean + ' ms mean · ' + lapses + ' lapse' + (lapses === 1 ? '' : 's') + '</b>' + advice + '<br><span class="dim" style="font-size:13px">Press Start to try again.</span></div>');
-    Api.submitPvt(aid, { mean_rt: mean, lapses: lapses, false_starts: st.falseStarts, trials: n }).then(function () {
-      A.toast('PVT result saved', lv === 'green' ? 'green' : lv); loadHistory();
+    Api.submitPvt(aid, { mean_rt_ms: mean, mean_rt: mean, fastest_ms: fastest, lapses: lapses, false_starts: st.falseStarts, trials: n }).then(function (res) {
+      var fired = (res && res.alerts) || [];
+      A.toast('PVT result saved' + (fired.length ? ' · ' + fired[0].message : ''), fired.length ? R.worst(fired.map(function (a) { return a.level; })) : 'green');
+      loadHistory();
     }).catch(function (e) { A.toast('Could not save result: ' + e.message, 'red'); });
   }
 
@@ -143,7 +145,7 @@
         xFormat: function (t) { return new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: A.TZ }); },
         tipFormat: function (t) { return A.fmtDateTime(new Date(t).toISOString()) + ' EAT'; }
       });
-    });
+    }).catch(function (e) { console.warn('PVT history', e); });
   }
   st.trials = 10; progress(); loadHistory();
   document.getElementById('trials').addEventListener('change', function () { st.trials = Number(this.value); progress(); });

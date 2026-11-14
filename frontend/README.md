@@ -8,14 +8,30 @@ Charts are drawn by a tiny built-in canvas helper (`js/charts.js`), so everythin
 
 ## Run it
 
+**Easiest: served by Django** (same server as the API, nothing else to run):
+
+```
+http://2.24.53.231:8000/app/        # the VPS
+http://127.0.0.1:8000/app/          # local: python manage.py runserver
+```
+
+Pages opened under `/app/` call that same server's `/api`.
+
+**Standalone** (any static host):
+
 ```bash
 cd frontend
 python3 -m http.server 5500
 ```
 
-Open <http://localhost:5500>. (Opening `index.html` straight from disk also works, but a local server is closer to production.)
+Open <http://localhost:5500>. It calls the VPS API (`http://2.24.53.231:8000/api`) by default.
+For a local backend open any page once with
+`?api_base=http://127.0.0.1:8000/api` (remembered in `localStorage`; `?api_base=reset` clears it).
 
-### Demo logins (mock)
+**No backend at all:** add `?api=mock` (remembered; `?api=real` switches back). Mock mode
+simulates everything in the browser and shows a "SIMULATED DATA" banner.
+
+### Demo logins
 
 | username | password | role |
 |----------|----------|------|
@@ -25,7 +41,10 @@ Open <http://localhost:5500>. (Opening `index.html` straight from disk also work
 | `hana`   | `astra2026` | Astronaut 4 · Mission Specialist |
 | `surgeon`| `astra2026` | Flight Surgeon / Mission Support |
 
-The session is stored in `localStorage` (`astra_session`). Logout clears it.
+Real mode logs in with `POST /api/auth/login/` and keeps `{username, role, astronaut_id, name, token}`
+in `localStorage` (`astra_session`). The token goes in `Authorization: Token <key>` on every write.
+Logout calls `POST /api/auth/logout/` and clears it. If the server rejects the token (expired after 72 h,
+or the database was reset) the page says so and sends you to the login page.
 
 ## Pages (user flow)
 
@@ -46,16 +65,16 @@ frontend/
   index.html login.html my-health.html checkin.html pvt.html history.html support.html
   css/style.css          dark space theme, responsive
   js/rules.js            port of health/sensor_rules.py + health/rules.py (same thresholds)
-  js/mock-data.js        mock backend: same JSON as the Django API, live every 3 s
-  js/api.js              API client — the ONE place to switch mock ↔ real
+  js/mock-data.js        mock backend for ?api=mock: same JSON as the Django API, live every 3 s
+  js/api.js              API client: base URL, token header, errors, mock ↔ real
   js/charts.js           tiny canvas charts (line, bars, sparkline)
   js/common.js           nav, session, formatting, icons, starfield
   js/pages/*.js          one script per page
 ```
 
-## Mock data
+## Mock data (`?api=mock`)
 
-`js/mock-data.js` behaves like the Django backend fed by `device_simulator`:
+`js/mock-data.js` (only active in mock mode) behaves like the Django backend fed by `device_simulator`:
 
 * Every 3 s it produces a new batch of wearable/patch/cabin readings (same metric names, units and ranges as
   `device_simulator/generators.py`) and runs them through the same rules as `health/sensor_rules.py`.
@@ -65,42 +84,37 @@ frontend/
 * Check-ins, PVT results, acknowledged and resolved alerts are kept in `localStorage` so the demo flows across pages.
   Reset with `MockAPI.resetDemo()` in the browser console.
 
-## Switch to the real API
+## API wiring
 
-Open `js/api.js` and change one line:
+`js/api.js` is the only file that talks to the server. Order used to pick the API:
+`?api_base=` / saved `astra_api_base` → same-origin `/api` when served by Django at `/app/` →
+`http://2.24.53.231:8000/api`. Mock mode only with `?api=mock`.
 
-```js
-var USE_MOCK = false;                              // was true
-var API_BASE = 'http://2.24.53.231:8000/api';      // the VPS
-```
+| function | endpoint | auth |
+|----------|----------|------|
+| `Api.login(u, p)` (via `Astra.login`) | `POST /api/auth/login/` | – |
+| `Api.me()` | `GET /api/auth/me/` (token check on protected pages) | token |
+| `Api.logout()` (via `Astra.logout`) | `POST /api/auth/logout/` | token |
+| `Api.getCrew()` | `GET /api/crew/` | – |
+| `Api.getCrewMember(id)` | `GET /api/crew/<id>/` | – |
+| `Api.getLatest(id)` | `GET /api/readings/latest/?astronaut=<id>` | – |
+| `Api.getCabin()` | `GET /api/cabin/latest/` | – |
+| `Api.getHistory(id, metric, hours, limit)` | `GET /api/readings/history/` (long windows come back averaged into buckets) | – |
+| `Api.getAlerts({astronaut, level, resolved, limit})` | `GET /api/alerts/` | – |
+| `Api.getCheckins({astronaut, limit})` | `GET /api/checkins/` | – |
+| `Api.getPvt({astronaut, limit})` | `GET /api/pvt/` | – |
+| `Api.submitCheckin(data)` | `POST /api/checkins/` → `{checkin, alerts, status}`; the page shows the server's alerts | astronaut |
+| `Api.submitPvt(id, result)` | `POST /api/pvt/` → `{pvt, alerts, status}` | astronaut |
+| `Api.acknowledgeAlert(id)` | `POST /api/alerts/<id>/acknowledge/` | surgeon |
+| `Api.resolveAlert(id)` | `POST /api/alerts/<id>/resolve/` | surgeon |
 
-Or, without editing, add `?api=real` to any page URL (e.g. `index.html?api=real`).
-
-All read functions call the endpoints documented in `../API.md` and expect exactly the JSON shown there:
-
-| function | endpoint |
-|----------|----------|
-| `Api.getCrew()` | `GET /api/crew/` |
-| `Api.getCrewMember(id)` | `GET /api/crew/<id>/` |
-| `Api.getLatest(id)` | `GET /api/readings/latest/?astronaut=<id>` |
-| `Api.getCabin()` | `GET /api/cabin/latest/` |
-| `Api.getHistory(id, metric, hours, limit)` | `GET /api/readings/history/?astronaut=&metric=&hours=&limit=` |
-| `Api.getAlerts({astronaut, level, resolved, limit})` | `GET /api/alerts/` |
-| `Api.getCheckins({astronaut, limit})` | `GET /api/checkins/` |
-
-### Not on the backend yet (proposed)
-
-These work in mock mode only. In real mode they call the paths below, which still need to be built in Django:
-
-| function | proposed endpoint |
-|----------|-------------------|
-| login (`js/common.js` → `Astra.login`) | `POST /api/auth/login/` |
-| `Api.submitCheckin(data)` | `POST /api/checkins/` (DailyCheckIn fields + `astronaut_id`, optional `urine_calcium`) |
-| `Api.submitPvt(id, result)` | `POST /api/pvt/` → saves `pvt_reaction_time` and `pvt_lapses` readings |
-| `Api.acknowledgeAlert(id)` | `POST /api/alerts/<id>/acknowledge/` |
-| `Api.resolveAlert(id)` | `POST /api/alerts/<id>/resolve/` |
+Errors: every call rejects with an `Error` whose `status` is the HTTP code (`0` + `offline: true`
+when the server can't be reached or takes > 10 s). Pages show a toast; polling pages switch
+the LIVE badge to OFFLINE and show a red "cannot reach …" bar until the server answers again.
 
 ### Notes
 
 * Times are shown in **EAT (Africa/Addis_Ababa)**. The API returns ISO 8601 with an offset, which the browser converts.
 * The API is plain HTTP, so serve the frontend over HTTP too (an HTTPS page can't call an HTTP API: mixed content).
+* The status shown for each astronaut comes from the server (`status` in `/api/crew/`). Value colours on tiles use
+  `js/rules.js`, a copy of the server thresholds: keep both in sync if you change a threshold.

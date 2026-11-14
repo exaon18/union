@@ -1,60 +1,86 @@
 /* ASTRA HEALTH - API client.
- * Flip USE_MOCK to false to read from the real Django backend.
- * Every function returns a Promise that resolves to the same JSON the
- * backend returns (documented in API.md).
+ * Talks to the real Django backend by default. Every function returns a Promise
+ * that resolves to the JSON documented in API.md.
+ *
+ * Where the API is:
+ *   1. ?api_base=http://127.0.0.1:8000/api   (saved in localStorage; ?api_base=reset clears it)
+ *   2. localStorage "astra_api_base"
+ *   3. same origin "/api" when this page is served by Django at /app/
+ *   4. DEFAULT_API_BASE (the VPS)
+ * Mock data (no backend): add ?api=mock (saved; ?api=real switches back).
  */
 (function (global) {
   'use strict';
 
-  var USE_MOCK = true;                               // <- the one switch
-  var API_BASE = 'http://2.24.53.231:8000/api';      // no trailing slash
+  var DEFAULT_API_BASE = 'http://2.24.53.231:8000/api';   // no trailing slash
+  var BASE_KEY = 'astra_api_base', MODE_KEY = 'astra_api_mode', SESSION_KEY = 'astra_session';
 
-  // Allow overriding from the URL for quick tests: ?api=real or ?api=mock
-  try {
-    var q = new URLSearchParams(location.search).get('api');
-    if (q === 'real') USE_MOCK = false;
-    if (q === 'mock') USE_MOCK = true;
-  } catch (e) { /* ignore */ }
+  function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
+  function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 
-  function qs(params) {
+  var params; try { params = new URLSearchParams(location.search); } catch (e) { params = { get: function () { return null; } }; }
+
+  // ---- mode: real (default) or mock ----
+  var qMode = params.get('api');
+  if (qMode === 'mock' || qMode === 'real') store(MODE_KEY, qMode === 'mock' ? 'mock' : null);
+  var USE_MOCK = read(MODE_KEY) === 'mock';
+
+  // ---- base URL ----
+  var qBase = params.get('api_base');
+  if (qBase) {
+    if (qBase === 'reset') store(BASE_KEY, null);
+    else store(BASE_KEY, qBase.replace(/\/+$/, ''));
+  }
+  var servedByDjango = /^https?:$/.test(location.protocol) && /^\/app(\/|$)/.test(location.pathname);
+  var API_BASE = read(BASE_KEY) || (servedByDjango ? location.origin + '/api' : DEFAULT_API_BASE);
+
+  function qs(p) {
     var parts = [];
-    Object.keys(params || {}).forEach(function (k) {
-      var v = params[k];
+    Object.keys(p || {}).forEach(function (k) {
+      var v = p[k];
       if (v !== undefined && v !== null && v !== '') parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
     });
     return parts.length ? '?' + parts.join('&') : '';
   }
 
-  var TIMEOUT_MS = 8000;
-  function withTimeout(url, init) {
-    if (typeof AbortController === 'undefined') return fetch(url, init);
-    var ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, TIMEOUT_MS);
-    init.signal = ctl.signal;
-    return fetch(url, init).then(function (r) { clearTimeout(t); return r; }, function (e) {
-      clearTimeout(t);
-      throw e && e.name === 'AbortError' ? new Error('API timed out after ' + TIMEOUT_MS / 1000 + ' s') : e;
-    });
+  function token() {
+    try { var s = JSON.parse(read(SESSION_KEY)); return s && s.token; } catch (e) { return null; }
   }
 
-  function get(path, params) {
-    return withTimeout(API_BASE + path + qs(params), { headers: { Accept: 'application/json' } }).then(function (res) {
+  var TIMEOUT_MS = 10000;
+  function request(method, path, params, data) {
+    var url = API_BASE + path + (method === 'GET' ? qs(params) : '');
+    var headers = { Accept: 'application/json' };
+    var init = { method: method, headers: headers };
+    if (method !== 'GET') { headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(data || {}); }
+    var t = token(); if (t && method !== 'GET') headers.Authorization = 'Token ' + t;
+    var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, timer;
+    if (ctl) { init.signal = ctl.signal; timer = setTimeout(function () { ctl.abort(); }, TIMEOUT_MS); }
+    return fetch(url, init).then(function (res) {
+      clearTimeout(timer);
       return res.json().catch(function () { return {}; }).then(function (body) {
-        if (!res.ok) { var e = new Error(body.error || ('HTTP ' + res.status)); e.status = res.status; e.body = body; throw e; }
+        if (!res.ok) {
+          var e = new Error(body.error || ('HTTP ' + res.status)); e.status = res.status; e.body = body;
+          if (res.status === 401 && t) Api.onUnauthorized(e);
+          throw e;
+        }
         return body;
       });
+    }, function (err) {
+      clearTimeout(timer);
+      var e = new Error(err && err.name === 'AbortError'
+        ? 'server did not answer within ' + TIMEOUT_MS / 1000 + ' s'
+        : 'cannot reach the server (' + API_BASE + ')');
+      e.status = 0; e.offline = true;
+      throw e;
     });
   }
-  function post(path, data) {
-    return withTimeout(API_BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(data || {}) })
-      .then(function (res) {
-        return res.json().catch(function () { return {}; }).then(function (body) {
-          if (!res.ok) { var e = new Error(body.error || ('HTTP ' + res.status)); e.status = res.status; e.body = body; throw e; }
-          return body;
-        });
-      });
-  }
+  function get(path, params) { return request('GET', path, params); }
+  function post(path, data) { return request('POST', path, null, data); }
+
   // Run a mock call asynchronously so callers behave the same in both modes.
   function mock(fn) {
+    if (global.MockAPI && MockAPI._start) MockAPI._start();
     return new Promise(function (resolve, reject) {
       setTimeout(function () { try { resolve(fn()); } catch (e) { reject(e); } }, 40);
     });
@@ -63,40 +89,46 @@
   var Api = {
     USE_MOCK: USE_MOCK,
     API_BASE: API_BASE,
+    POLL_MS: 3000,
+    /** Called when the server rejects our token (expired / logged out elsewhere). Set by common.js. */
+    onUnauthorized: function () {},
 
-    /* ---- read endpoints (exist on the backend today) ---- */
-    // GET /api/crew/
+    /* ---- auth (token) ---- */
+    // POST /api/auth/login/ -> {token, user:{username, name, role, astronaut_id, title}}
+    login: function (username, password) { return post('/auth/login/', { username: username, password: password }); },
+    // GET /api/auth/me/  (needs the token, so it is sent as an authenticated request)
+    me: function () {
+      var t = token();
+      return fetch(API_BASE + '/auth/me/', { headers: { Accept: 'application/json', Authorization: 'Token ' + t } })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (b) { if (!r.ok) { var e = new Error(b.error || 'HTTP ' + r.status); e.status = r.status; throw e; } return b; }); });
+    },
+    // POST /api/auth/logout/
+    logout: function () { return post('/auth/logout/'); },
+
+    /* ---- read endpoints (public) ---- */
     getCrew: function () { return USE_MOCK ? mock(MockAPI.getCrew) : get('/crew/'); },
-    // GET /api/crew/<id>/
     getCrewMember: function (id) { return USE_MOCK ? mock(function () { return MockAPI.getCrewMember(id); }) : get('/crew/' + encodeURIComponent(id) + '/'); },
-    // GET /api/readings/latest/?astronaut=<id>
     getLatest: function (id) { return USE_MOCK ? mock(function () { return MockAPI.getLatest(id); }) : get('/readings/latest/', { astronaut: id }); },
-    // GET /api/cabin/latest/
     getCabin: function () { return USE_MOCK ? mock(MockAPI.getCabin) : get('/cabin/latest/'); },
-    // GET /api/readings/history/?astronaut=&metric=&hours=&limit=
     getHistory: function (id, metric, hours, limit) {
       return USE_MOCK ? mock(function () { return MockAPI.getHistory(id, metric, hours, limit); })
         : get('/readings/history/', { astronaut: id, metric: metric, hours: hours, limit: limit });
     },
-    // GET /api/alerts/?astronaut=&level=&resolved=&limit=
     getAlerts: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getAlerts(opts); }) : get('/alerts/', opts); },
-    // GET /api/checkins/?astronaut=&limit=
     getCheckins: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getCheckins(opts); }) : get('/checkins/', opts); },
+    getPvt: function (opts) { return USE_MOCK ? mock(function () { return { count: 0, results: [] }; }) : get('/pvt/', opts); },
 
-    /* ---- write endpoints: NOT built on the backend yet (proposed paths) ---- */
-    // POST /api/checkins/   body = DailyCheckIn fields + astronaut_id
+    /* ---- write endpoints (Authorization: Token <key>) ---- */
+    // POST /api/checkins/ -> {checkin, alerts, status}
     submitCheckin: function (data) { return USE_MOCK ? mock(function () { return MockAPI.submitCheckin(data); }) : post('/checkins/', data); },
-    // POST /api/pvt/        body = {astronaut_id, mean_rt, lapses, false_starts, trials}
+    // POST /api/pvt/ {astronaut_id, mean_rt_ms, fastest_ms, lapses, false_starts, trials} -> {pvt, alerts, status}
     submitPvt: function (aid, result) {
       return USE_MOCK ? mock(function () { return MockAPI.submitPvt(aid, result); })
         : post('/pvt/', Object.assign({ astronaut_id: aid }, result));
     },
-    // POST /api/alerts/<id>/resolve/
+    // POST /api/alerts/<id>/acknowledge/ and /resolve/ (flight surgeon) -> {alert}
     resolveAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.resolveAlert(id); }) : post('/alerts/' + id + '/resolve/'); },
-    // POST /api/alerts/<id>/acknowledge/
-    acknowledgeAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.acknowledgeAlert(id); }) : post('/alerts/' + id + '/acknowledge/'); },
-
-    POLL_MS: 3000
+    acknowledgeAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.acknowledgeAlert(id); }) : post('/alerts/' + id + '/acknowledge/'); }
   };
 
   global.Api = Api;
