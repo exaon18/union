@@ -56,32 +56,31 @@ def parse_timestamp(raw, now=None):
 
 def clear_recovered_alerts(readings, new_alerts, now=None):
     """
-    Close open sensor alerts whose metric is back in range: a reading in this batch for the
-    same astronaut + metric broke no rule, and the alert is older than ALERT_CLEAR_AFTER_SECONDS
+    Close open sensor alerts whose metric has improved: a reading in this batch for the same
+    astronaut + metric is back in range (or now at a lower level, e.g. a red heart-rate alert
+    when the heart rate is only yellow), and the alert is older than ALERT_CLEAR_AFTER_SECONDS
     (so a one-off spike stays visible for a moment). Persistent problems never clear this way.
     """
     seconds = getattr(settings, "ALERT_CLEAR_AFTER_SECONDS", 0)
     if seconds <= 0 or not readings:
         return 0
     now = now or timezone.now()
-    abnormal = {(a.reading.astronaut_id, a.reading.metric) for a in new_alerts if a.reading_id}
-    # a reading that matched a rule but was deduplicated is still abnormal
-    normal = set()
+    rank = {None: 0, Alert.YELLOW: 1, Alert.RED: 2}
+    current = {}       # (astronaut_id, metric) -> worst level seen in this batch (None = normal)
+    for a in new_alerts:
+        if a.reading_id:
+            key = (a.reading.astronaut_id, a.reading.metric)
+            current[key] = max(current.get(key), a.level, key=lambda lv: rank.get(lv, 0))
     for r in readings:
         key = (r.astronaut_id, r.metric)
-        if key in abnormal:
-            continue
-        if match_reading(r) is None:
-            normal.add(key)
-        else:
-            abnormal.add(key)
-    normal -= abnormal
-    if not normal:
-        return 0
+        hit = match_reading(r)        # a deduplicated abnormal reading is still abnormal
+        level = hit.level if hit else None
+        current[key] = max(current.get(key), level, key=lambda lv: rank.get(lv, 0)) if key in current else level
     candidates = Alert.objects.filter(
         resolved=False, reading__isnull=False, created_at__lt=now - timedelta(seconds=seconds),
-    ).values_list("id", "astronaut_id", "reading__metric")
-    ids = [pk for pk, aid, metric in candidates if (aid, metric) in normal]
+    ).values_list("id", "astronaut_id", "reading__metric", "level")
+    ids = [pk for pk, aid, metric, level in candidates
+           if (aid, metric) in current and rank[current[(aid, metric)]] < rank.get(level, 0)]
     if ids:
         Alert.objects.filter(id__in=ids).update(resolved=True, resolved_at=now)
     return len(ids)
@@ -102,22 +101,13 @@ def auto_resolve_stale_sensor_alerts(now=None):
     ).exclude(reading__source="pvt_test").update(resolved=True, resolved_at=now)
 
 
-@csrf_exempt          # devices can't send Django CSRF tokens; we use the HMAC signature instead
-@require_POST
-def receive_readings(request):
-    if not _signature_ok(request):
-        return JsonResponse({"error": "invalid signature"}, status=401)
-    try:
-        payload = json.loads(request.body)
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        return JsonResponse({"error": "invalid JSON"}, status=400)
-
-    items = payload.get("readings", [payload]) if isinstance(payload, dict) else payload
-    if not isinstance(items, list):
-        return JsonResponse({"error": "readings must be a list"}, status=400)
-
+def ingest(items, now=None):
+    """
+    Save a list of reading dicts and run the alert rules on them (shared by the webhook and
+    the simulation "Apply now" endpoint). Returns (saved_readings, new_alerts, errors).
+    """
     crew = {a.id: a for a in Astronaut.objects.select_related("user")}
-    now = timezone.now()
+    now = now or timezone.now()
     rows, errors = [], []
 
     for i, item in enumerate(items):
@@ -153,6 +143,24 @@ def receive_readings(request):
         clear_recovered_alerts(saved, alerts, now)
         auto_resolve_stale_sensor_alerts(now)
 
+    return saved, alerts, errors
+
+
+@csrf_exempt          # devices can't send Django CSRF tokens; we use the HMAC signature instead
+@require_POST
+def receive_readings(request):
+    if not _signature_ok(request):
+        return JsonResponse({"error": "invalid signature"}, status=401)
+    try:
+        payload = json.loads(request.body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"error": "invalid JSON"}, status=400)
+
+    items = payload.get("readings", [payload]) if isinstance(payload, dict) else payload
+    if not isinstance(items, list):
+        return JsonResponse({"error": "readings must be a list"}, status=400)
+
+    saved, alerts, errors = ingest(items)
     return JsonResponse({
         "saved": len(saved),
         "alerts": [{"level": a.level, "message": a.message, "astronaut": str(a.astronaut or "CABIN")} for a in alerts],

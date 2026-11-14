@@ -267,6 +267,12 @@ ENDPOINTS = [
     {"method": "GET", "path": "/api/pvt/", "auth": "public", "description": "PVT results, newest first. Optional ?astronaut=<id>&limit=30."},
     {"method": "POST", "path": "/api/pvt/", "auth": "token (astronaut: own data)",
      "description": "Save a PVT run; also stores pvt_reaction_time and pvt_lapses readings so sensor rules fire."},
+    {"method": "GET", "path": "/api/sim/scenario/", "auth": "public",
+     "description": "Active simulation scenario (what the device simulator sends), resolved per astronaut, and the presets."},
+    {"method": "POST", "path": "/api/sim/scenario/", "auth": "token (surgeon)",
+     "description": 'Change it. Body {"preset","target","system","custom","cabin","reset","apply_now"}.'},
+    {"method": "POST", "path": "/api/sim/reset/", "auth": "token (surgeon)", "description": "Resolve all open alerts."},
+    {"method": "POST", "path": "/api/sim/tick/", "auth": "token (surgeon)", "description": "Push one simulated batch now."},
     {"method": "POST", "path": "/api/webhook/readings/", "auth": "HMAC (X-Astra-Signature)",
      "description": "Device webhook. HMAC-signed. Not for the frontend."},
 ]

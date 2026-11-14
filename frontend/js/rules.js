@@ -23,16 +23,20 @@
       [RED, function (v) { return v > 160; }, 'Very high blood pressure', 'Rest and contact the flight surgeon.'],
       [YELLOW, function (v) { return v > 140; }, 'Elevated blood pressure', 'Reduce sodium and re-check later.']]],
     body_temperature: ['immune', [
-      [RED, function (v) { return v > 38; }, 'Fever', 'Possible infection: isolate if possible and contact mission support.']]],
+      [RED, function (v) { return v > 38; }, 'Fever', 'Possible infection: isolate if possible and contact mission support.'],
+      [YELLOW, function (v) { return v > 37.5; }, 'Raised body temperature', 'Rest, drink water and re-measure in an hour.']]],
     respiration_rate: ['cardiovascular', [
+      [RED, function (v) { return v > 28; }, 'Very fast breathing', 'Check SpO2 and cabin CO2 now; contact mission support.'],
       [YELLOW, function (v) { return v > 22; }, 'Fast breathing', 'Rest and check cabin CO2 levels.']]],
     blood_glucose: ['immune', [
       [RED, function (v) { return v > 180 || v < 60; }, 'Blood glucose out of safe range', 'Re-test; eat or adjust meal plan; contact the flight surgeon.'],
       [YELLOW, function (v) { return v > 140; }, 'Blood glucose high', 'Review recent meals and re-test in 2 hours.']]],
     stress_level: ['behavioral', [
+      [RED, function (v) { return v > 90; }, 'Very high stress level', 'Stop critical tasks; contact the flight surgeon and psychologist.'],
       [YELLOW, function (v) { return v > 75; }, 'High stress level', 'Take a break; schedule a call with the flight psychologist.']]],
     radiation_dose: ['radiation', [
-      [RED, function (v) { return v > 1; }, 'High personal radiation dose', 'Move to the shielded area and contact mission support.']]],
+      [RED, function (v) { return v > 1; }, 'High personal radiation dose', 'Move to the shielded area and contact mission support.'],
+      [YELLOW, function (v) { return v > 0.8; }, 'Elevated personal radiation dose', 'Limit time in unshielded modules today.']]],
     sleep_total: ['behavioral', [
       [YELLOW, function (v) { return v < 5; }, 'Short sleep', 'Adjust the schedule to allow a full sleep period.']]],
     urine_calcium: ['musculoskeletal', [
@@ -47,10 +51,13 @@
       [RED, function (v) { return v > 5000; }, 'Cabin CO2 dangerously high', 'Check CO2 scrubbers immediately; alert mission control.'],
       [YELLOW, function (v) { return v > 4000; }, 'Cabin CO2 elevated', 'Check ventilation; may cause headaches.']]],
     o2: ['environment', [
-      [RED, function (v) { return v < 19.5; }, 'Cabin O2 low', 'Check life support and alert mission control.']]],
+      [RED, function (v) { return v < 19.5; }, 'Cabin O2 low', 'Check life support and alert mission control.'],
+      [YELLOW, function (v) { return v < 20; }, 'Cabin O2 slightly low', 'Check the oxygen generator.']]],
     cabin_radiation: ['radiation', [
-      [RED, function (v) { return v > 1; }, 'Cabin radiation spike (possible solar event)', 'All crew to the shielded area.']]],
+      [RED, function (v) { return v > 1; }, 'Cabin radiation spike (possible solar event)', 'All crew to the shielded area.'],
+      [YELLOW, function (v) { return v > 0.8; }, 'Cabin radiation elevated', 'Watch space-weather reports; prepare the shielded area.']]],
     noise: ['environment', [
+      [RED, function (v) { return v > 85; }, 'Cabin noise dangerously high', 'Hearing protection on now; find the source (fan or pump fault).'],
       [YELLOW, function (v) { return v > 70; }, 'Cabin noise high', 'Use hearing protection; affects sleep and stress.']]]
   };
 

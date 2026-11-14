@@ -168,3 +168,22 @@ class AuthToken(models.Model):
 
     def __str__(self):
         return f"token for {self.user} ({self.created_at:%Y-%m-%d %H:%M})"
+
+
+class SimScenario(models.Model):
+    """
+    The device simulator's active scenario (one row, pk=1). The simulator reads it from
+    GET /api/sim/scenario/ every tick; the flight surgeon changes it from the Scenario Control page.
+    `config` is validated by device_simulator/scenarios.py:
+      {"preset": "one_critical", "target": 2, "system": "cardiovascular",
+       "custom": {"1": {"level": "caution", "system": "behavioral"}}, "cabin": {"level", "system"},
+       "anomaly_rate": 0.002}
+    """
+    config = models.JSONField(default=dict)
+    version = models.PositiveIntegerField(default=0)   # +1 on every change (the simulator logs it)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+")
+
+    def __str__(self):
+        return f"scenario v{self.version}: {self.config.get('preset', 'realistic')}"
