@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,18 +21,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!i*$w(m8(i*j+svy-ya^edtcw!rr7@a=uf3htrhwzgx(md%&ia'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-!i*$w(m8(i*j+svy-ya^edtcw!rr7@a=uf3htrhwzgx(md%&ia',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if h.strip()
+]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'core',
+    'health',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,6 +51,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -78,6 +89,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        # Wait up to 20 s for a write lock instead of failing with "database is locked".
+        # WAL mode (set in health/apps.py) lets the API read while the simulator writes.
+        'OPTIONS': {
+            'timeout': 20,
+            'transaction_mode': 'IMMEDIATE',
+        },
     }
 }
 
@@ -106,7 +123,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Mission control is in Addis Ababa (EAT, UTC+3). Naive device timestamps are read as EAT.
+TIME_ZONE = 'Africa/Addis_Ababa'
 
 USE_I18N = True
 
@@ -122,3 +140,46 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Use our custom User model from the core app (must be set before the first migrate)
+AUTH_USER_MODEL = 'core.User'
+
+# Uploaded files (e.g. user avatars)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Shared secret for the device webhook (the simulator signs requests with it).
+# Change it, or set the ASTRA_WEBHOOK_SECRET environment variable.
+WEBHOOK_SECRET = os.environ.get("ASTRA_WEBHOOK_SECRET", "astra-dev-secret")
+
+
+# CORS: frontend apps on other origins can call the GET endpoints.
+# Set DJANGO_CORS_ALLOWED_ORIGINS to a comma-separated list of origins
+# (e.g. https://your-frontend.com). If unset, all origins are allowed (hackathon default).
+_cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+if _cors_origins:
+    CORS_ALLOWED_ORIGINS = _cors_origins
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
+# GET endpoints are public. Writes (check-ins, PVT, alerts) use POST + "Authorization: Token <key>".
+# The default CORS_ALLOW_HEADERS already includes authorization and content-type.
+CORS_ALLOW_METHODS = ["GET", "HEAD", "OPTIONS", "POST"]
+
+# Skip a new sensor alert when the same astronaut/metric/level already has an open
+# alert from the last N minutes (stops a stuck sensor from creating thousands). 0 = off.
+ALERT_DEDUP_MINUTES = int(os.environ.get("ASTRA_ALERT_DEDUP_MINUTES", "5"))
+
+# An open sensor alert closes automatically once a newer reading of the same metric is back
+# in range and the alert is at least this old (one-off spikes stay visible briefly). 0 = off.
+ALERT_CLEAR_AFTER_SECONDS = int(os.environ.get("ASTRA_ALERT_CLEAR_AFTER_SECONDS", "120"))
+
+# Open sensor alerts older than this are closed automatically on the next webhook call
+# (a still-abnormal sensor raises a fresh one). Check-in and PVT alerts are never auto-closed. 0 = off.
+ALERT_AUTO_RESOLVE_MINUTES = int(os.environ.get("ASTRA_ALERT_AUTO_RESOLVE_MINUTES", "30"))
+
+# API login tokens expire after this many hours.
+API_TOKEN_TTL_HOURS = int(os.environ.get("ASTRA_TOKEN_TTL_HOURS", "72"))

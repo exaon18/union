@@ -1,0 +1,702 @@
+# ASTRA HEALTH API
+
+A short guide for the frontend team. You do not need to know Django.
+
+The backend stores live sensor readings, daily check-ins, PVT results and alerts. Your job is to **call a URL and use the JSON that comes back**. JSON is just structured text that looks like `{"metric": "heart_rate", "value": 72}`.
+
+## Base URL
+
+```
+http://2.24.53.231:8000/api
+```
+
+Plain HTTP (an IP, no HTTPS or domain yet). If your page is served over HTTPS the browser will block these calls (mixed content); serve the frontend over HTTP, or open it from Django itself at **`http://2.24.53.231:8000/app/`** (same server, so no CORS or mixed-content problems).
+
+* **Times** are ISO 8601 with an offset, in mission-control time (EAT, `+03:00`), e.g. `2026-11-14T22:35:06+03:00`. `new Date(...)` in JavaScript handles them.
+* **Reading** (`GET`) is public: no login. The public mission dashboard uses only GETs.
+* **Writing** (`POST`) needs a login token: `Authorization: Token <key>` (see [Login](#login-token-auth)).
+* **CORS**: any website may call the API (GET and POST, `Authorization` header allowed).
+* The examples below are **real responses** from a local test run (4 astronauts + simulator with an emergency for astronaut 2, Sara Tesfaye). Long lists are cut with `…`.
+
+Demo accounts (password for all: `astra2026`):
+
+| username | role | astronaut_id |
+|----------|------|--------------|
+| `abebe` | astronaut (Commander) | 1 |
+| `sara` | astronaut (Flight Engineer, emergency demo) | 2 |
+| `dawit` | astronaut (Medical Officer) | 3 |
+| `hana` | astronaut (Mission Specialist) | 4 |
+| `surgeon` | flight surgeon (Dr. Meron Alemu, sees everyone, acknowledges/resolves alerts) | – |
+
+## Endpoint summary
+
+| method | path | auth | what |
+|--------|------|------|------|
+| GET | `/api/` | public | This index. |
+| POST | `/api/auth/login/` | public | Body {"username","password"} -> {"token", "user": {username, name, role, astronaut_id}}. |
+| GET | `/api/auth/me/` | token | The logged-in user. |
+| POST | `/api/auth/logout/` | token | Delete the current token. |
+| GET | `/api/crew/` | public | All astronauts with overall status and open alert counts. |
+| GET | `/api/crew/<id>/` | public | One astronaut, including personal baselines. |
+| GET | `/api/readings/latest/` | public | Newest reading per metric. Pass ?astronaut=<id> or ?source=cabin. Optional &hours=48. |
+| GET | `/api/cabin/latest/` | public | Newest cabin/environment reading per metric (no astronaut). |
+| GET | `/api/readings/history/` | public | Time series, oldest first. Requires ?astronaut=<id>&metric=<name>. Optional &hours=24&limit=500. |
+| GET | `/api/alerts/` | public | Alerts, newest first. Optional ?astronaut=<id>&level=red&resolved=false&acknowledged=false&limit=50. |
+| POST | `/api/alerts/<id>/acknowledge/` | token (surgeon) | Mark an alert as seen by mission support. |
+| POST | `/api/alerts/<id>/resolve/` | token (surgeon) | Close an alert. |
+| GET | `/api/checkins/` | public | Recent daily check-ins, newest first. Optional ?astronaut=<id>&limit=30. |
+| POST | `/api/checkins/` | token (astronaut: own data) | Submit a daily check-in. Runs the check-in rules and returns the alerts it created. |
+| GET | `/api/pvt/` | public | PVT results, newest first. Optional ?astronaut=<id>&limit=30. |
+| POST | `/api/pvt/` | token (astronaut: own data) | Save a PVT run; also stores pvt_reaction_time and pvt_lapses readings so sensor rules fire. |
+| POST | `/api/webhook/readings/` | HMAC (X-Astra-Signature) | Device webhook. HMAC-signed. Not for the frontend. |
+
+`GET /api/` returns this list as JSON (plus `server_time`).
+
+---
+
+## Login (token auth)
+
+### `POST /api/auth/login/`
+
+Body: `{"username": "sara", "password": "astra2026"}`
+
+```json
+{
+  "token": "3f2a…(40 hex characters)…9c1d",
+  "expires_at": "2026-11-17T22:53:03.413089+03:00",
+  "user": {
+    "id": 2,
+    "username": "sara",
+    "name": "Sara Tesfaye",
+    "role": "astronaut",
+    "title": null,
+    "astronaut_id": 2
+  }
+}
+```
+
+* `role` is `astronaut` or `surgeon`. `astronaut_id` is the astronaut's own id (null for the surgeon).
+* Keep `token` (e.g. in `localStorage`) and send it on every POST: `Authorization: Token <token>`.
+* Tokens expire after 72 h (`expires_at`). A wrong password gives **401** `{"error": "wrong username or password"}`.
+* Only a hash of the token is stored on the server.
+
+### `GET /api/auth/me/`  (token)
+
+```json
+{
+  "user": {
+    "id": 2,
+    "username": "sara",
+    "name": "Sara Tesfaye",
+    "role": "astronaut",
+    "title": null,
+    "astronaut_id": 2
+  }
+}
+```
+
+401 means the token is missing, expired or logged out: send the user back to the login page.
+
+### `POST /api/auth/logout/`  (token)
+
+Deletes the token. Returns `{"ok": true}`.
+
+---
+
+## `GET /api/crew/`
+
+All astronauts. `status` is the worst level among the astronaut's **open** alerts (`green` when none). `last_reading_at` is the newest sensor reading.
+
+`http://2.24.53.231:8000/api/crew/`
+
+```json
+{
+  "count": 4,
+  "astronauts": [
+    {
+      "id": 1,
+      "name": "Abebe Kebede",
+      "mission": "Artemis Mars Transit",
+      "role": "Commander",
+      "status": "green",
+      "open_alerts": 0,
+      "last_reading_at": "2026-11-14T22:53:02+03:00"
+    },
+    {
+      "id": 2,
+      "name": "Sara Tesfaye",
+      "mission": "Artemis Mars Transit",
+      "role": "Flight Engineer",
+      "status": "red",
+      "open_alerts": 37,
+      "last_reading_at": "2026-11-14T22:53:02+03:00"
+    },
+    {
+      "id": 3,
+      "name": "Dawit Haile",
+      "mission": "Artemis Mars Transit",
+      "role": "Medical Officer",
+      "status": "green",
+      "open_alerts": 0,
+      "last_reading_at": "2026-11-14T22:53:02+03:00"
+    },
+    {
+      "id": 4,
+      "name": "Hana Girma",
+      "mission": "Artemis Mars Transit",
+      "role": "Mission Specialist",
+      "status": "green",
+      "open_alerts": 0,
+      "last_reading_at": "2026-11-14T22:53:02+03:00"
+    }
+  ]
+}
+```
+
+## `GET /api/crew/<id>/`
+
+One astronaut, plus personal `baselines` (their normal values).
+
+`http://2.24.53.231:8000/api/crew/2/`
+
+```json
+{
+  "id": 2,
+  "name": "Sara Tesfaye",
+  "mission": "Artemis Mars Transit",
+  "role": "Flight Engineer",
+  "status": "red",
+  "open_alerts": 37,
+  "last_reading_at": "2026-11-14T22:53:02+03:00",
+  "baselines": {
+    "heart_rate": 68,
+    "systolic_bp": 112,
+    "diastolic_bp": 72
+  }
+}
+```
+
+---
+
+## `GET /api/readings/latest/`
+
+Newest reading **per metric** for one astronaut (`?astronaut=<id>`) or for the cabin (`?source=cabin`). Optional `&hours=48` (only look at the last N hours; default 48).
+
+* Numbers are in `value`; text metrics (`ecg_rhythm`) use `text_value` and `value` is null.
+* Readings dated in the future (bad device clock) are ignored.
+
+`http://2.24.53.231:8000/api/readings/latest/?astronaut=2`
+
+```json
+{
+  "astronaut_id": 2,
+  "astronaut": "Sara Tesfaye",
+  "count": 26,
+  "readings": [
+    {
+      "metric": "blood_glucose",
+      "value": 87.0,
+      "text_value": "",
+      "unit": "mg/dL",
+      "source": "cgm",
+      "timestamp": "2026-11-14T22:53:02+03:00"
+    },
+    {
+      "metric": "body_mass",
+      "value": 72.0,
+      "text_value": "",
+      "unit": "kg",
+      "source": "mass_device",
+      "timestamp": "2026-11-14T22:37:28+03:00"
+    },
+    {
+      "metric": "body_temperature",
+      "value": 36.5,
+      "text_value": "",
+      "unit": "°C",
+      "source": "patch",
+      "timestamp": "2026-11-14T22:53:02+03:00"
+    },
+    {
+      "metric": "calories_burned",
+      "value": 2538.0,
+      "text_value": "",
+      "unit": "kcal",
+      "source": "wearable",
+      "timestamp": "2026-11-14T22:37:28+03:00"
+    },
+    …
+  ]
+}
+```
+
+## `GET /api/cabin/latest/`
+
+Same as `readings/latest/?source=cabin`: CO₂, O₂, cabin radiation, noise, temperature, humidity, pressure, VOC.
+
+`http://2.24.53.231:8000/api/cabin/latest/`
+
+```json
+{
+  "source": "cabin",
+  "count": 8,
+  "readings": [
+    {
+      "metric": "cabin_pressure",
+      "value": 101.8,
+      "text_value": "",
+      "unit": "kPa",
+      "source": "cabin",
+      "timestamp": "2026-11-14T22:53:02+03:00"
+    },
+    {
+      "metric": "cabin_radiation",
+      "value": 0.6,
+      "text_value": "",
+      "unit": "mSv/day",
+      "source": "cabin",
+      "timestamp": "2026-11-14T22:53:02+03:00"
+    },
+    {
+      "metric": "cabin_temperature",
+      "value": 22.8,
+      "text_value": "",
+      "unit": "°C",
+      "source": "cabin",
+      "timestamp": "2026-11-14T22:53:02+03:00"
+    },
+    …
+  ]
+}
+```
+
+---
+
+## `GET /api/readings/history/`
+
+Time series for charts, **oldest first**. Required: `astronaut`, `metric`. Optional: `hours` (default 24), `limit` (default 500, max 2000).
+
+If the window has more points than `limit` (24 h of 3-second readings is ~29,000), the server **averages them into time buckets** so the chart still covers the whole window. Then the response has `bucket_seconds`, each point has `samples` (how many readings were averaged) and `timestamp` is the newest reading in that bucket. Add `&downsample=false` to get the newest `limit` raw points instead.
+
+Raw: `http://2.24.53.231:8000/api/readings/history/?astronaut=2&metric=heart_rate&hours=1&limit=3&downsample=false`
+
+```json
+{
+  "astronaut_id": 2,
+  "astronaut": "Sara Tesfaye",
+  "metric": "heart_rate",
+  "hours": 1,
+  "count": 3,
+  "readings": [
+    {
+      "metric": "heart_rate",
+      "value": 125.0,
+      "text_value": "",
+      "unit": "bpm",
+      "source": "wearable",
+      "timestamp": "2026-11-14T22:52:56+03:00"
+    },
+    {
+      "metric": "heart_rate",
+      "value": 126.0,
+      "text_value": "",
+      "unit": "bpm",
+      "source": "wearable",
+      "timestamp": "2026-11-14T22:52:59+03:00"
+    },
+    {
+      "metric": "heart_rate",
+      "value": 134.0,
+      "text_value": "",
+      "unit": "bpm",
+      "source": "wearable",
+      "timestamp": "2026-11-14T22:53:02+03:00"
+    }
+  ]
+}
+```
+
+Downsampled: `http://2.24.53.231:8000/api/readings/history/?astronaut=2&metric=heart_rate&hours=24&limit=3`
+
+```json
+{
+  "astronaut_id": 2,
+  "astronaut": "Sara Tesfaye",
+  "metric": "heart_rate",
+  "hours": 24,
+  "count": 3,
+  "readings": [
+    {
+      "metric": "heart_rate",
+      "value": 84.94,
+      "text_value": "",
+      "unit": "bpm",
+      "source": "wearable",
+      "timestamp": "2026-11-14T06:52:40.251598+03:00",
+      "samples": 556
+    },
+    {
+      "metric": "heart_rate",
+      "value": 85.48,
+      "text_value": "",
+      "unit": "bpm",
+      "source": "wearable",
+      "timestamp": "2026-11-14T14:52:14.329006+03:00",
+      "samples": 555
+    },
+    {
+      "metric": "heart_rate",
+      "value": 103.19,
+      "text_value": "",
+      "unit": "bpm",
+      "source": "wearable",
+      "timestamp": "2026-11-14T22:53:02+03:00",
+      "samples": 965
+    }
+  ],
+  "bucket_seconds": 28800
+}
+```
+
+---
+
+## `GET /api/alerts/`
+
+Alerts, **newest first**. Optional: `astronaut=<id>` (or `astronaut=cabin`), `level=green|yellow|red`, `resolved=true|false`, `acknowledged=true|false`, `limit` (default 50, max 200).
+
+`http://2.24.53.231:8000/api/alerts/?astronaut=2&resolved=false&limit=2`
+
+```json
+{
+  "count": 2,
+  "alerts": [
+    {
+      "id": 199,
+      "astronaut_id": 2,
+      "astronaut": "Sara Tesfaye",
+      "system": "musculoskeletal",
+      "level": "yellow",
+      "message": "Only 40 min exercise (target ≥ 60)",
+      "recommendation": "Bone and muscle loss risk in microgravity; complete the exercise session.",
+      "acknowledged": false,
+      "acknowledged_at": null,
+      "resolved": false,
+      "resolved_at": null,
+      "resolved_by": null,
+      "acknowledged_by": null,
+      "source": "checkin",
+      "created_at": "2026-11-14T22:52:55.737987+03:00"
+    },
+    {
+      "id": 197,
+      "astronaut_id": 2,
+      "astronaut": "Sara Tesfaye",
+      "system": "musculoskeletal",
+      "level": "yellow",
+      "message": "Only 40 min exercise (target ≥ 60)",
+      "recommendation": "Bone and muscle loss risk in microgravity; complete the exercise session.",
+      "acknowledged": false,
+      "acknowledged_at": null,
+      "resolved": false,
+      "resolved_at": null,
+      "resolved_by": null,
+      "acknowledged_by": null,
+      "source": "checkin",
+      "created_at": "2026-11-14T22:52:45.237630+03:00"
+    }
+  ]
+}
+```
+
+* `source`: `sensor` (from the webhook or PVT readings), `checkin` (from a daily check-in) or `other`.
+* `resolved_by`: the surgeon's username, `"auto"` when the system closed it, `null` while open.
+* How alerts open and close on their own:
+  * **No duplicates:** while an alert for the same astronaut + metric + level is open and younger than 5 minutes, a repeat reading does not create another one.
+  * **Back to normal:** an open sensor alert closes itself (`resolved_by: "auto"`) once a newer reading of the same metric is back in range and the alert is at least 2 minutes old. A persistent problem (Sara's emergency) stays open.
+  * **Stale:** open sensor alerts older than 30 minutes close automatically. A still-abnormal sensor raises a fresh one. Check-in and PVT alerts wait for the flight surgeon.
+  * Tunable on the server with `ASTRA_ALERT_DEDUP_MINUTES`, `ASTRA_ALERT_CLEAR_AFTER_SECONDS`, `ASTRA_ALERT_AUTO_RESOLVE_MINUTES` (0 turns each off).
+
+### `POST /api/alerts/<id>/acknowledge/`  (token, surgeon only)
+
+Marks the alert as seen by mission support. It stays open.
+
+```json
+{
+  "alert": {
+    "id": 202,
+    "astronaut_id": 2,
+    "astronaut": "Sara Tesfaye",
+    "system": "behavioral",
+    "level": "yellow",
+    "message": "Attention lapses (fatigue): 3",
+    "recommendation": "Rest before critical tasks.",
+    "acknowledged": true,
+    "acknowledged_at": "2026-11-14T22:53:03.718746+03:00",
+    "resolved": false,
+    "resolved_at": null,
+    "resolved_by": null,
+    "acknowledged_by": "surgeon",
+    "source": "sensor",
+    "created_at": "2026-11-14T22:53:03.491748+03:00"
+  }
+}
+```
+
+### `POST /api/alerts/<id>/resolve/`  (token, surgeon only)
+
+Closes the alert (and acknowledges it if it wasn't yet).
+
+```json
+{
+  "alert": {
+    "id": 202,
+    "astronaut_id": 2,
+    "astronaut": "Sara Tesfaye",
+    "system": "behavioral",
+    "level": "yellow",
+    "message": "Attention lapses (fatigue): 3",
+    "recommendation": "Rest before critical tasks.",
+    "acknowledged": true,
+    "acknowledged_at": "2026-11-14T22:53:03.718746+03:00",
+    "resolved": true,
+    "resolved_at": "2026-11-14T22:53:03.723265+03:00",
+    "resolved_by": "surgeon",
+    "acknowledged_by": "surgeon",
+    "source": "sensor",
+    "created_at": "2026-11-14T22:53:03.491748+03:00"
+  }
+}
+```
+
+An astronaut token gets **403** `{"error": "forbidden for role astronaut"}`.
+
+---
+
+## Daily check-in
+
+### `GET /api/checkins/`
+
+Recent check-ins, newest first. Optional `?astronaut=<id>&limit=30`.
+
+`http://2.24.53.231:8000/api/checkins/?astronaut=2&limit=1`
+
+```json
+{
+  "count": 1,
+  "checkins": [
+    {
+      "id": 8,
+      "astronaut_id": 2,
+      "created_at": "2026-11-14T22:53:03.480460+03:00",
+      "heart_rate": 74,
+      "systolic_bp": 118,
+      "diastolic_bp": 76,
+      "temperature": 36.9,
+      "exercise_minutes": 40,
+      "sleep_hours": 6.5,
+      "mood": 4,
+      "stress": 2,
+      "radiation_msv": 0.5,
+      "symptoms": "mild headache"
+    }
+  ]
+}
+```
+
+### `POST /api/checkins/`  (token)
+
+Astronauts submit for themselves (`astronaut_id` optional, must be their own). The surgeon must pass `astronaut_id`.
+
+| field | type | range | required |
+|-------|------|-------|----------|
+| `heart_rate` | whole number, bpm | 30–220 | yes |
+| `systolic_bp` / `diastolic_bp` | whole numbers, mmHg | 70–250 / 40–150, diastolic < systolic | yes |
+| `temperature` | °C | 34–43 | yes |
+| `sleep_hours` | hours | 0–16 | yes |
+| `mood` | 1 (very low) – 5 (great) | 1–5 | yes |
+| `stress` | 1 (calm) – 5 (severe) | 1–5 | yes |
+| `exercise_minutes` | whole number | 0–300 | no (0) |
+| `radiation_msv` | mSv today | 0–50 | no (0) |
+| `symptoms` | text | ≤ 500 chars | no |
+| `urine_calcium` | mg/day, saved as a `lab` sensor reading | 0–1000 | no |
+
+The server runs the check-in rules (`health/rules.py`) and returns the alerts they created plus the worst level as `status`:
+
+```json
+{
+  "checkin": {
+    "id": 8,
+    "astronaut_id": 2,
+    "created_at": "2026-11-14T22:53:03.480460+03:00",
+    "heart_rate": 74,
+    "systolic_bp": 118,
+    "diastolic_bp": 76,
+    "temperature": 36.9,
+    "exercise_minutes": 40,
+    "sleep_hours": 6.5,
+    "mood": 4,
+    "stress": 2,
+    "radiation_msv": 0.5,
+    "symptoms": "mild headache"
+  },
+  "alerts": [
+    {
+      "id": 201,
+      "astronaut_id": 2,
+      "astronaut": "Sara Tesfaye",
+      "system": "musculoskeletal",
+      "level": "yellow",
+      "message": "Only 40 min exercise (target ≥ 60)",
+      "recommendation": "Bone and muscle loss risk in microgravity; complete the exercise session.",
+      "acknowledged": false,
+      "acknowledged_at": null,
+      "resolved": false,
+      "resolved_at": null,
+      "resolved_by": null,
+      "acknowledged_by": null,
+      "source": "checkin",
+      "created_at": "2026-11-14T22:53:03.480814+03:00"
+    }
+  ],
+  "status": "yellow"
+}
+```
+
+Errors: **401** `{"error": "login required (Authorization: Token <key>)"}`, **400** `{"error": "mood must be between 1 and 5"}`, **403** when an astronaut sends someone else's `astronaut_id`.
+
+---
+
+## PVT (Psychomotor Vigilance Task)
+
+### `GET /api/pvt/`
+
+PVT runs, newest first. Optional `?astronaut=<id>&limit=30`.
+
+```json
+{
+  "count": 1,
+  "results": [
+    {
+      "id": 6,
+      "astronaut_id": 2,
+      "created_at": "2026-11-14T22:53:03.491076+03:00",
+      "mean_rt_ms": 412,
+      "fastest_ms": 251,
+      "lapses": 3,
+      "false_starts": 1,
+      "trials": 10
+    }
+  ]
+}
+```
+
+### `POST /api/pvt/`  (token)
+
+Body: `{"mean_rt_ms": 412, "fastest_ms": 251, "lapses": 3, "false_starts": 1, "trials": 10}` (`mean_rt_ms` and `trials` required; `astronaut_id` same rule as check-ins; `mean_rt` is accepted as an alias of `mean_rt_ms`).
+
+Also saves two sensor readings, `pvt_reaction_time` (ms) and `pvt_lapses`, so they appear in `readings/history/` and the sensor rules fire (≥ 3 lapses yellow, ≥ 6 red):
+
+```json
+{
+  "pvt": {
+    "id": 6,
+    "astronaut_id": 2,
+    "created_at": "2026-11-14T22:53:03.491076+03:00",
+    "mean_rt_ms": 412,
+    "fastest_ms": 251,
+    "lapses": 3,
+    "false_starts": 1,
+    "trials": 10
+  },
+  "alerts": [
+    {
+      "id": 202,
+      "astronaut_id": 2,
+      "astronaut": "Sara Tesfaye",
+      "system": "behavioral",
+      "level": "yellow",
+      "message": "Attention lapses (fatigue): 3",
+      "recommendation": "Rest before critical tasks.",
+      "acknowledged": false,
+      "acknowledged_at": null,
+      "resolved": false,
+      "resolved_at": null,
+      "resolved_by": null,
+      "acknowledged_by": null,
+      "source": "sensor",
+      "created_at": "2026-11-14T22:53:03.491748+03:00"
+    }
+  ],
+  "status": "yellow"
+}
+```
+
+---
+
+## Errors
+
+The body is always JSON: `{"error": "..."}`.
+
+- **400**: bad or missing parameter / body field (the message says which).
+- **401**: login required, or the token is wrong/expired.
+- **403**: logged in, but your role can't do this.
+- **404**: unknown astronaut or alert id.
+- **405**: wrong method (e.g. GET on `/api/auth/login/`).
+
+---
+
+## Calling it from JavaScript
+
+The simulator writes a new batch about every 3 seconds, so poll on that interval.
+
+```javascript
+const API = "http://2.24.53.231:8000/api";   // or "/api" when the page is served by Django at /app/
+
+// Public data: no login
+async function loadCrew() {
+  const res = await fetch(`${API}/crew/`);
+  if (!res.ok) throw new Error((await res.json()).error);
+  return (await res.json()).astronauts;
+}
+
+// Login once, keep the token
+async function login(username, password) {
+  const res = await fetch(`${API}/auth/login/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error);
+  localStorage.setItem("token", body.token);
+  return body.user;               // { username, name, role, astronaut_id }
+}
+
+// Any write: send the token
+async function submitCheckin(data) {
+  const res = await fetch(`${API}/checkins/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Token " + localStorage.getItem("token") },
+    body: JSON.stringify(data),
+  });
+  const body = await res.json();
+  if (res.status === 401) { /* token expired: go to the login page */ }
+  if (!res.ok) throw new Error(body.error);
+  return body;                    // { checkin, alerts, status }
+}
+
+loadCrew().then(console.log);
+setInterval(() => loadCrew().then(console.log), 3000);
+```
+
+Test any GET by pasting it in a browser, or with curl:
+
+```
+curl http://2.24.53.231:8000/api/crew/
+curl -X POST http://2.24.53.231:8000/api/auth/login/ -H "Content-Type: application/json" \
+     -d '{"username":"sara","password":"astra2026"}'
+```
+
+## What the frontend should not call
+
+`POST /api/webhook/readings/` is only for the device simulator (or a real device). It needs an HMAC signature made with the server's secret. See `device_simulator/README.md`.

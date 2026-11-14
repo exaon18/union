@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mission Support · ASTRA HEALTH</title>
+<meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2322d3ee' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-support">
+<header id="topnav"></header>
+<main>
+<div class="page-head">
+  <div>
+    <span class="eyebrow">Flight surgeon · Mission support</span>
+    <h1>Mission Support Console</h1>
+    <p>Whole-crew view, sorted by severity. Acknowledge an alert when you've seen it; resolve it when it has been handled.</p>
+  </div>
+  <div class="row wrap" id="headChips"></div>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h2 id="crewTitle">Crew overview</h2><span class="live" data-conn><i></i><span>LIVE</span></span></div>
+  <div class="table-wrap"><table id="crewTable"></table></div>
+</section>
+
+<section class="split mt">
+  <div class="panel">
+    <div class="panel-head">
+      <h2 id="alertsTitle">Open alerts</h2>
+      <div class="seg" id="levelSeg"><button data-l="" class="active">All</button><button data-l="red">Critical</button><button data-l="yellow">Caution</button></div>
+    </div>
+    <div class="alert-list" id="openAlerts" style="max-height:640px;overflow:auto"></div>
+  </div>
+  <div class="panel" id="drill">
+    <div class="panel-head"><h2 id="drillTitle">Drill-down</h2><a class="btn btn-ghost btn-sm" id="drillOpen" href="#">Full dashboard</a></div>
+    <div id="drillBody"><div class="empty" style="color:var(--muted)">Select an astronaut in the table.</div></div>
+  </div>
+</section>
+</main>
+<footer id="footer"></footer>
+<script src="js/rules.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/common.js"></script>
+<script src="js/pages/support.js"></script>
+</body>
+</html>
