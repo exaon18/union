@@ -48,6 +48,10 @@ Demo accounts (password for all: `astra2026`):
 | POST | `/api/checkins/` | token (astronaut: own data) | Submit a daily check-in. Runs the check-in rules and returns the alerts it created. |
 | GET | `/api/pvt/` | public | PVT results, newest first. Optional ?astronaut=<id>&limit=30. |
 | POST | `/api/pvt/` | token (astronaut: own data) | Save a PVT run; also stores pvt_reaction_time and pvt_lapses readings so sensor rules fire. |
+| GET | `/api/sim/scenario/` | public | Active simulation scenario, resolved per astronaut, plus presets. The simulator reads it every tick. |
+| POST | `/api/sim/scenario/` | token (surgeon) | Change the scenario. Optional `reset` (resolve open alerts) and `apply_now` (push one batch). |
+| POST | `/api/sim/reset/` | token (surgeon) | Resolve every open alert. |
+| POST | `/api/sim/tick/` | token (surgeon) | Generate and save one simulated batch now. |
 | POST | `/api/webhook/readings/` | HMAC (X-Astra-Signature) | Device webhook. HMAC-signed. Not for the frontend. |
 
 `GET /api/` returns this list as JSON (plus `server_time`).
@@ -412,7 +416,7 @@ Alerts, **newest first**. Optional: `astronaut=<id>` (or `astronaut=cabin`), `le
 * `resolved_by`: the surgeon's username, `"auto"` when the system closed it, `null` while open.
 * How alerts open and close on their own:
   * **No duplicates:** while an alert for the same astronaut + metric + level is open and younger than 5 minutes, a repeat reading does not create another one.
-  * **Back to normal:** an open sensor alert closes itself (`resolved_by: "auto"`) once a newer reading of the same metric is back in range and the alert is at least 2 minutes old. A persistent problem (Sara's emergency) stays open.
+  * **Back to normal:** an open sensor alert closes itself (`resolved_by: "auto"`) once a newer reading of the same metric is back in range, or at a lower level (a red heart-rate alert closes when the heart rate is only yellow; a new yellow alert opens), and the alert is at least 2 minutes old. A persistent problem stays open.
   * **Stale:** open sensor alerts older than 30 minutes close automatically. A still-abnormal sensor raises a fresh one. Check-in and PVT alerts wait for the flight surgeon.
   * Tunable on the server with `ASTRA_ALERT_DEDUP_MINUTES`, `ASTRA_ALERT_CLEAR_AFTER_SECONDS`, `ASTRA_ALERT_AUTO_RESOLVE_MINUTES` (0 turns each off).
 
@@ -630,6 +634,73 @@ Also saves two sensor readings, `pvt_reaction_time` (ms) and `pvt_lapses`, so th
   "status": "yellow"
 }
 ```
+
+---
+
+## Simulation lab (`/api/sim/`)
+
+Controls what the device simulator sends, so you can test the system in a chosen situation.
+Presets and value bands live in `device_simulator/scenarios.py` (the simulator and the server share it).
+
+| level | what the simulator sends for the chosen system |
+|-------|-----------------------------------------------|
+| `normal` | values clamped inside the green range: never an alert |
+| `caution` | values inside the yellow band only |
+| `critical` | values inside the red band |
+
+Astronaut systems: `cardiovascular` (HR, ECG, BP, HRV), `respiratory` (SpO₂, breathing rate),
+`radiation` (dosimeter), `behavioral` (stress, sleep, PVT lapses), `immune` (body temperature, glucose).
+Cabin systems: `co2`, `o2`, `radiation`, `noise` (cabin alerts have no astronaut).
+
+Presets: `nominal`, `one_caution`, `one_critical`, `mixed` (one critical + one caution), `several_caution`,
+`all_critical`, `cabin_co2`, `radiation_storm`, `realistic` (default: mostly green, rare one-tick blips at
+`anomaly_rate` per astronaut per tick), `custom`.
+
+### `GET /api/sim/scenario/`  (public)
+
+```json
+{
+  "preset": "one_critical", "label": "One critical",
+  "description": "The focus astronaut is red in the chosen system; everyone else is green.",
+  "config": {"preset": "one_critical", "target": 2, "system": "cardiovascular", "custom": {},
+             "cabin": {"level": "normal", "system": "co2"}, "anomaly_rate": 0.002},
+  "resolved": {"mode": "fixed", "anomaly_rate": 0.002,
+               "astronauts": {"1": {"level": "normal", "system": "cardiovascular"},
+                              "2": {"level": "critical", "system": "cardiovascular"}, "…": "…"},
+               "cabin": {"level": "normal", "system": "co2"}},
+  "expected_status": {"1": "green", "2": "red", "3": "green", "4": "green"},
+  "version": 2, "updated_at": "2026-11-15T00:40:19.512301+03:00", "updated_by": "surgeon",
+  "presets": [{"key": "nominal", "label": "All nominal", "description": "…"}, "…"],
+  "levels": ["normal", "caution", "critical"], "systems": {"…": "…"}, "cabin_systems": {"…": "…"}
+}
+```
+
+`expected_status` is `null` for `realistic` (random).
+
+### `POST /api/sim/scenario/`  (token, surgeon only)
+
+```json
+{"preset": "one_critical", "target": 2, "system": "respiratory", "reset": true, "apply_now": true}
+{"preset": "custom",
+ "custom": {"1": {"level": "caution", "system": "behavioral"}, "4": {"level": "critical", "system": "respiratory"}},
+ "cabin": {"level": "caution", "system": "noise"}, "reset": true}
+```
+
+* `target` (astronaut id) is used by `one_caution`, `one_critical`, `mixed` and `several_caution` (everyone *except* the target).
+* `system` is used by `one_caution`, `one_critical`, `mixed`.
+* `reset: true` resolves every open alert first, so the console starts clean.
+* `apply_now: true` generates and saves one batch immediately (no waiting for the simulator).
+
+Response: `{"scenario": {...same as GET...}, "reset": 7, "batch": {"saved": 112, "alerts": [...], "errors": []}}`.
+400 with `{"error": "...", "errors": [...]}` for an unknown preset/system/astronaut; 401 without a token; 403 for astronauts.
+
+### `POST /api/sim/reset/`  (token, surgeon only)
+
+Resolves every open alert (sensor, check-in and PVT). `{"resolved": 11}`. `resolved_by` is the surgeon.
+
+### `POST /api/sim/tick/`  (token, surgeon only)
+
+Pushes one batch from the active scenario, exactly like one simulator tick. `201 {"saved": 112, "alerts": [...], "errors": []}`.
 
 ---
 

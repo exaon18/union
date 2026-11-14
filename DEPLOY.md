@@ -81,12 +81,39 @@ Teammates can also host `frontend/` anywhere else (or run `python3 -m http.serve
 another backend, open any page once with `?api_base=http://127.0.0.1:8000/api` (saved in
 the browser; `?api_base=reset` goes back to the default).
 
-## Simulator options worth knowing
+## Simulator and Scenario Control
 
-`astra-sim` needs no change. By default it now sends UTC timestamps with an offset and a low
-random-anomaly rate (`--anomaly-rate 0.0005`), so healthy crew stay mostly green and only
-occasionally blip. For the emergency demo, add `--emergency 2` to the service's `ExecStart` and
-run `sudo systemctl daemon-reload && sudo systemctl restart astra-sim`.
+`astra-sim` now follows the **active scenario** stored on the server. Before every batch it calls
+`GET http://127.0.0.1:8000/api/sim/scenario/` (derived from its `--url`), so nothing else needs
+configuring. The flight surgeon picks a scenario at `http://2.24.53.231:8000/app/scenarios.html`
+(All nominal, One caution, One critical, Several caution, All critical, Cabin CO2, Radiation storm,
+Random / realistic, Custom). The change shows up within one tick (3 s); "Apply" can also resolve
+old alerts and push a batch at once. The default is "Random / realistic" (mostly green).
+
+After pulling this update:
+
+```bash
+cd ~/astra && git pull \
+  && venv/bin/python manage.py migrate \
+  && sudo systemctl restart astra astra-sim
+sudo journalctl -u astra-sim -n 5 --no-pager      # "scenario v0: Random / realistic", then "sent ... alerts 0"
+curl -s http://127.0.0.1:8000/api/sim/scenario/ | head -c 200; echo
+```
+
+`migrate` adds one small table (`health_simscenario`). If the service's `ExecStart` still has
+`--emergency 2` or `--anomaly-rate`, those flags are now ignored (they only apply with `--legacy`).
+You can remove them with `sudo systemctl edit --full astra-sim`, then
+`sudo systemctl daemon-reload && sudo systemctl restart astra-sim`.
+
+To clear everything the old simulator left open, open Scenario Control and press **Reset alerts**,
+or:
+
+```bash
+TOKEN=$(curl -s -X POST http://127.0.0.1:8000/api/auth/login/ -H 'Content-Type: application/json' \
+  -d '{"username":"surgeon","password":"astra2026"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
+curl -s -X POST http://127.0.0.1:8000/api/sim/scenario/ -H "Authorization: Token $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"preset":"nominal","reset":true,"apply_now":true}' | head -c 200; echo
+```
 
 ## Optional tuning (`.env.prod`)
 
