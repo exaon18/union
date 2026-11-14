@@ -5,6 +5,8 @@
  * runs the "emergency" scenario (simulator --emergency 2).
  * Live mode: every 3 s a new batch of readings is generated, run through the
  * same threshold rules as health/sensor_rules.py, and alerts are created.
+ * Scenario Control (scenarios.html) can replace that story with a scenario
+ * (all nominal, one critical...), kept in localStorage "astra_mock_scenario".
  */
 (function (global) {
   'use strict';
@@ -24,6 +26,17 @@
   ];
 
   var TICK_MS = 3000;
+
+  /* ---------- scenario (Scenario Control page; null = the built-in demo story) ---------- */
+  var SC = global.AstraScenarios;
+  var LS_SCEN = 'astra_mock_scenario', LS_RESET_AT = 'astra_mock_reset_at';
+  var scen = SC ? lsGet(LS_SCEN, null) : null;
+  function scenarioMode() {
+    if (!scen) return;
+    CREW.forEach(function (a) { a.emergency = false; });
+    DAILY_BAD_TODAY = {};
+  }
+  function resolvedScenario() { return SC.resolve(scen, CREW.map(function (a) { return a.id; })); }
   var DAY = 86400000, HOUR = 3600000, MIN = 60000;
 
   /* ---------- helpers ---------- */
@@ -180,8 +193,8 @@
     });
     Object.keys(CABIN).forEach(function (m) { state.cabin[m] = reading(m, CABIN[m][1](seedRng, false), CABIN[m][0], 'cabin', now); });
 
-    // Alert log (oldest first so ids increase with time)
-    var log = [
+    // Alert log (oldest first so ids increase with time). Not in scenario mode.
+    var log = scen ? [] : [
       [3, now - 4.2 * HOUR, 'sleep_total'], [3, now - 4.1 * HOUR, 'recovery_score'],
       [4, now - 3.5 * HOUR, { metric: 'heart_rate', value: 104, unit: 'bpm' }, true],
       [null, now - 2.6 * HOUR, { metric: 'co2', value: 4210, unit: 'ppm' }, true],
@@ -212,14 +225,64 @@
     var n = state.alerts.length;
     state.alerts.forEach(function (al, i) { al.id = n - i; });
     state.nextAlertId = 1000;
-    var resolved = lsGet(LS_RESOLVED, []);
-    state.alerts.forEach(function (al) { if (resolved.indexOf(al.id) >= 0) al.resolved = true; });
+    var resolved = lsGet(LS_RESOLVED, []), resetAt = lsGet(LS_RESET_AT, 0);
+    state.alerts.forEach(function (al) { if (resolved.indexOf(al.id) >= 0 || Date.parse(al.created_at) < resetAt) al.resolved = true; });
+    if (scen) scenarioValues(now, seedRng);
+  }
+
+  /* Scenario mode: one batch of values for everyone (returns {aid|'cabin': [readings]}). */
+  function scenarioValues(now, g) {
+    var p = SC.plan(resolvedScenario(), g), out = {};
+    CREW.forEach(function (a) {
+      var st = p.astronauts[a.id] || { level: 'normal' }, prob = SC.problem(a, st.level, st.system, g), batch = [];
+      Object.keys(LIVE).forEach(function (m) {
+        var v = m in prob ? prob[m] : SC.clamp(m, LIVE[m][2](a, g, false, { emergency: false, hourOfDay: hourOfDayEAT(now) }));
+        var r = reading(m, v, LIVE[m][0], LIVE[m][1], now); state.latest[a.id][m] = r; batch.push(r);
+      });
+      ['sleep_total', 'pvt_lapses', 'pvt_reaction_time'].forEach(function (m) {
+        var prev = state.latest[a.id][m];
+        var v = m in prob ? prob[m] : SC.clamp(m, prev && prev.value !== null && prev._scen ? prev.value : DAILY[m][2](a, g, false, { day: missionDay(now) }));
+        var r = reading(m, v, DAILY[m][0], DAILY[m][1], now);
+        Object.defineProperty(r, '_scen', { value: !(m in prob), enumerable: false });
+        state.latest[a.id][m] = r; batch.push(r);
+      });
+      ['urine_calcium', 'exercise_minutes', 'recovery_score'].forEach(function (m) {
+        var cur = state.latest[a.id][m]; if (cur && typeof cur.value === 'number') cur.value = SC.clamp(m, cur.value);
+      });
+      out[a.id] = batch;
+    });
+    var cp = SC.cabinProblem(p.cabin.level, p.cabin.system, g), cb = [];
+    Object.keys(CABIN).forEach(function (m) {
+      var r = reading(m, m in cp ? cp[m] : SC.clamp(m, CABIN[m][1](g, false)), CABIN[m][0], 'cabin', now);
+      state.cabin[m] = r; cb.push(r);
+    });
+    out.cabin = cb;
+    return out;
+  }
+  var RANKL = { yellow: 1, red: 2 };
+  /* Like the server: an open sensor alert closes when its metric is back in range (or lower) for 2 min. */
+  function clearRecovered(now) {
+    state.alerts.forEach(function (al) {
+      if (al.resolved || !al._metric || al._metric === 'checkin' || Date.parse(al.created_at) > now - 2 * MIN) return;
+      var cur = al.astronaut_id === null ? state.cabin[al._metric] : (state.latest[al.astronaut_id] || {})[al._metric];
+      if (!cur) return;
+      var ev = R.evaluateReading(cur);
+      if ((ev ? RANKL[ev.level] : 0) < RANKL[al.level]) al.resolved = true;
+    });
   }
 
   /* One live tick = one simulator batch. */
   function tick() {
     var now = Date.now(), g = state.liveRng;
     var fired = [];
+    if (scen) {
+      var vals = scenarioValues(now, g);
+      CREW.forEach(function (a) { fired = fired.concat(evaluateBatch(a.id, vals[a.id], now, 5 * MIN)); });
+      fired = fired.concat(evaluateBatch(null, vals.cabin, now, 5 * MIN));
+      clearRecovered(now);
+      state.listeners.forEach(function (fn) { try { fn(fired); } catch (e) { console.error(e); } });
+      return fired;
+    }
     CREW.forEach(function (a) {
       var badMetric = null;
       if (!a.emergency && g() < 0.025) {
@@ -246,6 +309,7 @@
       if (!al.resolved && al._transient && al.id >= 1000 && Date.parse(al.created_at) < now - 2 * MIN) al.resolved = true;
     });
     state.listeners.forEach(function (fn) { try { fn(fired); } catch (e) { console.error(e); } });
+    return fired;
   }
 
   function start() {
@@ -423,13 +487,56 @@
       return { count: list.length, results: list };
     },
     pvtHistory: function (aid) { return lsGet(LS_PVT, []).filter(function (p) { return p.astronaut_id === Number(aid); }); },
-    resetDemo: function () { [LS_RESOLVED, LS_ACK, LS_CHECKINS, LS_PVT].forEach(function (k) { localStorage.removeItem(k); }); },
+    resetDemo: function () { [LS_RESOLVED, LS_ACK, LS_CHECKINS, LS_PVT, LS_SCEN, LS_RESET_AT].forEach(function (k) { localStorage.removeItem(k); }); },
+
+    /* ---- simulation scenario (same JSON as /api/sim/...) ---- */
+    getScenario: function () {
+      var ids = CREW.map(function (a) { return a.id; });
+      var meta = lsGet(LS_SCEN + '_meta', { version: 0 });
+      var base = { presets: SC.PRESETS, levels: SC.LEVELS, systems: SC.SYSTEMS, cabin_systems: SC.CABIN_SYSTEMS,
+        version: meta.version, updated_at: meta.updated_at || null, updated_by: meta.updated_at ? 'surgeon' : null };
+      if (!scen) {
+        return Object.assign(base, { preset: 'story', label: 'Demo story (mock default)',
+          description: 'The built-in mock story: Sara Tesfaye has a cardiac emergency, the others blip now and then.',
+          config: Object.assign({}, SC.DEFAULT, { preset: 'story' }), resolved: null, expected_status: null });
+      }
+      var res = SC.resolve(scen, ids), p = SC.PRESETS.filter(function (x) { return x.key === scen.preset; })[0] || SC.PRESETS[0];
+      return Object.assign(base, { preset: scen.preset, label: p.label, description: p.description,
+        config: Object.assign({}, SC.DEFAULT, scen), resolved: res, expected_status: res.mode === 'fixed' ? SC.expected(res) : null });
+    },
+    setScenario: function (data) {
+      data = data || {};
+      if (data.preset === 'story') { localStorage.removeItem(LS_SCEN); scen = null; }
+      else {
+        if (!SC.PRESETS.some(function (p) { return p.key === data.preset; })) err(400, 'preset must be one of ' + SC.PRESETS.map(function (p) { return p.key; }).join(', '));
+        scen = { preset: data.preset, target: Number(data.target) || 2, system: data.system || 'cardiovascular',
+          custom: data.custom || {}, cabin: data.cabin || { level: 'normal', system: 'co2' }, anomaly_rate: data.anomaly_rate || 0.002 };
+        lsSet(LS_SCEN, scen); scenarioMode();
+      }
+      var meta = lsGet(LS_SCEN + '_meta', { version: 0 });
+      lsSet(LS_SCEN + '_meta', { version: meta.version + 1, updated_at: new Date().toISOString() });
+      var out = { scenario: MockAPI.getScenario() };
+      if (data.reset) out.reset = MockAPI.resetSim().resolved;
+      if (data.apply_now) out.batch = MockAPI.simTick();
+      return out;
+    },
+    resetSim: function () {
+      var n = 0;
+      state.alerts.forEach(function (al) { if (!al.resolved) { al.resolved = true; al.resolved_by = 'surgeon'; n++; } });
+      lsSet(LS_RESET_AT, Date.now());
+      return { resolved: n };
+    },
+    simTick: function () {
+      var fired = tick();
+      return { saved: CREW.length * 16 + 8, errors: [], alerts: fired.map(function (al) { return { level: al.level, message: al.message, astronaut: al.astronaut || 'CABIN' }; }) };
+    },
     onTick: function (fn) { state.listeners.push(fn); },
     missionDay: function () { return missionDay(Date.now()); },
     TICK_MS: TICK_MS,
     _start: start           // api.js starts the live mock ticker only in mock mode
   };
 
+  scenarioMode();
   seed();
   global.MockAPI = MockAPI;
   global.MOCK_CREW = CREW;

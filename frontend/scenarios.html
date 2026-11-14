@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scenario Control · ASTRA HEALTH</title>
+<meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236fd3ff' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="preload" href="vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header id="topnav"></header>
+<main class="page" id="main">
+<div class="page-head">
+  <div>
+    <div class="eyebrow reveal">Flight surgeon · Simulation lab</div>
+    <h1 class="reveal">Scenario Control</h1>
+    <p class="muted reveal">Choose what the device simulator sends. It reads this before every batch (every 3 s), so the Support Console and the Mission dashboard react within one tick. Simulated data only.</p>
+  </div>
+  <div class="row wrap reveal">
+    <span class="chip" id="sc-sim"><span class="dot"></span><span id="sc-sim-text">Simulator…</span></span>
+    <span class="chip">Active:&nbsp;<b id="sc-active">—</b></span>
+  </div>
+</div>
+
+<div id="sc-note"></div>
+
+<div class="counters reveal" id="counters">
+  <div class="counter-tile st-red" id="ct-red"><small>__RED__Critical</small><b id="sc-red">—</b></div>
+  <div class="counter-tile st-yellow"><small>__YELLOW__Caution</small><b id="sc-yellow">—</b></div>
+  <div class="counter-tile st-green"><small>__GREEN__Nominal</small><b id="sc-green">—</b></div>
+  <div class="counter-tile st-none" style="--st:var(--accent)"><small>Open alerts</small><b id="sc-open">—</b><span class="dim" style="font-size:12px" id="sc-cabin"></span></div>
+</div>
+
+<section class="grid g-12">
+  <div class="span-8 lg-12 sc-col">
+    <div class="panel reveal">
+      <div class="panel-head"><h2><span class="step-no">1</span>Pick a scenario <span class="sub">dots = what each astronaut and the cabin will show</span></h2></div>
+      <div class="sc-presets" id="sc-presets" role="group" aria-label="Scenario presets"></div>
+      <div class="sc-opts">
+        <label class="field"><span class="label">Focus astronaut</span><select class="input" id="sc-target"></select></label>
+        <label class="field"><span class="label">System</span><select class="input" id="sc-system"></select></label>
+        <label class="field"><span class="label">Anomaly rate (random)</span>
+          <select class="input" id="sc-rate">
+            <option value="0.002">Low: a blip every few minutes</option>
+            <option value="0.01">Medium: about one a minute</option>
+            <option value="0.05">High: stress test</option>
+          </select></label>
+      </div>
+    </div>
+
+    <div class="panel reveal">
+      <div class="panel-head"><h2><span class="step-no">2</span>Custom: each astronaut <span class="sub">changing a row switches to Custom</span></h2></div>
+      <div class="sc-table" id="sc-custom"></div>
+    </div>
+
+    <div class="panel reveal sc-apply">
+      <div class="panel-head"><h2><span class="step-no">3</span>Apply <span class="sub" id="sc-dirty"></span></h2></div>
+      <div class="sc-preview" id="sc-preview"></div>
+      <div class="sc-actions">
+        <label class="check"><input type="checkbox" id="sc-reset" checked> Resolve open alerts first (start clean)</label>
+        <label class="check"><input type="checkbox" id="sc-now" checked> Push one batch now</label>
+        <div class="row wrap" style="margin-left:auto">
+          <button class="btn" type="button" id="sc-reset-btn">Reset alerts</button>
+          <button class="btn" type="button" id="sc-tick-btn">Push batch now</button>
+          <button class="btn btn-primary" type="button" id="sc-apply-btn">Apply scenario</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="span-4 lg-12 sc-col">
+    <div class="panel reveal">
+      <div class="panel-head"><h2>Live crew status <span class="sub">expected → now</span></h2><span class="live-tag">Live</span></div>
+      <ul class="sc-live" id="sc-live"></ul>
+      <a class="btn btn-sm" href="support.html" style="margin-top:12px">Open Support Console __ARROW__</a>
+    </div>
+    <div class="panel reveal">
+      <div class="panel-head"><h2>Latest alerts <span class="sub" id="sc-alert-count"></span></h2></div>
+      <ul class="feed mid" id="sc-alerts" aria-live="polite"></ul>
+    </div>
+  </div>
+
+  <div class="span-12 disclaimer-box reveal">__SHIELD__<span><b>Simulation lab.</b> Scenarios only change the simulated device data, so you can check how the console, alerts and dashboards react. Thresholds are demo values, not clinical guidance.</span></div>
+</section>
+</main>
+<footer id="footer"></footer>
+<script src="js/rules.js"></script>
+<script src="js/scenarios.js"></script>
+<script src="js/mock-data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/common.js"></script>
+<script src="js/pages/scenarios.js"></script>
+</body>
+</html>

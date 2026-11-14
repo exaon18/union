@@ -56,6 +56,7 @@ or the database was reset) the page says so and sends you to the login page.
 | `checkin.html` | astronaut | 7-step check-in wizard (mood, stress, symptoms + notes, device values pre-filled, sleep/exercise, radiation/urine calcium, review), instant rule feedback and server alerts after submit |
 | `pvt.html` | astronaut | Psychomotor Vigilance Task: random 2–10 s delay, click/tap/Space, 5/10/20 trials, mean/fastest RT, lapses (> 500 ms), false starts, per-trial bars, 7-day history |
 | `history.html` | astronaut / surgeon | Metric chips, 6 h / 24 h / 7 d, chart with thresholds, stats, readings table, alert history |
+| `scenarios.html` | surgeon | **Scenario Control** (simulation lab): preset cards (all nominal, one caution/critical, several caution, all critical, cabin CO₂, radiation storm, random, custom), a per-astronaut level/system grid, Apply / Reset alerts / Push batch now, and live crew status (expected → now) with the latest alerts |
 | `support.html` | surgeon | **Support Console**: critical/caution/nominal/open-alert counters, crew grid sorted most urgent first, alert feed with filters and Acknowledge / Resolve, cabin gauges, per-astronaut detail view (same as My Health, plus Ack/Resolve) |
 
 ## Files
@@ -65,6 +66,7 @@ frontend/
   index.html login.html my-health.html checkin.html pvt.html history.html support.html
   css/style.css          mission-control design system (glass panels, status colours, animations), responsive
   js/rules.js            port of health/sensor_rules.py + health/rules.py (same thresholds)
+  js/scenarios.js        port of device_simulator/scenarios.py (presets, value bands) for Scenario Control and mock mode
   js/mock-data.js        mock backend for ?api=mock: same JSON as the Django API, live every 3 s
   js/api.js              API client: base URL, token header, errors, mock ↔ real
   js/charts.js           tiny canvas charts (line, bars, sparkline)
@@ -109,6 +111,9 @@ The visual design follows the "UNION Mission Health" mock-up made by a teammate.
 * **Astronaut 2 (Sara Tesfaye)** is in the *emergency* scenario: HR ≈ 130 bpm, SpO₂ ≈ 88 %, irregular ECG,
   high BP, so red alerts keep firing.
 * The other crew members occasionally get a transient yellow anomaly, and the cabin occasionally spikes CO₂ or noise.
+* That is the default *demo story*. On **Scenario Control** you can apply any scenario instead; mock mode then
+  generates data from the same value bands as the real simulator (saved in `localStorage` as
+  `astra_mock_scenario`; "Back to the built-in demo story" or the demo-data reset clears it).
 * Check-ins, PVT results, acknowledged and resolved alerts are kept in `localStorage` so the demo flows across pages.
   Reset with `MockAPI.resetDemo()` in the browser console.
 

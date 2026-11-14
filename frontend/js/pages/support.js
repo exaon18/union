@@ -127,6 +127,7 @@
         $('con-count').textContent = allAlerts.length ? allAlerts.length + (allAlerts.length >= 100 ? '+' : '') : '';
         if (list[0]) $('con-mission').textContent = list[0].mission + ' · mission day ' + A.missionDay() + ' · ' + list.length + ' crew. Most urgent first. Acknowledge when seen; resolve when handled.';
         renderBanner(list);
+        Api.getScenario().then(function (sc) { $('con-scen').textContent = 'Simulation: ' + sc.label; }).catch(function () {});
         renderAlerts();
         GAUGES.forEach(function (g) { var r = cab[g[0]]; gaugeFns[g[0]](r ? r.value : null, A.levelOf(r)); });
         $('cabin-updated').textContent = res[2].readings.length ? 'updated ' + A.fmtTime(res[2].readings[0].timestamp, true) + ' EAT' : '';

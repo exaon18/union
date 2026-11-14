@@ -128,7 +128,17 @@
     },
     // POST /api/alerts/<id>/acknowledge/ and /resolve/ (flight surgeon) -> {alert}
     resolveAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.resolveAlert(id); }) : post('/alerts/' + id + '/resolve/'); },
-    acknowledgeAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.acknowledgeAlert(id); }) : post('/alerts/' + id + '/acknowledge/'); }
+    acknowledgeAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.acknowledgeAlert(id); }) : post('/alerts/' + id + '/acknowledge/'); },
+
+    /* ---- simulation lab (Scenario Control) ---- */
+    // GET /api/sim/scenario/ (public) -> {preset, label, config, resolved, expected_status, version, presets, ...}
+    getScenario: function () { return USE_MOCK ? mock(MockAPI.getScenario) : get('/sim/scenario/'); },
+    // POST /api/sim/scenario/ (surgeon) {preset, target, system, custom, cabin, reset, apply_now} -> {scenario, reset?, batch?}
+    setScenario: function (data) { return USE_MOCK ? mock(function () { return MockAPI.setScenario(data); }) : post('/sim/scenario/', data); },
+    // POST /api/sim/reset/ (surgeon) -> {resolved: n}
+    resetSim: function () { return USE_MOCK ? mock(MockAPI.resetSim) : post('/sim/reset/'); },
+    // POST /api/sim/tick/ (surgeon) -> {saved, alerts, errors}
+    simTick: function () { return USE_MOCK ? mock(MockAPI.simTick) : post('/sim/tick/'); }
   };
 
   global.Api = Api;

@@ -358,7 +358,7 @@
   function navLinks(s) {
     var links = [['index.html', 'Mission', 'mission']];
     if (s && s.role === 'astronaut') links.push(['my-health.html', 'My Health', 'health'], ['checkin.html', 'Daily Check-in', 'checkin'], ['pvt.html', 'Reaction Test', 'pvt'], ['history.html', 'History', 'history']);
-    if (s && s.role === 'surgeon') links.push(['support.html', 'Support Console', 'support'], ['history.html', 'Crew History', 'history']);
+    if (s && s.role === 'surgeon') links.push(['support.html', 'Support Console', 'support'], ['scenarios.html', 'Scenario Control', 'scenarios'], ['history.html', 'Crew History', 'history']);
     return links;
   }
   function renderNav(active) {
