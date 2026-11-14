@@ -20,5 +20,7 @@ urlpatterns = [
     path("sim/scenario/", sim.scenario_view, name="sim-scenario"),
     path("sim/reset/", sim.reset_view, name="sim-reset"),
     path("sim/tick/", sim.tick_view, name="sim-tick"),
+    path("space-weather/", sim.space_weather_view, name="space-weather"),
+    path("nasa/reference/", sim.nasa_reference_view, name="nasa-reference"),
     path("webhook/readings/", webhook.receive_readings, name="webhook-readings"),
 ]

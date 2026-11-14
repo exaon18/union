@@ -122,6 +122,7 @@ def main():
     # Fallback until the server answers: mostly-nominal "realistic" behaviour.
     local = scenarios.resolve({"preset": args.scenario or "realistic"}, crew_ids)
     resolved, label, version, warned = local, args.scenario or "realistic", None, False
+    sw_id = None
     while True:
         # Timezone-aware UTC, e.g. 2026-11-14T19:30:00+00:00, so the server never has to guess.
         ts = datetime.now(timezone.utc)
@@ -141,6 +142,12 @@ def main():
                     if data.get("version") != version:
                         version = data.get("version")
                         print(f"[{stamp}] scenario v{version}: {label}")
+                    sw = (resolved.get("space_weather") or {})
+                    if sw.get("id") != sw_id:
+                        sw_id = sw.get("id")
+                        if sw_id:
+                            print(f"[{stamp}] space weather: NASA DONKI {sw.get('type')} {sw_id} ({sw.get('label')}) "
+                                  f"-> crew radiation {sw.get('level')}")
             batch = scenarios.generate_batch(resolved, CREW, ts, daily=args.daily)
 
         result = send(args.url, batch)

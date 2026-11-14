@@ -273,6 +273,8 @@ ENDPOINTS = [
      "description": 'Change it. Body {"preset","target","system","custom","cabin","reset","apply_now"}.'},
     {"method": "POST", "path": "/api/sim/reset/", "auth": "token (surgeon)", "description": "Resolve all open alerts."},
     {"method": "POST", "path": "/api/sim/tick/", "auth": "token (surgeon)", "description": "Push one simulated batch now."},
+    {"method": "GET", "path": "/api/space-weather/", "auth": "none", "description": "Real NASA DONKI space weather: crew state, latest events, replayable events."},
+    {"method": "GET", "path": "/api/nasa/reference/", "auth": "none", "description": "Reference bands derived from NASA OSDR OSD-575, OSD-656 and OSD-53, with provenance."},
     {"method": "POST", "path": "/api/webhook/readings/", "auth": "HMAC (X-Astra-Signature)",
      "description": "Device webhook. HMAC-signed. Not for the frontend."},
 ]

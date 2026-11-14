@@ -187,3 +187,27 @@ class SimScenario(models.Model):
 
     def __str__(self):
         return f"scenario v{self.version}: {self.config.get('preset', 'realistic')}"
+
+
+class SpaceWeatherEvent(models.Model):
+    """
+    A real space-weather event from NASA DONKI (https://kauai.ccmc.gsfc.nasa.gov/DONKI/):
+    FLR (solar flare), SEP (solar energetic particles), CME, GST (geomagnetic storm).
+    Filled by `python manage.py fetch_donki`; `source` says whether it came from the live API
+    or the bundled snapshot (health/data/donki_snapshot.json).
+    """
+    event_id = models.CharField(max_length=80, unique=True)      # e.g. 2026-07-04T20:29:00-FLR-001
+    event_type = models.CharField(max_length=4, db_index=True)   # FLR, SEP, CME, GST
+    start_time = models.DateTimeField(db_index=True)
+    class_type = models.CharField(max_length=10, blank=True)     # flare class (X1.3) / max Kp for GST
+    speed = models.FloatField(null=True, blank=True)             # CME speed km/s
+    link = models.URLField(max_length=300, blank=True)
+    data = models.JSONField(default=dict)                        # normalised fields (see health/donki.py)
+    source = models.CharField(max_length=10, default="live")     # live | snapshot
+    fetched_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-start_time"]
+
+    def __str__(self):
+        return f"{self.event_type} {self.event_id} {self.class_type}"

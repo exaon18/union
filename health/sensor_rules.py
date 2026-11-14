@@ -51,7 +51,7 @@ RULES = {
         (YELLOW, lambda v: v > 75, "High stress level", "Take a break; schedule a call with the flight psychologist."),
     ]),
     "radiation_dose": ("radiation", [
-        (RED, lambda v: v > 1, "High personal radiation dose", "Move to the shielded area and contact mission support."),
+        (RED, lambda v: v > 1, "High personal radiation dose", "Go to the storm shelter (most shielded module) and contact mission support."),
         (YELLOW, lambda v: v > 0.8, "Elevated personal radiation dose", "Limit time in unshielded modules today."),
     ]),
     "sleep_total": ("behavioral", [
@@ -78,7 +78,7 @@ RULES = {
         (YELLOW, lambda v: v < 20, "Cabin O2 slightly low", "Check the oxygen generator."),
     ]),
     "cabin_radiation": ("radiation", [
-        (RED, lambda v: v > 1, "Cabin radiation spike (possible solar event)", "All crew to the shielded area."),
+        (RED, lambda v: v > 1, "Cabin radiation spike (possible solar event)", "All crew to the storm shelter now."),
         (YELLOW, lambda v: v > 0.8, "Cabin radiation elevated", "Watch space-weather reports; prepare the shielded area."),
     ]),
     "noise": ("environment", [
@@ -86,6 +86,13 @@ RULES = {
         (YELLOW, lambda v: v > 70, "Cabin noise high", "Use hearing protection; affects sleep and stress."),
     ]),
 }
+
+
+# Lab markers (serum CMP/cytokines from OSD-575, urine proteins from OSD-656): bands derived
+# from real NASA OSDR data, see health/nasa.py and health/data/nasa_reference.json.
+from .nasa import lab_rules  # noqa: E402
+
+RULES.update(lab_rules())
 
 
 def match_reading(reading):
@@ -141,6 +148,9 @@ def evaluate_readings(readings, dedup_minutes=None):
         seen.add(key)
         new.append(alert)
     if new:
+        # Radiation alerts caused by a real NASA DONKI event cite it (see health/donki.py).
+        from .donki import annotate_radiation_alerts
+        annotate_radiation_alerts(new)
         Alert.objects.bulk_create(new)
     return new
 

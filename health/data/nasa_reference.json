@@ -1,0 +1,3591 @@
+{
+ "generated_at": "2026-11-14T22:10:49+00:00",
+ "generator": "scripts/build_nasa_reference.py",
+ "note": "Derived from real NASA OSDR files. Pre-flight = Inspiration4 draws L-92, L-44, L-3 (4 crew); return = R+1. OSD-53: 6 Shuttle astronauts, L-10 vs R+0. Small samples: decision-support demo only.",
+ "studies": {
+  "OSD-575": {
+   "title": "SpaceX Inspiration4 Blood Serum Metabolic Panel and Immune/Cardiac Cytokine Arrays (Comprehensive Metabolic Panel and Multiplex)",
+   "description": "The SpaceX Inspiration4 mission was a 3-day mission with four private astronauts to low Earth orbit that occurred in September 2021. The crew collected biospecimen samples before, during, and after flight. One of these biospecimen collections included whole blood collected via venipuncture, with serum extracted from blood using a serum separator tube (SST). Samples were collected pre-flight (L-92, L-44, L-3) and post-flight (R+1, R+45, R+82). Serum samples were submitted for immune and cardiovascular cytokine biomarker profiling panels at two different companies (Eve Technologies and Alamar), ",
+   "publications": [
+    {
+     "title": "The Space Omics and Medical Atlas (SOMA) and international astronaut biobank",
+     "doi": "10.1038/s41586-024-07639-y"
+    },
+    {
+     "title": "Collection of Biospecimens from the Inspiration4 Mission Establishes the Standards for the Space Omics and Medical Atlas (SOMA)",
+     "doi": "10.1038/s41467-024-48806-z"
+    },
+    {
+     "title": "CAMbank: SST Field Processing v1",
+     "doi": "10.17504/protocols.io.81wgbxxo1lpk/v1"
+    }
+   ],
+   "release_date": "14-May-2024",
+   "url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-575",
+   "files": [
+    {
+     "name": "LSDS-8_Comprehensive_Metabolic_Panel_CMP.upload_SUBMITTED.csv",
+     "url": "https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Comprehensive_Metabolic_Panel_CMP.upload_SUBMITTED.csv",
+     "rows": 531
+    },
+    {
+     "name": "LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv",
+     "url": "https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv",
+     "rows": 1988
+    },
+    {
+     "name": "LSDS-8_Multiplex_serum.cardiovascular.EvePanel_SUBMITTED.csv",
+     "url": "https://osdr.nasa.gov/geode-py/ws/studies/OSD-575/download?source=datamanager&file=LSDS-8_Multiplex_serum.cardiovascular.EvePanel_SUBMITTED.csv",
+     "rows": 252
+    }
+   ],
+   "design": "SpaceX Inspiration4 (3 days, 2021), 4 crew; serum at L-92, L-44, L-3, R+1, R+45, R+82, R+194"
+  },
+  "OSD-656": {
+   "title": "SpaceX Inspiration4 Urine Inflammation Panel (Multiplex, NULISAseq)",
+   "description": "The SpaceX Inspiration4 mission was a 3-day mission with four private astronauts to low Earth orbit that occurred in September 2021. The crew collected biospecimen samples before, during, and after flight. One of these biospecimen collections included urine from pre-flight and post-flight/recovery timepoints (L-92, L-44, L-3, R+1, R+45, R+82). 203 inflammatory, cytokine, and chemokine proteins were quantified using NULISAseq. This study derives results from the Multiplex assay, and the urine data in this study are related to other studies using data from the same experiment; OSD-569 (whole blo",
+   "publications": [
+    {
+     "title": "The Space Omics and Medical Atlas (SOMA) and international astronaut biobank",
+     "doi": "10.1038/s41586-024-07639-y"
+    },
+    {
+     "title": "Collection of Biospecimens from the Inspiration4 Mission Establishes the Standards for the Space Omics and Medical Atlas (SOMA)",
+     "doi": "10.1038/s41467-024-48806-z"
+    }
+   ],
+   "release_date": "14-May-2024",
+   "url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-656",
+   "files": [
+    {
+     "name": "LSDS-64_Multiplex_urine.immune.AlamarPanel_TRANSFORMED.csv",
+     "url": "https://osdr.nasa.gov/geode-py/ws/studies/OSD-656/download?source=datamanager&file=LSDS-64_Multiplex_urine.immune.AlamarPanel_TRANSFORMED.csv",
+     "rows": 22
+    },
+    {
+     "name": "LSDS-64_Multiplex_200plex v1-Target Information.csv",
+     "url": "https://osdr.nasa.gov/geode-py/ws/studies/OSD-656/download?source=datamanager&file=LSDS-64_Multiplex_200plex+v1-Target+Information.csv"
+    }
+   ],
+   "design": "Inspiration4 urine, Alamar NULISA ~200-plex inflammation panel; NPQ values are log2-scaled"
+  },
+  "OSD-53": {
+   "title": "Spaceflight Modulates Gene Expression in Astronauts",
+   "description": "Astronauts are exposed to a unique combination of stressors during spaceflight, which leads to alterations in their physiology and potentially increases their susceptibility to infectious pathogens. Here we report the first microarray evaluation of any astronaut tissue sample, specifically whole blood, before and after spaceflight using an array comprising 234 well-characterized stress response genes. Differentially regulated genes included those important for DNA repair, oxidative stress, and protein folding/degradation. Microarrays comprising 234 well characterized stress-related genes were ",
+   "publications": [
+    {
+     "title": "Spaceflight modulates gene expression in the whole blood of astronauts",
+     "doi": "10.1038/npjmgrav.2016.39"
+    }
+   ],
+   "release_date": "15-Oct-2013",
+   "url": "https://osdr.nasa.gov/bio/repo/data/studies/OSD-53",
+   "files": [
+    {
+     "name": "GLDS-53_microarray_E-GEOD-47126.additional.zip",
+     "url": "https://osdr.nasa.gov/geode-py/ws/studies/OSD-53/download?source=datamanager&file=GLDS-53_microarray_E-GEOD-47126.additional.zip",
+     "member": "GSE47126_Fold_change_data.txt"
+    },
+    {
+     "name": "GPL140 platform annotation (probe -> gene)",
+     "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL140&targ=self&form=text&view=data"
+    }
+   ],
+   "design": "6 astronauts, whole blood 10 days before launch vs 2-3 h after landing; 234 stress-response genes"
+  }
+ },
+ "monitoring": [
+  {
+   "metric": "serum_glucose",
+   "direction": "up",
+   "preflight_mean": 75.333,
+   "flight_shift": 17.917,
+   "green": [
+    57.416,
+    89.6666
+   ],
+   "yellow_at": 93.25,
+   "red_at": 111.167,
+   "label": "Serum glucose",
+   "unit": "mg/dL",
+   "system": "immune",
+   "meaning": "metabolic stress response",
+   "study": "OSD-575",
+   "source_file": "LSDS-8_Comprehensive_Metabolic_Panel_CMP.upload_SUBMITTED.csv",
+   "analyte": "GLUCOSE",
+   "fold_change": 1.238,
+   "crew": "4/4",
+   "preflight_n": 12,
+   "return_n": 4,
+   "preflight_sd": 11.284,
+   "recovery": {
+    "R+45": 51.75,
+    "R+82": 82.0,
+    "R+194": 82.0
+   }
+  },
+  {
+   "metric": "serum_calcium",
+   "direction": "down",
+   "preflight_mean": 9.825,
+   "flight_shift": -0.3,
+   "green": [
+    9.585,
+    10.125
+   ],
+   "yellow_at": 9.525,
+   "red_at": 9.225,
+   "label": "Serum calcium",
+   "unit": "mg/dL",
+   "system": "musculoskeletal",
+   "meaning": "calcium balance / bone",
+   "study": "OSD-575",
+   "source_file": "LSDS-8_Comprehensive_Metabolic_Panel_CMP.upload_SUBMITTED.csv",
+   "analyte": "CALCIUM",
+   "fold_change": 0.969,
+   "crew": "4/4",
+   "preflight_n": 12,
+   "return_n": 4,
+   "preflight_sd": 0.355,
+   "recovery": {
+    "R+45": 9.575,
+    "R+82": 9.95,
+    "R+194": 9.575
+   }
+  },
+  {
+   "metric": "serum_albumin",
+   "direction": "down",
+   "preflight_mean": 4.65,
+   "flight_shift": -0.15,
+   "green": [
+    4.53,
+    4.8
+   ],
+   "yellow_at": 4.5,
+   "red_at": 4.35,
+   "label": "Serum albumin",
+   "unit": "g/dL",
+   "system": "immune",
+   "meaning": "protein status / inflammation",
+   "study": "OSD-575",
+   "source_file": "LSDS-8_Comprehensive_Metabolic_Panel_CMP.upload_SUBMITTED.csv",
+   "analyte": "ALBUMIN",
+   "fold_change": 0.968,
+   "crew": "4/4",
+   "preflight_n": 12,
+   "return_n": 4,
+   "preflight_sd": 0.284,
+   "recovery": {
+    "R+45": 4.525,
+    "R+82": 4.75,
+    "R+194": 4.4
+   }
+  },
+  {
+   "metric": "il6",
+   "direction": "up",
+   "preflight_mean": 3.703,
+   "flight_shift": 2.937,
+   "green": [
+    0.766,
+    6.0526
+   ],
+   "yellow_at": 6.64,
+   "red_at": 9.577,
+   "label": "IL-6",
+   "unit": "pg/mL",
+   "system": "immune",
+   "meaning": "pro-inflammatory cytokine",
+   "study": "OSD-575",
+   "source_file": "LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv",
+   "analyte": "IL-6",
+   "fold_change": 1.793,
+   "crew": "4/4",
+   "preflight_n": 12,
+   "return_n": 4,
+   "preflight_sd": 1.124,
+   "recovery": {
+    "R+45": 4.657,
+    "R+82": 3.953,
+    "R+194": 3.725
+   }
+  },
+  {
+   "metric": "tnf_alpha",
+   "direction": "up",
+   "preflight_mean": 179.362,
+   "flight_shift": 77.618,
+   "green": [
+    101.744,
+    241.4564
+   ],
+   "yellow_at": 256.98,
+   "red_at": 334.598,
+   "label": "TNF-α",
+   "unit": "pg/mL",
+   "system": "immune",
+   "meaning": "pro-inflammatory cytokine",
+   "study": "OSD-575",
+   "source_file": "LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv",
+   "analyte": "TNFα",
+   "fold_change": 1.433,
+   "crew": "4/4",
+   "preflight_n": 12,
+   "return_n": 4,
+   "preflight_sd": 209.656,
+   "recovery": {
+    "R+45": 123.75,
+    "R+82": 221.43,
+    "R+194": 116.895
+   }
+  },
+  {
+   "metric": "il10",
+   "direction": "up",
+   "preflight_mean": 9.357,
+   "flight_shift": 4.595,
+   "green": [
+    4.762,
+    13.033
+   ],
+   "yellow_at": 13.952,
+   "red_at": 18.547,
+   "label": "IL-10",
+   "unit": "pg/mL",
+   "system": "immune",
+   "meaning": "anti-inflammatory cytokine",
+   "study": "OSD-575",
+   "source_file": "LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv",
+   "analyte": "IL-10",
+   "fold_change": 1.491,
+   "crew": "4/4",
+   "preflight_n": 12,
+   "return_n": 4,
+   "preflight_sd": 3.793,
+   "recovery": {
+    "R+45": 9.617,
+    "R+82": 10.275,
+    "R+194": 12.445
+   }
+  },
+  {
+   "metric": "mcp1",
+   "direction": "up",
+   "preflight_mean": 885.199,
+   "flight_shift": 726.088,
+   "green": [
+    159.111,
+    1466.1
+   ],
+   "yellow_at": 1611.3,
+   "red_at": 2337.4,
+   "label": "MCP-1 (CCL2)",
+   "unit": "pg/mL",
+   "system": "immune",
+   "meaning": "monocyte-recruiting chemokine",
+   "study": "OSD-575",
+   "source_file": "LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv",
+   "analyte": "MCP-1",
+   "fold_change": 1.82,
+   "crew": "4/4",
+   "preflight_n": 12,
+   "return_n": 4,
+   "preflight_sd": 365.649,
+   "recovery": {
+    "R+45": 1220.8,
+    "R+82": 1434.7,
+    "R+194": 902.548
+   }
+  },
+  {
+   "metric": "crp",
+   "direction": "up",
+   "preflight_mean": 17.7125,
+   "flight_shift": 12.6043,
+   "green": [
+    5.1082,
+    27.7959
+   ],
+   "yellow_at": 30.3168,
+   "red_at": 42.921,
+   "label": "C-reactive protein",
+   "unit": "mg/L",
+   "system": "immune",
+   "meaning": "acute-phase inflammation (pg/mL ÷ 10⁶)",
+   "study": "OSD-575",
+   "source_file": "LSDS-8_Multiplex_serum.cardiovascular.EvePanel_SUBMITTED.csv",
+   "analyte": "CRP",
+   "fold_change": 1.712,
+   "crew": "4/4",
+   "preflight_n": 12,
+   "return_n": 4,
+   "preflight_sd": 21.6129,
+   "recovery": {
+    "R+45": 17.997,
+    "R+82": 13.5615,
+    "R+194": 23.0656
+   }
+  },
+  {
+   "metric": "urine_il6",
+   "direction": "up",
+   "preflight_mean": 12.053,
+   "flight_shift": 1.995,
+   "green": [
+    10.058,
+    13.649
+   ],
+   "yellow_at": 14.048,
+   "red_at": 16.043,
+   "label": "Urine IL-6",
+   "unit": "NPQ",
+   "system": "immune",
+   "meaning": "inflammation in urine",
+   "study": "OSD-656",
+   "source_file": "LSDS-64_Multiplex_urine.immune.AlamarPanel_TRANSFORMED.csv",
+   "analyte": "il6",
+   "fold_change": 3.986,
+   "crew": "3/3",
+   "preflight_n": 11,
+   "return_n": 3,
+   "preflight_sd": 1.727,
+   "recovery": {
+    "R+45": 12.564,
+    "R+82": 10.561
+   }
+  },
+  {
+   "metric": "urine_il8",
+   "direction": "up",
+   "preflight_mean": 11.446,
+   "flight_shift": 3.927,
+   "green": [
+    7.519,
+    14.5876
+   ],
+   "yellow_at": 15.373,
+   "red_at": 19.3,
+   "label": "Urine IL-8 (CXCL8)",
+   "unit": "NPQ",
+   "system": "immune",
+   "meaning": "neutrophil chemokine",
+   "study": "OSD-656",
+   "source_file": "LSDS-64_Multiplex_urine.immune.AlamarPanel_TRANSFORMED.csv",
+   "analyte": "cxcl8",
+   "fold_change": 15.211,
+   "crew": "3/3",
+   "preflight_n": 11,
+   "return_n": 3,
+   "preflight_sd": 1.507,
+   "recovery": {
+    "R+45": 11.876,
+    "R+82": 10.909
+   }
+  },
+  {
+   "metric": "urine_mpo",
+   "direction": "up",
+   "preflight_mean": 5.404,
+   "flight_shift": 5.208,
+   "green": [
+    0.196,
+    9.5704
+   ],
+   "yellow_at": 10.612,
+   "red_at": 15.82,
+   "label": "Urine MPO",
+   "unit": "NPQ",
+   "system": "immune",
+   "meaning": "neutrophil activation",
+   "study": "OSD-656",
+   "source_file": "LSDS-64_Multiplex_urine.immune.AlamarPanel_TRANSFORMED.csv",
+   "analyte": "mpo",
+   "fold_change": 36.963,
+   "crew": "3/3",
+   "preflight_n": 11,
+   "return_n": 3,
+   "preflight_sd": 2.306,
+   "recovery": {
+    "R+45": 6.452,
+    "R+82": 6.901
+   }
+  },
+  {
+   "metric": "urine_lcn2",
+   "direction": "up",
+   "preflight_mean": 9.068,
+   "flight_shift": 1.551,
+   "green": [
+    7.517,
+    10.3088
+   ],
+   "yellow_at": 10.619,
+   "red_at": 12.17,
+   "label": "Urine NGAL (LCN2)",
+   "unit": "NPQ",
+   "system": "immune",
+   "meaning": "kidney stress marker",
+   "study": "OSD-656",
+   "source_file": "LSDS-64_Multiplex_urine.immune.AlamarPanel_TRANSFORMED.csv",
+   "analyte": "lcn2",
+   "fold_change": 2.93,
+   "crew": "3/3",
+   "preflight_n": 11,
+   "return_n": 3,
+   "preflight_sd": 2.266,
+   "recovery": {
+    "R+45": 9.2,
+    "R+82": 7.889
+   }
+  }
+ ],
+ "shifted": {
+  "OSD-575": [
+   {
+    "marker": "MCP-1",
+    "id": "MCP-1",
+    "study": "OSD-575",
+    "fold_change": 1.82,
+    "log2_fc": 0.864,
+    "crew": "4/4",
+    "direction": "up"
+   },
+   {
+    "marker": "IL-6",
+    "id": "IL-6",
+    "study": "OSD-575",
+    "fold_change": 1.793,
+    "log2_fc": 0.842,
+    "crew": "4/4",
+    "direction": "up"
+   },
+   {
+    "marker": "IP-10",
+    "id": "IP-10",
+    "study": "OSD-575",
+    "fold_change": 1.505,
+    "log2_fc": 0.59,
+    "crew": "4/4",
+    "direction": "up"
+   },
+   {
+    "marker": "IL-10",
+    "id": "IL-10",
+    "study": "OSD-575",
+    "fold_change": 1.491,
+    "log2_fc": 0.576,
+    "crew": "4/4",
+    "direction": "up"
+   },
+   {
+    "marker": "TNFα",
+    "id": "TNFα",
+    "study": "OSD-575",
+    "fold_change": 1.433,
+    "log2_fc": 0.519,
+    "crew": "4/4",
+    "direction": "up"
+   },
+   {
+    "marker": "CRP",
+    "id": "CRP",
+    "study": "OSD-575",
+    "fold_change": 1.712,
+    "log2_fc": 0.776,
+    "crew": "4/4",
+    "direction": "up"
+   }
+  ],
+  "OSD-656": [
+   {
+    "marker": "Myeloperoxidase",
+    "id": "mpo",
+    "study": "OSD-656",
+    "fold_change": 36.963,
+    "log2_fc": 5.208,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Neutrophil collagenase",
+    "id": "mmp8",
+    "study": "OSD-656",
+    "fold_change": 28.051,
+    "log2_fc": 4.81,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Interleukin-36 alpha",
+    "id": "il36a",
+    "study": "OSD-656",
+    "fold_change": 23.687,
+    "log2_fc": 4.566,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "C-X-C motif chemokine ligand 2",
+    "id": "cxcl2",
+    "study": "OSD-656",
+    "fold_change": 22.347,
+    "log2_fc": 4.482,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Protein S100-A12",
+    "id": "s100a12",
+    "study": "OSD-656",
+    "fold_change": 15.617,
+    "log2_fc": 3.965,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Interleukin-8, IL8",
+    "id": "cxcl8",
+    "study": "OSD-656",
+    "fold_change": 15.211,
+    "log2_fc": 3.927,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Oncostatin-M",
+    "id": "osm",
+    "study": "OSD-656",
+    "fold_change": 11.876,
+    "log2_fc": 3.57,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "C-C motif chemokine 20",
+    "id": "ccl20",
+    "study": "OSD-656",
+    "fold_change": 8.462,
+    "log2_fc": 3.081,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Granzyme B",
+    "id": "gzmb",
+    "study": "OSD-656",
+    "fold_change": 8.276,
+    "log2_fc": 3.049,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Tumor necrosis factor ligand superfamily member 12",
+    "id": "tnfsf12",
+    "study": "OSD-656",
+    "fold_change": 7.537,
+    "log2_fc": 2.914,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Tumor necrosis factor ligand superfamily member 6",
+    "id": "faslg",
+    "study": "OSD-656",
+    "fold_change": 6.422,
+    "log2_fc": 2.683,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "Galectin-9",
+    "id": "lgals9",
+    "study": "OSD-656",
+    "fold_change": 6.413,
+    "log2_fc": 2.681,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "C-C motif chemokine 23",
+    "id": "ccl23",
+    "study": "OSD-656",
+    "fold_change": 6.285,
+    "log2_fc": 2.652,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "C-X-C motif chemokine ligand 3",
+    "id": "cxcl3",
+    "study": "OSD-656",
+    "fold_change": 5.963,
+    "log2_fc": 2.576,
+    "crew": "3/3",
+    "direction": "up"
+   },
+   {
+    "marker": "C-X-C motif chemokine 10",
+    "id": "cxcl10",
+    "study": "OSD-656",
+    "fold_change": 5.788,
+    "log2_fc": 2.533,
+    "crew": "3/3",
+    "direction": "up"
+   }
+  ],
+  "OSD-53": [
+   {
+    "marker": "BAG1",
+    "name": "BCL2-binding athanogene 1 (BAG1); glucocorticoid receptor-associated protein RAP46",
+    "study": "OSD-53",
+    "fold_change": 0.37,
+    "log2_fc": -1.44,
+    "p_value": 0.014,
+    "direction": "down",
+    "astronauts": "5/6 pre, 6/6 post"
+   },
+   {
+    "marker": "HSP90",
+    "name": "90-kDa heat-shock protein beta (HSP90); 84-kDa heat-shock protein beta (HSP84); HSPCB",
+    "study": "OSD-53",
+    "fold_change": 0.41,
+    "log2_fc": -1.29,
+    "p_value": 0.024,
+    "direction": "down",
+    "astronauts": "6/6 pre, 6/6 post"
+   },
+   {
+    "marker": "c-fos",
+    "name": "c-fos proto-oncogene; G0S7 protein",
+    "study": "OSD-53",
+    "fold_change": 3.11,
+    "log2_fc": 1.64,
+    "p_value": 0.032,
+    "direction": "up",
+    "astronauts": "6/6 pre, 6/6 post"
+   },
+   {
+    "marker": "GPX1",
+    "name": "glutathione peroxidase 1 (GSHPX1; GPX1)",
+    "study": "OSD-53",
+    "fold_change": 0.52,
+    "log2_fc": -0.95,
+    "p_value": 0.041,
+    "direction": "down",
+    "astronauts": "6/6 pre, 6/6 post"
+   },
+   {
+    "marker": "XRCC1",
+    "name": "X-ray repair-complementing defective repair in Chinese hamster cells 1 (XRCC1)",
+    "study": "OSD-53",
+    "fold_change": 0.45,
+    "log2_fc": -1.16,
+    "p_value": 0.045,
+    "direction": "down",
+    "astronauts": "6/6 pre, 6/6 post"
+   }
+  ]
+ },
+ "tables": {
+  "osd575_cmp": {
+   "GLUCOSE": {
+    "preflight": {
+     "mean": 75.333,
+     "sd": 11.284,
+     "n": 12,
+     "min": 56.0,
+     "max": 100.0
+    },
+    "return_r1": {
+     "mean": 93.25,
+     "sd": 8.655,
+     "n": 4
+    },
+    "delta": 17.917,
+    "fold_change": 1.238,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 51.75,
+     "R+82": 82.0,
+     "R+194": 82.0
+    },
+    "unit": "mg/dL",
+    "lab_range": [
+     "65",
+     "99"
+    ]
+   },
+   "UREA NITROGEN (BUN)": {
+    "preflight": {
+     "mean": 19.417,
+     "sd": 3.502,
+     "n": 12,
+     "min": 14.0,
+     "max": 26.0
+    },
+    "return_r1": {
+     "mean": 21.25,
+     "sd": 3.403,
+     "n": 4
+    },
+    "delta": 1.833,
+    "fold_change": 1.094,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 18.5,
+     "R+82": 19.25,
+     "R+194": 25.25
+    },
+    "unit": "mg/dL",
+    "lab_range": [
+     "7",
+     "25"
+    ]
+   },
+   "CREATININE": {
+    "preflight": {
+     "mean": 1.07,
+     "sd": 0.148,
+     "n": 12,
+     "min": 0.83,
+     "max": 1.37
+    },
+    "return_r1": {
+     "mean": 1.028,
+     "sd": 0.127,
+     "n": 4
+    },
+    "delta": -0.042,
+    "fold_change": 0.96,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1.038,
+     "R+82": 1.018,
+     "R+194": 1.18
+    },
+    "unit": "mg/dL",
+    "lab_range": [
+     "0.5",
+     "1.1"
+    ]
+   },
+   "eGFR NON-AFR. AMERICAN": {
+    "preflight": {
+     "mean": 75.917,
+     "sd": 6.571,
+     "n": 12,
+     "min": 65.0,
+     "max": 85.0
+    },
+    "return_r1": {
+     "mean": 79.5,
+     "sd": 8.103,
+     "n": 4
+    },
+    "delta": 3.583,
+    "fold_change": 1.047,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 78.5,
+     "R+82": 81.0,
+     "R+194": 66.5
+    },
+    "unit": "mL/min/1.73m2",
+    "lab_range": [
+     "60",
+     null
+    ]
+   },
+   "eGFR AFRICAN AMERICAN": {
+    "preflight": {
+     "mean": 87.917,
+     "sd": 7.465,
+     "n": 12,
+     "min": 75.0,
+     "max": 98.0
+    },
+    "return_r1": {
+     "mean": 92.0,
+     "sd": 9.381,
+     "n": 4
+    },
+    "delta": 4.083,
+    "fold_change": 1.046,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 91.0,
+     "R+82": 93.75,
+     "R+194": 77.0
+    },
+    "unit": "mL/min/1.73m2",
+    "lab_range": [
+     "60",
+     null
+    ]
+   },
+   "SODIUM": {
+    "preflight": {
+     "mean": 140.25,
+     "sd": 1.658,
+     "n": 12,
+     "min": 138.0,
+     "max": 143.0
+    },
+    "return_r1": {
+     "mean": 138.0,
+     "sd": 1.414,
+     "n": 4
+    },
+    "delta": -2.25,
+    "fold_change": 0.984,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 138.25,
+     "R+82": 139.75,
+     "R+194": 138.25
+    },
+    "unit": "mmol/L",
+    "lab_range": [
+     "135",
+     "146"
+    ]
+   },
+   "POTASSIUM": {
+    "preflight": {
+     "mean": 3.917,
+     "sd": 0.354,
+     "n": 12,
+     "min": 3.3,
+     "max": 4.6
+    },
+    "return_r1": {
+     "mean": 3.725,
+     "sd": 0.608,
+     "n": 4
+    },
+    "delta": -0.192,
+    "fold_change": 0.951,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 4.6,
+     "R+82": 3.975,
+     "R+194": 4.075
+    },
+    "unit": "mmol/L",
+    "lab_range": [
+     "3.5",
+     "5.3"
+    ]
+   },
+   "CHLORIDE": {
+    "preflight": {
+     "mean": 102.417,
+     "sd": 1.73,
+     "n": 12,
+     "min": 99.0,
+     "max": 106.0
+    },
+    "return_r1": {
+     "mean": 103.25,
+     "sd": 1.258,
+     "n": 4
+    },
+    "delta": 0.833,
+    "fold_change": 1.008,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 100.75,
+     "R+82": 102.75,
+     "R+194": 103.0
+    },
+    "unit": "mmol/L",
+    "lab_range": [
+     "98",
+     "110"
+    ]
+   },
+   "CARBON DIOXIDE": {
+    "preflight": {
+     "mean": 23.583,
+     "sd": 1.881,
+     "n": 12,
+     "min": 20.0,
+     "max": 26.0
+    },
+    "return_r1": {
+     "mean": 22.25,
+     "sd": 1.708,
+     "n": 4
+    },
+    "delta": -1.333,
+    "fold_change": 0.943,
+    "crew_up": 0,
+    "crew_down": 4,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 24.0,
+     "R+82": 24.75,
+     "R+194": 21.0
+    },
+    "unit": "mmol/L",
+    "lab_range": [
+     "20",
+     "32"
+    ]
+   },
+   "CALCIUM": {
+    "preflight": {
+     "mean": 9.825,
+     "sd": 0.355,
+     "n": 12,
+     "min": 9.3,
+     "max": 10.3
+    },
+    "return_r1": {
+     "mean": 9.525,
+     "sd": 0.275,
+     "n": 4
+    },
+    "delta": -0.3,
+    "fold_change": 0.969,
+    "crew_up": 0,
+    "crew_down": 4,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 9.575,
+     "R+82": 9.95,
+     "R+194": 9.575
+    },
+    "unit": "mg/dL",
+    "lab_range": [
+     "8.6",
+     "10.2"
+    ]
+   },
+   "PROTEIN; TOTAL": {
+    "preflight": {
+     "mean": 7.467,
+     "sd": 0.516,
+     "n": 12,
+     "min": 6.8,
+     "max": 8.8
+    },
+    "return_r1": {
+     "mean": 7.35,
+     "sd": 0.173,
+     "n": 4
+    },
+    "delta": -0.117,
+    "fold_change": 0.984,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 7.175,
+     "R+82": 7.5,
+     "R+194": 7.2
+    },
+    "unit": "g/dL",
+    "lab_range": [
+     "6.1",
+     "8.1"
+    ]
+   },
+   "ALBUMIN": {
+    "preflight": {
+     "mean": 4.65,
+     "sd": 0.284,
+     "n": 12,
+     "min": 4.2,
+     "max": 5.0
+    },
+    "return_r1": {
+     "mean": 4.5,
+     "sd": 0.294,
+     "n": 4
+    },
+    "delta": -0.15,
+    "fold_change": 0.968,
+    "crew_up": 0,
+    "crew_down": 4,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 4.525,
+     "R+82": 4.75,
+     "R+194": 4.4
+    },
+    "unit": "g/dL",
+    "lab_range": [
+     "3.6",
+     "5.1"
+    ]
+   },
+   "GLOBULIN": {
+    "preflight": {
+     "mean": 2.817,
+     "sd": 0.395,
+     "n": 12,
+     "min": 2.3,
+     "max": 3.9
+    },
+    "return_r1": {
+     "mean": 2.85,
+     "sd": 0.173,
+     "n": 4
+    },
+    "delta": 0.033,
+    "fold_change": 1.012,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 2.65,
+     "R+82": 2.75,
+     "R+194": 2.8
+    },
+    "unit": "g/dL",
+    "lab_range": [
+     "1.9",
+     "3.7"
+    ]
+   },
+   "ALBUMIN/GLOBULIN RATIO": {
+    "preflight": {
+     "mean": 1.675,
+     "sd": 0.245,
+     "n": 12,
+     "min": 1.3,
+     "max": 2.2
+    },
+    "return_r1": {
+     "mean": 1.6,
+     "sd": 0.216,
+     "n": 4
+    },
+    "delta": -0.075,
+    "fold_change": 0.955,
+    "crew_up": 0,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1.725,
+     "R+82": 1.725,
+     "R+194": 1.575
+    },
+    "unit": "(calc)",
+    "lab_range": [
+     "1",
+     "2.5"
+    ]
+   },
+   "BILIRUBIN; TOTAL": {
+    "preflight": {
+     "mean": 0.55,
+     "sd": 0.25,
+     "n": 12,
+     "min": 0.2,
+     "max": 1.0
+    },
+    "return_r1": {
+     "mean": 0.575,
+     "sd": 0.419,
+     "n": 4
+    },
+    "delta": 0.025,
+    "fold_change": 1.045,
+    "crew_up": 1,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 0.633,
+     "R+82": 0.8,
+     "R+194": 0.475
+    },
+    "unit": "mg/dL",
+    "lab_range": [
+     "0.2",
+     "1.2"
+    ]
+   },
+   "ALKALINE PHOSPHATASE": {
+    "preflight": {
+     "mean": 52.917,
+     "sd": 14.872,
+     "n": 12,
+     "min": 31.0,
+     "max": 78.0
+    },
+    "return_r1": {
+     "mean": 56.5,
+     "sd": 12.923,
+     "n": 4
+    },
+    "delta": 3.583,
+    "fold_change": 1.068,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 55.5,
+     "R+82": 54.5,
+     "R+194": 54.0
+    },
+    "unit": "U/L",
+    "lab_range": [
+     "31",
+     "125"
+    ]
+   },
+   "AST": {
+    "preflight": {
+     "mean": 25.167,
+     "sd": 11.8,
+     "n": 12,
+     "min": 13.0,
+     "max": 44.0
+    },
+    "return_r1": {
+     "mean": 26.25,
+     "sd": 14.796,
+     "n": 4
+    },
+    "delta": 1.083,
+    "fold_change": 1.043,
+    "crew_up": 2,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 20.5,
+     "R+82": 19.25,
+     "R+194": 22.25
+    },
+    "unit": "U/L",
+    "lab_range": [
+     "10",
+     "30"
+    ]
+   },
+   "ALT": {
+    "preflight": {
+     "mean": 20.833,
+     "sd": 9.907,
+     "n": 12,
+     "min": 12.0,
+     "max": 37.0
+    },
+    "return_r1": {
+     "mean": 21.0,
+     "sd": 13.342,
+     "n": 4
+    },
+    "delta": 0.167,
+    "fold_change": 1.008,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 18.5,
+     "R+82": 16.75,
+     "R+194": 21.25
+    },
+    "unit": "U/L",
+    "lab_range": [
+     "6",
+     "29"
+    ]
+   }
+  },
+  "osd575_cytokines": {
+   "sCD40L": {
+    "preflight": {
+     "mean": 14780.7,
+     "sd": 6104.0,
+     "n": 12,
+     "min": 7553.6,
+     "max": 24408.0
+    },
+    "return_r1": {
+     "mean": 12518.4,
+     "sd": 2806.0,
+     "n": 4
+    },
+    "delta": -2262.3,
+    "fold_change": 0.847,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 12282.6,
+     "R+82": 12753.3,
+     "R+194": 12494.3
+    },
+    "unit": "pg/ml"
+   },
+   "EGF": {
+    "preflight": {
+     "mean": 497.575,
+     "sd": 198.83,
+     "n": 12,
+     "min": 236.75,
+     "max": 916.85
+    },
+    "return_r1": {
+     "mean": 434.633,
+     "sd": 123.46,
+     "n": 4
+    },
+    "delta": -62.942,
+    "fold_change": 0.874,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 590.197,
+     "R+82": 409.455,
+     "R+194": 465.045
+    },
+    "unit": "pg/ml"
+   },
+   "Eotaxin": {
+    "preflight": {
+     "mean": 96.442,
+     "sd": 75.51,
+     "n": 12,
+     "min": 27.05,
+     "max": 265.94
+    },
+    "return_r1": {
+     "mean": 141.34,
+     "sd": 129.841,
+     "n": 4
+    },
+    "delta": 44.898,
+    "fold_change": 1.466,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 145.65,
+     "R+82": 105.575,
+     "R+194": 108.897
+    },
+    "unit": "pg/ml"
+   },
+   "FGF-2": {
+    "preflight": {
+     "mean": 188.556,
+     "sd": 21.066,
+     "n": 12,
+     "min": 164.59,
+     "max": 236.4
+    },
+    "return_r1": {
+     "mean": 184.975,
+     "sd": 11.791,
+     "n": 4
+    },
+    "delta": -3.581,
+    "fold_change": 0.981,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 202.778,
+     "R+82": 187.54,
+     "R+194": 189.762
+    },
+    "unit": "pg/ml"
+   },
+   "FLT-3L": {
+    "preflight": {
+     "mean": 17.965,
+     "sd": 5.247,
+     "n": 12,
+     "min": 11.36,
+     "max": 24.85
+    },
+    "return_r1": {
+     "mean": 19.593,
+     "sd": 6.872,
+     "n": 4
+    },
+    "delta": 1.628,
+    "fold_change": 1.091,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 16.562,
+     "R+82": 18.207,
+     "R+194": 17.89
+    },
+    "unit": "pg/ml"
+   },
+   "Fractalkine": {
+    "preflight": {
+     "mean": 636.931,
+     "sd": 622.547,
+     "n": 12,
+     "min": 148.59,
+     "max": 2032.7
+    },
+    "return_r1": {
+     "mean": 856.945,
+     "sd": 804.169,
+     "n": 4
+    },
+    "delta": 220.014,
+    "fold_change": 1.345,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 482.347,
+     "R+82": 789.33,
+     "R+194": 457.192
+    },
+    "unit": "pg/ml"
+   },
+   "G-CSF": {
+    "preflight": {
+     "mean": 66.688,
+     "sd": 9.94,
+     "n": 12,
+     "min": 48.43,
+     "max": 82.11
+    },
+    "return_r1": {
+     "mean": 69.255,
+     "sd": 7.378,
+     "n": 4
+    },
+    "delta": 2.567,
+    "fold_change": 1.038,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 63.315,
+     "R+82": 60.727,
+     "R+194": 48.55
+    },
+    "unit": "pg/ml"
+   },
+   "GM-CSF": {
+    "preflight": {
+     "mean": 508.798,
+     "sd": 709.946,
+     "n": 12,
+     "min": 6.32,
+     "max": 2535.6
+    },
+    "return_r1": {
+     "mean": 499.15,
+     "sd": 595.186,
+     "n": 4
+    },
+    "delta": -9.648,
+    "fold_change": 0.981,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 400.762,
+     "R+82": 368.777,
+     "R+194": 272.91
+    },
+    "unit": "pg/ml"
+   },
+   "GROα": {
+    "preflight": {
+     "mean": 41.29,
+     "sd": 12.579,
+     "n": 12,
+     "min": 19.88,
+     "max": 60.71
+    },
+    "return_r1": {
+     "mean": 42.383,
+     "sd": 6.933,
+     "n": 4
+    },
+    "delta": 1.093,
+    "fold_change": 1.026,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 39.767,
+     "R+82": 39.538,
+     "R+194": 41.81
+    },
+    "unit": "pg/ml"
+   },
+   "IFN-α2": {
+    "preflight": {
+     "mean": 120.448,
+     "sd": 72.65,
+     "n": 12,
+     "min": 23.86,
+     "max": 256.93
+    },
+    "return_r1": {
+     "mean": 125.72,
+     "sd": 83.98,
+     "n": 4
+    },
+    "delta": 5.272,
+    "fold_change": 1.044,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 136.178,
+     "R+82": 129.132,
+     "R+194": 131.025
+    },
+    "unit": "pg/ml"
+   },
+   "IFNγ": {
+    "preflight": {
+     "mean": 29.521,
+     "sd": 26.725,
+     "n": 12,
+     "min": 3.05,
+     "max": 94.55
+    },
+    "return_r1": {
+     "mean": 25.457,
+     "sd": 28.0,
+     "n": 4
+    },
+    "delta": -4.063,
+    "fold_change": 0.862,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 15.383,
+     "R+82": 19.438,
+     "R+194": 12.575
+    },
+    "unit": "pg/ml"
+   },
+   "IL-1α": {
+    "preflight": {
+     "mean": 206.956,
+     "sd": 147.684,
+     "n": 12,
+     "min": 108.08,
+     "max": 625.72
+    },
+    "return_r1": {
+     "mean": 327.28,
+     "sd": 417.298,
+     "n": 4
+    },
+    "delta": 120.324,
+    "fold_change": 1.581,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 166.248,
+     "R+82": 144.998,
+     "R+194": 123.135
+    },
+    "unit": "pg/ml"
+   },
+   "IL-1β": {
+    "preflight": {
+     "mean": 76.107,
+     "sd": 52.191,
+     "n": 12,
+     "min": 22.7,
+     "max": 188.46
+    },
+    "return_r1": {
+     "mean": 73.793,
+     "sd": 24.48,
+     "n": 4
+    },
+    "delta": -2.314,
+    "fold_change": 0.97,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 99.603,
+     "R+82": 78.445,
+     "R+194": 67.558
+    },
+    "unit": "pg/ml"
+   },
+   "IL-1RA": {
+    "preflight": {
+     "mean": 21.986,
+     "sd": 7.901,
+     "n": 12,
+     "min": 10.59,
+     "max": 39.33
+    },
+    "return_r1": {
+     "mean": 23.82,
+     "sd": 3.683,
+     "n": 4
+    },
+    "delta": 1.834,
+    "fold_change": 1.083,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 25.89,
+     "R+82": 13.907,
+     "R+194": 11.158
+    },
+    "unit": "pg/ml"
+   },
+   "IL-2": {
+    "preflight": {
+     "mean": 6.77,
+     "sd": 4.816,
+     "n": 12,
+     "min": 1.75,
+     "max": 15.64
+    },
+    "return_r1": {
+     "mean": 6.595,
+     "sd": 2.697,
+     "n": 4
+    },
+    "delta": -0.175,
+    "fold_change": 0.974,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 13.15,
+     "R+82": 8.88,
+     "R+194": 4.89
+    },
+    "unit": "pg/ml"
+   },
+   "IL-3": {
+    "preflight": {
+     "mean": 0.659,
+     "sd": 0.35,
+     "n": 12,
+     "min": 0.14,
+     "max": 1.1
+    },
+    "return_r1": {
+     "mean": 0.695,
+     "sd": 0.356,
+     "n": 4
+    },
+    "delta": 0.036,
+    "fold_change": 1.054,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 0.72,
+     "R+82": 0.96,
+     "R+194": 0.83
+    },
+    "unit": "pg/ml"
+   },
+   "IL-4": {
+    "preflight": {
+     "mean": 6.312,
+     "sd": 3.361,
+     "n": 12,
+     "min": 2.31,
+     "max": 13.33
+    },
+    "return_r1": {
+     "mean": 7.695,
+     "sd": 3.678,
+     "n": 4
+    },
+    "delta": 1.383,
+    "fold_change": 1.219,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 6.692,
+     "R+82": 6.438,
+     "R+194": 7.755
+    },
+    "unit": "pg/ml"
+   },
+   "IL-5": {
+    "preflight": {
+     "mean": 13.412,
+     "sd": 5.083,
+     "n": 12,
+     "min": 7.42,
+     "max": 25.41
+    },
+    "return_r1": {
+     "mean": 15.5,
+     "sd": 3.34,
+     "n": 4
+    },
+    "delta": 2.088,
+    "fold_change": 1.156,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 10.93,
+     "R+82": 13.053,
+     "R+194": 11.33
+    },
+    "unit": "pg/ml"
+   },
+   "IL-6": {
+    "preflight": {
+     "mean": 3.703,
+     "sd": 1.124,
+     "n": 12,
+     "min": 2.51,
+     "max": 5.94
+    },
+    "return_r1": {
+     "mean": 6.64,
+     "sd": 0.782,
+     "n": 4
+    },
+    "delta": 2.937,
+    "fold_change": 1.793,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 4.657,
+     "R+82": 3.953,
+     "R+194": 3.725
+    },
+    "unit": "pg/ml"
+   },
+   "IL-7": {
+    "preflight": {
+     "mean": 10.783,
+     "sd": 5.139,
+     "n": 12,
+     "min": 5.66,
+     "max": 22.7
+    },
+    "return_r1": {
+     "mean": 13.445,
+     "sd": 4.087,
+     "n": 4
+    },
+    "delta": 2.662,
+    "fold_change": 1.247,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 9.123,
+     "R+82": 10.512,
+     "R+194": 7.195
+    },
+    "unit": "pg/ml"
+   },
+   "IL-8": {
+    "preflight": {
+     "mean": 24.9,
+     "sd": 20.736,
+     "n": 12,
+     "min": 5.01,
+     "max": 73.86
+    },
+    "return_r1": {
+     "mean": 27.26,
+     "sd": 11.895,
+     "n": 4
+    },
+    "delta": 2.36,
+    "fold_change": 1.095,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 250.637,
+     "R+82": 17.457,
+     "R+194": 20.085
+    },
+    "unit": "pg/ml"
+   },
+   "IL-9": {
+    "preflight": {
+     "mean": 24.545,
+     "sd": 6.281,
+     "n": 12,
+     "min": 14.42,
+     "max": 34.95
+    },
+    "return_r1": {
+     "mean": 23.455,
+     "sd": 6.915,
+     "n": 4
+    },
+    "delta": -1.09,
+    "fold_change": 0.956,
+    "crew_up": 0,
+    "crew_down": 4,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 23.74,
+     "R+82": 23.555,
+     "R+194": 22.33
+    },
+    "unit": "pg/ml"
+   },
+   "IL-10": {
+    "preflight": {
+     "mean": 9.357,
+     "sd": 3.793,
+     "n": 12,
+     "min": 3.44,
+     "max": 15.48
+    },
+    "return_r1": {
+     "mean": 13.953,
+     "sd": 2.327,
+     "n": 4
+    },
+    "delta": 4.595,
+    "fold_change": 1.491,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 9.617,
+     "R+82": 10.275,
+     "R+194": 12.445
+    },
+    "unit": "pg/ml"
+   },
+   "IL-12p40": {
+    "preflight": {
+     "mean": 156.873,
+     "sd": 75.312,
+     "n": 12,
+     "min": 76.65,
+     "max": 321.07
+    },
+    "return_r1": {
+     "mean": 135.227,
+     "sd": 42.935,
+     "n": 4
+    },
+    "delta": -21.646,
+    "fold_change": 0.862,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 234.513,
+     "R+82": 140.798,
+     "R+194": 111.85
+    },
+    "unit": "pg/ml"
+   },
+   "IL-12p70": {
+    "preflight": {
+     "mean": 62.106,
+     "sd": 57.561,
+     "n": 12,
+     "min": 6.47,
+     "max": 155.3
+    },
+    "return_r1": {
+     "mean": 53.737,
+     "sd": 49.296,
+     "n": 4
+    },
+    "delta": -8.368,
+    "fold_change": 0.865,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 54.56,
+     "R+82": 48.48,
+     "R+194": 31.66
+    },
+    "unit": "pg/ml"
+   },
+   "IL-13": {
+    "preflight": {
+     "mean": 241.699,
+     "sd": 102.186,
+     "n": 12,
+     "min": 90.08,
+     "max": 434.64
+    },
+    "return_r1": {
+     "mean": 764.405,
+     "sd": 1104.8,
+     "n": 4
+    },
+    "delta": 522.706,
+    "fold_change": 3.163,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 332.597,
+     "R+82": 625.673,
+     "R+194": 319.115
+    },
+    "unit": "pg/ml"
+   },
+   "IL-15": {
+    "preflight": {
+     "mean": 7.396,
+     "sd": 2.912,
+     "n": 12,
+     "min": 2.69,
+     "max": 11.16
+    },
+    "return_r1": {
+     "mean": 10.02,
+     "sd": 3.51,
+     "n": 4
+    },
+    "delta": 2.624,
+    "fold_change": 1.355,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 9.002,
+     "R+82": 8.26,
+     "R+194": 8.533
+    },
+    "unit": "pg/ml"
+   },
+   "IL-17A": {
+    "preflight": {
+     "mean": 23.237,
+     "sd": 6.627,
+     "n": 12,
+     "min": 12.16,
+     "max": 37.77
+    },
+    "return_r1": {
+     "mean": 21.35,
+     "sd": 4.977,
+     "n": 4
+    },
+    "delta": -1.887,
+    "fold_change": 0.919,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 26.927,
+     "R+82": 23.593,
+     "R+194": 22.535
+    },
+    "unit": "pg/ml"
+   },
+   "IL-17E/IL-25": {
+    "preflight": {
+     "mean": 1772.8,
+     "sd": 481.734,
+     "n": 12,
+     "min": 1025.4,
+     "max": 2901.0
+    },
+    "return_r1": {
+     "mean": 1414.3,
+     "sd": 431.129,
+     "n": 4
+    },
+    "delta": -358.541,
+    "fold_change": 0.798,
+    "crew_up": 0,
+    "crew_down": 4,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1314.6,
+     "R+82": 1295.5,
+     "R+194": 1332.6
+    },
+    "unit": "pg/ml"
+   },
+   "IL-17F": {
+    "preflight": {
+     "mean": 76.233,
+     "sd": 40.581,
+     "n": 12,
+     "min": 14.39,
+     "max": 137.07
+    },
+    "return_r1": {
+     "mean": 70.55,
+     "sd": 53.302,
+     "n": 4
+    },
+    "delta": -5.683,
+    "fold_change": 0.925,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 70.547,
+     "R+82": 69.142,
+     "R+194": 59.837
+    },
+    "unit": "pg/ml"
+   },
+   "IL-18": {
+    "preflight": {
+     "mean": 320.75,
+     "sd": 187.143,
+     "n": 12,
+     "min": 105.71,
+     "max": 667.35
+    },
+    "return_r1": {
+     "mean": 292.99,
+     "sd": 184.202,
+     "n": 4
+    },
+    "delta": -27.76,
+    "fold_change": 0.913,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 304.478,
+     "R+82": 239.713,
+     "R+194": 335.058
+    },
+    "unit": "pg/ml"
+   },
+   "IL-22": {
+    "preflight": {
+     "mean": 166.183,
+     "sd": 60.96,
+     "n": 12,
+     "min": 98.62,
+     "max": 277.02
+    },
+    "return_r1": {
+     "mean": 343.46,
+     "sd": 448.789,
+     "n": 4
+    },
+    "delta": 177.277,
+    "fold_change": 2.067,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 207.648,
+     "R+82": 367.868,
+     "R+194": 184.91
+    },
+    "unit": "pg/ml"
+   },
+   "IL-27": {
+    "preflight": {
+     "mean": 1455.7,
+     "sd": 377.724,
+     "n": 12,
+     "min": 987.99,
+     "max": 2294.9
+    },
+    "return_r1": {
+     "mean": 2042.0,
+     "sd": 399.118,
+     "n": 4
+    },
+    "delta": 586.251,
+    "fold_change": 1.403,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1337.0,
+     "R+82": 1486.6,
+     "R+194": 1345.8
+    },
+    "unit": "pg/ml"
+   },
+   "IP-10": {
+    "preflight": {
+     "mean": 126.742,
+     "sd": 72.279,
+     "n": 12,
+     "min": 29.09,
+     "max": 249.44
+    },
+    "return_r1": {
+     "mean": 190.705,
+     "sd": 104.425,
+     "n": 4
+    },
+    "delta": 63.962,
+    "fold_change": 1.505,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 122.55,
+     "R+82": 100.4,
+     "R+194": 123.127
+    },
+    "unit": "pg/ml"
+   },
+   "MCP-1": {
+    "preflight": {
+     "mean": 885.199,
+     "sd": 365.649,
+     "n": 12,
+     "min": 334.63,
+     "max": 1496.9
+    },
+    "return_r1": {
+     "mean": 1611.3,
+     "sd": 394.377,
+     "n": 4
+    },
+    "delta": 726.088,
+    "fold_change": 1.82,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1220.8,
+     "R+82": 1434.7,
+     "R+194": 902.548
+    },
+    "unit": "pg/ml"
+   },
+   "MCP-3": {
+    "preflight": {
+     "mean": 71.299,
+     "sd": 87.251,
+     "n": 12,
+     "min": 15.15,
+     "max": 281.58
+    },
+    "return_r1": {
+     "mean": 104.953,
+     "sd": 135.682,
+     "n": 4
+    },
+    "delta": 33.653,
+    "fold_change": 1.472,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 54.867,
+     "R+82": 94.952,
+     "R+194": 49.917
+    },
+    "unit": "pg/ml"
+   },
+   "M-CSF": {
+    "preflight": {
+     "mean": 174.183,
+     "sd": 58.269,
+     "n": 12,
+     "min": 92.76,
+     "max": 254.46
+    },
+    "return_r1": {
+     "mean": 191.51,
+     "sd": 65.304,
+     "n": 4
+    },
+    "delta": 17.327,
+    "fold_change": 1.099,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 208.56,
+     "R+82": 114.105,
+     "R+194": 160.103
+    },
+    "unit": "pg/ml"
+   },
+   "MDC": {
+    "preflight": {
+     "mean": 1604.6,
+     "sd": 1061.3,
+     "n": 12,
+     "min": 568.49,
+     "max": 3069.5
+    },
+    "return_r1": {
+     "mean": 2318.2,
+     "sd": 1859.0,
+     "n": 4
+    },
+    "delta": 713.584,
+    "fold_change": 1.445,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 2066.0,
+     "R+82": 1735.5,
+     "R+194": 1852.4
+    },
+    "unit": "pg/ml"
+   },
+   "MIG/CXCL9": {
+    "preflight": {
+     "mean": 2288.8,
+     "sd": 939.378,
+     "n": 12,
+     "min": 1013.7,
+     "max": 4389.9
+    },
+    "return_r1": {
+     "mean": 2934.9,
+     "sd": 1166.7,
+     "n": 4
+    },
+    "delta": 646.074,
+    "fold_change": 1.282,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 2253.9,
+     "R+82": 2417.7,
+     "R+194": 3521.9
+    },
+    "unit": "pg/ml"
+   },
+   "MIP-1α": {
+    "preflight": {
+     "mean": 84.672,
+     "sd": 21.006,
+     "n": 12,
+     "min": 52.43,
+     "max": 122.68
+    },
+    "return_r1": {
+     "mean": 70.185,
+     "sd": 13.959,
+     "n": 4
+    },
+    "delta": -14.487,
+    "fold_change": 0.829,
+    "crew_up": 0,
+    "crew_down": 4,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 75.915,
+     "R+82": 71.095,
+     "R+194": 70.052
+    },
+    "unit": "pg/ml"
+   },
+   "MIP-1β": {
+    "preflight": {
+     "mean": 83.922,
+     "sd": 53.855,
+     "n": 12,
+     "min": 43.16,
+     "max": 207.09
+    },
+    "return_r1": {
+     "mean": 98.212,
+     "sd": 87.592,
+     "n": 4
+    },
+    "delta": 14.291,
+    "fold_change": 1.17,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 68.748,
+     "R+82": 63.737,
+     "R+194": 72.585
+    },
+    "unit": "pg/ml"
+   },
+   "PDGF-AA": {
+    "preflight": {
+     "mean": 9045.6,
+     "sd": 9760.9,
+     "n": 12,
+     "min": 469.71,
+     "max": 29439.9
+    },
+    "return_r1": {
+     "mean": 10075.3,
+     "sd": 7296.8,
+     "n": 4
+    },
+    "delta": 1029.6,
+    "fold_change": 1.114,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 16953.0,
+     "R+82": 9125.4,
+     "R+194": 8521.8
+    },
+    "unit": "pg/ml"
+   },
+   "PDGF-AB/BB": {
+    "preflight": {
+     "mean": 126969.3,
+     "sd": 88315.6,
+     "n": 12,
+     "min": 32107.2,
+     "max": 264860.0
+    },
+    "return_r1": {
+     "mean": 123639.7,
+     "sd": 50907.2,
+     "n": 4
+    },
+    "delta": -3329.7,
+    "fold_change": 0.974,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 183636.4,
+     "R+82": 114908.6,
+     "R+194": 131959.9
+    },
+    "unit": "pg/ml"
+   },
+   "RANTES": {
+    "preflight": {
+     "mean": 3522.7,
+     "sd": 3498.8,
+     "n": 12,
+     "min": 244.72,
+     "max": 10484.1
+    },
+    "return_r1": {
+     "mean": 6941.8,
+     "sd": 7595.4,
+     "n": 4
+    },
+    "delta": 3419.1,
+    "fold_change": 1.971,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 6726.9,
+     "R+82": 4302.8,
+     "R+194": 5538.6
+    },
+    "unit": "pg/ml"
+   },
+   "TGFα": {
+    "preflight": {
+     "mean": 25.756,
+     "sd": 12.112,
+     "n": 12,
+     "min": 7.09,
+     "max": 43.92
+    },
+    "return_r1": {
+     "mean": 23.477,
+     "sd": 14.441,
+     "n": 4
+    },
+    "delta": -2.278,
+    "fold_change": 0.912,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 20.183,
+     "R+82": 18.25,
+     "R+194": 15.547
+    },
+    "unit": "pg/ml"
+   },
+   "TNFα": {
+    "preflight": {
+     "mean": 179.362,
+     "sd": 209.656,
+     "n": 12,
+     "min": 60.14,
+     "max": 687.17
+    },
+    "return_r1": {
+     "mean": 256.98,
+     "sd": 312.028,
+     "n": 4
+    },
+    "delta": 77.618,
+    "fold_change": 1.433,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 123.75,
+     "R+82": 221.43,
+     "R+194": 116.895
+    },
+    "unit": "pg/ml"
+   },
+   "TNFβ": {
+    "preflight": {
+     "mean": 111.519,
+     "sd": 247.903,
+     "n": 12,
+     "min": 10.31,
+     "max": 867.96
+    },
+    "return_r1": {
+     "mean": 114.285,
+     "sd": 196.33,
+     "n": 4
+    },
+    "delta": 2.766,
+    "fold_change": 1.025,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 35.87,
+     "R+82": 83.093,
+     "R+194": 33.153
+    },
+    "unit": "pg/ml"
+   },
+   "VEGF-A": {
+    "preflight": {
+     "mean": 704.562,
+     "sd": 225.924,
+     "n": 12,
+     "min": 243.34,
+     "max": 1053.6
+    },
+    "return_r1": {
+     "mean": 672.353,
+     "sd": 340.436,
+     "n": 4
+    },
+    "delta": -32.209,
+    "fold_change": 0.954,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 718.933,
+     "R+82": 708.48,
+     "R+194": 760.85
+    },
+    "unit": "pg/ml"
+   },
+   "6CKine": {
+    "preflight": {
+     "mean": 1042.7,
+     "sd": 422.866,
+     "n": 12,
+     "min": 595.0,
+     "max": 2160.0
+    },
+    "return_r1": {
+     "mean": 1046.1,
+     "sd": 374.918,
+     "n": 4
+    },
+    "delta": 3.39,
+    "fold_change": 1.003,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 753.355,
+     "R+82": 975.455,
+     "R+194": 634.05
+    },
+    "unit": "pg/ml"
+   },
+   "BCA-1": {
+    "preflight": {
+     "mean": 50.08,
+     "sd": 25.632,
+     "n": 12,
+     "min": 27.63,
+     "max": 117.97
+    },
+    "return_r1": {
+     "mean": 43.508,
+     "sd": 24.821,
+     "n": 4
+    },
+    "delta": -6.572,
+    "fold_change": 0.869,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 25.205,
+     "R+82": 31.017,
+     "R+194": 36.828
+    },
+    "unit": "pg/ml"
+   },
+   "CTACK": {
+    "preflight": {
+     "mean": 1068.1,
+     "sd": 140.814,
+     "n": 12,
+     "min": 876.08,
+     "max": 1439.5
+    },
+    "return_r1": {
+     "mean": 1216.5,
+     "sd": 204.514,
+     "n": 4
+    },
+    "delta": 148.478,
+    "fold_change": 1.139,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1184.5,
+     "R+82": 1251.4,
+     "R+194": 1339.0
+    },
+    "unit": "pg/ml"
+   },
+   "ENA-78": {
+    "preflight": {
+     "mean": 983.686,
+     "sd": 381.802,
+     "n": 12,
+     "min": 368.22,
+     "max": 1614.5
+    },
+    "return_r1": {
+     "mean": 1152.1,
+     "sd": 247.485,
+     "n": 4
+    },
+    "delta": 168.379,
+    "fold_change": 1.171,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 939.842,
+     "R+82": 1026.3,
+     "R+194": 1522.4
+    },
+    "unit": "pg/ml"
+   },
+   "Eotaxin-2": {
+    "preflight": {
+     "mean": 760.036,
+     "sd": 372.61,
+     "n": 12,
+     "min": 274.23,
+     "max": 1508.6
+    },
+    "return_r1": {
+     "mean": 725.857,
+     "sd": 498.284,
+     "n": 4
+    },
+    "delta": -34.178,
+    "fold_change": 0.955,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 824.225,
+     "R+82": 678.17,
+     "R+194": 932.212
+    },
+    "unit": "pg/ml"
+   },
+   "Eotaxin-3": {
+    "preflight": {
+     "mean": 47.172,
+     "sd": 25.375,
+     "n": 12,
+     "min": 13.5,
+     "max": 98.75
+    },
+    "return_r1": {
+     "mean": 40.098,
+     "sd": 27.52,
+     "n": 4
+    },
+    "delta": -7.074,
+    "fold_change": 0.85,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 31.462,
+     "R+82": 29.99,
+     "R+194": 24.027
+    },
+    "unit": "pg/ml"
+   },
+   "I-309": {
+    "preflight": {
+     "mean": 2.103,
+     "sd": 1.973,
+     "n": 12,
+     "min": 0.2,
+     "max": 5.3
+    },
+    "return_r1": {
+     "mean": 2.502,
+     "sd": 3.313,
+     "n": 4
+    },
+    "delta": 0.399,
+    "fold_change": 1.19,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1.623,
+     "R+82": 1.483,
+     "R+194": 1.585
+    },
+    "unit": "pg/ml"
+   },
+   "IL-16": {
+    "preflight": {
+     "mean": 229.119,
+     "sd": 137.044,
+     "n": 12,
+     "min": 84.6,
+     "max": 514.79
+    },
+    "return_r1": {
+     "mean": 212.625,
+     "sd": 179.327,
+     "n": 4
+    },
+    "delta": -16.494,
+    "fold_change": 0.928,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 191.735,
+     "R+82": 149.422,
+     "R+194": 132.188
+    },
+    "unit": "pg/ml"
+   },
+   "IL-20": {
+    "preflight": {
+     "mean": 636.986,
+     "sd": 608.545,
+     "n": 12,
+     "min": 45.34,
+     "max": 1790.6
+    },
+    "return_r1": {
+     "mean": 492.93,
+     "sd": 706.212,
+     "n": 4
+    },
+    "delta": -144.056,
+    "fold_change": 0.774,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 440.445,
+     "R+82": 397.083,
+     "R+194": 300.0
+    },
+    "unit": "pg/ml"
+   },
+   "IL-21": {
+    "preflight": {
+     "mean": 21.149,
+     "sd": 21.109,
+     "n": 12,
+     "min": 3.81,
+     "max": 75.1
+    },
+    "return_r1": {
+     "mean": 28.85,
+     "sd": 20.473,
+     "n": 4
+    },
+    "delta": 7.701,
+    "fold_change": 1.364,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 21.355,
+     "R+82": 19.383,
+     "R+194": 16.457
+    },
+    "unit": "pg/ml"
+   },
+   "IL-23": {
+    "preflight": {
+     "mean": 2145.9,
+     "sd": 1881.9,
+     "n": 12,
+     "min": 284.12,
+     "max": 6300.0
+    },
+    "return_r1": {
+     "mean": 2241.0,
+     "sd": 2320.5,
+     "n": 4
+    },
+    "delta": 95.162,
+    "fold_change": 1.044,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1545.8,
+     "R+82": 1351.6,
+     "R+194": 1229.9
+    },
+    "unit": "pg/ml"
+   },
+   "IL-28A": {
+    "preflight": {
+     "mean": 442.882,
+     "sd": 447.7,
+     "n": 12,
+     "min": 5.12,
+     "max": 1432.6
+    },
+    "return_r1": {
+     "mean": 466.715,
+     "sd": 519.965,
+     "n": 4
+    },
+    "delta": 23.832,
+    "fold_change": 1.054,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 359.567,
+     "R+82": 313.435,
+     "R+194": 255.595
+    },
+    "unit": "pg/ml"
+   },
+   "IL-33": {
+    "preflight": {
+     "mean": 78.247,
+     "sd": 63.948,
+     "n": 12,
+     "min": 10.68,
+     "max": 215.14
+    },
+    "return_r1": {
+     "mean": 82.198,
+     "sd": 83.113,
+     "n": 4
+    },
+    "delta": 3.951,
+    "fold_change": 1.05,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 65.422,
+     "R+82": 65.945,
+     "R+194": 52.358
+    },
+    "unit": "pg/ml"
+   },
+   "LIF": {
+    "preflight": {
+     "mean": 49.547,
+     "sd": 35.425,
+     "n": 12,
+     "min": 10.3,
+     "max": 100.11
+    },
+    "return_r1": {
+     "mean": 40.45,
+     "sd": 41.787,
+     "n": 4
+    },
+    "delta": -9.097,
+    "fold_change": 0.816,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 20.35,
+     "R+82": 30.567,
+     "R+194": 13.922
+    },
+    "unit": "pg/ml"
+   },
+   "MCP-2": {
+    "preflight": {
+     "mean": 43.722,
+     "sd": 13.769,
+     "n": 12,
+     "min": 23.52,
+     "max": 64.47
+    },
+    "return_r1": {
+     "mean": 40.4,
+     "sd": 12.778,
+     "n": 4
+    },
+    "delta": -3.322,
+    "fold_change": 0.924,
+    "crew_up": 0,
+    "crew_down": 4,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 39.013,
+     "R+82": 40.447,
+     "R+194": 39.267
+    },
+    "unit": "pg/ml"
+   },
+   "MCP-4": {
+    "preflight": {
+     "mean": 125.124,
+     "sd": 47.642,
+     "n": 12,
+     "min": 63.99,
+     "max": 216.93
+    },
+    "return_r1": {
+     "mean": 115.06,
+     "sd": 51.461,
+     "n": 4
+    },
+    "delta": -10.064,
+    "fold_change": 0.92,
+    "crew_up": 0,
+    "crew_down": 4,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 109.13,
+     "R+82": 103.192,
+     "R+194": 100.882
+    },
+    "unit": "pg/ml"
+   },
+   "MIP-1δ": {
+    "preflight": {
+     "mean": 4180.7,
+     "sd": 836.935,
+     "n": 12,
+     "min": 2466.3,
+     "max": 5334.5
+    },
+    "return_r1": {
+     "mean": 4362.4,
+     "sd": 799.579,
+     "n": 4
+    },
+    "delta": 181.672,
+    "fold_change": 1.043,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 4756.1,
+     "R+82": 3552.8,
+     "R+194": 5721.9
+    },
+    "unit": "pg/ml"
+   },
+   "SCF": {
+    "preflight": {
+     "mean": 67.48,
+     "sd": 52.899,
+     "n": 12,
+     "min": 12.08,
+     "max": 156.25
+    },
+    "return_r1": {
+     "mean": 56.512,
+     "sd": 53.269,
+     "n": 4
+    },
+    "delta": -10.968,
+    "fold_change": 0.837,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 45.33,
+     "R+82": 43.872,
+     "R+194": 41.935
+    },
+    "unit": "pg/ml"
+   },
+   "SDF-1α+β": {
+    "preflight": {
+     "mean": 7383.7,
+     "sd": 1534.8,
+     "n": 12,
+     "min": 4917.8,
+     "max": 9590.0
+    },
+    "return_r1": {
+     "mean": 6962.7,
+     "sd": 1780.3,
+     "n": 4
+    },
+    "delta": -420.993,
+    "fold_change": 0.943,
+    "crew_up": 1,
+    "crew_down": 3,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 6240.6,
+     "R+82": 5287.3,
+     "R+194": 7449.9
+    },
+    "unit": "pg/ml"
+   },
+   "TARC": {
+    "preflight": {
+     "mean": 113.529,
+     "sd": 31.353,
+     "n": 12,
+     "min": 60.95,
+     "max": 169.18
+    },
+    "return_r1": {
+     "mean": 132.695,
+     "sd": 102.231,
+     "n": 4
+    },
+    "delta": 19.166,
+    "fold_change": 1.169,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 124.622,
+     "R+82": 65.797,
+     "R+194": 156.78
+    },
+    "unit": "pg/ml"
+   },
+   "TPO": {
+    "preflight": {
+     "mean": 935.347,
+     "sd": 437.384,
+     "n": 12,
+     "min": 441.59,
+     "max": 2067.3
+    },
+    "return_r1": {
+     "mean": 839.355,
+     "sd": 602.19,
+     "n": 4
+    },
+    "delta": -95.992,
+    "fold_change": 0.897,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 821.005,
+     "R+82": 644.045,
+     "R+194": 611.548
+    },
+    "unit": "pg/ml"
+   },
+   "TRAIL": {
+    "preflight": {
+     "mean": 65.182,
+     "sd": 28.718,
+     "n": 12,
+     "min": 17.65,
+     "max": 109.03
+    },
+    "return_r1": {
+     "mean": 73.965,
+     "sd": 43.151,
+     "n": 4
+    },
+    "delta": 8.783,
+    "fold_change": 1.135,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 62.047,
+     "R+82": 67.017,
+     "R+194": 67.21
+    },
+    "unit": "pg/ml"
+   },
+   "TSLP": {
+    "preflight": {
+     "mean": 12.824,
+     "sd": 11.364,
+     "n": 12,
+     "min": 1.46,
+     "max": 33.73
+    },
+    "return_r1": {
+     "mean": 11.082,
+     "sd": 9.322,
+     "n": 4
+    },
+    "delta": -1.742,
+    "fold_change": 0.864,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 7.383,
+     "R+82": 6.61,
+     "R+194": 5.48
+    },
+    "unit": "pg/ml"
+   }
+  },
+  "osd575_cardio": {
+   "a-2 Macroglobulin": {
+    "preflight": {
+     "mean": 1458890.1,
+     "sd": 881557.6,
+     "n": 12,
+     "min": 531433.9,
+     "max": 3030400.0
+    },
+    "return_r1": {
+     "mean": 1666364.3,
+     "sd": 977609.5,
+     "n": 4
+    },
+    "delta": 207474.2,
+    "fold_change": 1.142,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1843150.0,
+     "R+82": 2077625.0,
+     "R+194": 1897075.0
+    },
+    "unit": "ng/ml"
+   },
+   "AGP": {
+    "preflight": {
+     "mean": 2148658.3,
+     "sd": 925263.1,
+     "n": 12,
+     "min": 1048700.0,
+     "max": 3653700.0
+    },
+    "return_r1": {
+     "mean": 1718713.6,
+     "sd": 1113592.1,
+     "n": 4
+    },
+    "delta": -429944.7,
+    "fold_change": 0.8,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 2573875.0,
+     "R+82": 2831325.0,
+     "R+194": 3073325.0
+    },
+    "unit": "ng/ml"
+   },
+   "CRP": {
+    "preflight": {
+     "mean": 17712500.0,
+     "sd": 21612887.4,
+     "n": 12,
+     "min": 1289600.0,
+     "max": 75749000.0
+    },
+    "return_r1": {
+     "mean": 30316775.0,
+     "sd": 35723770.2,
+     "n": 4
+    },
+    "delta": 12604275.0,
+    "fold_change": 1.712,
+    "crew_up": 4,
+    "crew_down": 0,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 17997025.0,
+     "R+82": 13561500.0,
+     "R+194": 23065600.0
+    },
+    "unit": "pg/ml"
+   },
+   "Fetuin A36": {
+    "preflight": {
+     "mean": 244949.3,
+     "sd": 80346.0,
+     "n": 12,
+     "min": 144424.4,
+     "max": 373933.4
+    },
+    "return_r1": {
+     "mean": 226068.1,
+     "sd": 97566.2,
+     "n": 4
+    },
+    "delta": -18881.1,
+    "fold_change": 0.923,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 247190.9,
+     "R+82": 279038.1,
+     "R+194": 274029.9
+    },
+    "unit": "ng/ml"
+   },
+   "Fibrinogen": {
+    "preflight": {
+     "mean": 4221.6,
+     "sd": 1137.9,
+     "n": 12,
+     "min": 2780.4,
+     "max": 6533.2
+    },
+    "return_r1": {
+     "mean": 3330.9,
+     "sd": 1221.2,
+     "n": 4
+    },
+    "delta": -890.656,
+    "fold_change": 0.789,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 3534.8,
+     "R+82": 3448.1,
+     "R+194": 4041.3
+    },
+    "unit": "ng/ml"
+   },
+   "Haptoglobin": {
+    "preflight": {
+     "mean": 5820826.4,
+     "sd": 7522132.7,
+     "n": 12,
+     "min": 73870.5,
+     "max": 17907000.0
+    },
+    "return_r1": {
+     "mean": 6192656.9,
+     "sd": 8122683.2,
+     "n": 4
+    },
+    "delta": 371830.5,
+    "fold_change": 1.064,
+    "crew_up": 2,
+    "crew_down": 2,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 9422450.0,
+     "R+82": 11603525.0,
+     "R+194": 20406875.0
+    },
+    "unit": "ng/ml"
+   },
+   "L-Selectin": {
+    "preflight": {
+     "mean": 968948.0,
+     "sd": 297420.7,
+     "n": 12,
+     "min": 515957.2,
+     "max": 1364800.0
+    },
+    "return_r1": {
+     "mean": 850470.9,
+     "sd": 275697.1,
+     "n": 4
+    },
+    "delta": -118477.1,
+    "fold_change": 0.878,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 1097337.3,
+     "R+82": 1157950.0,
+     "R+194": 1122233.1
+    },
+    "unit": "pg/ml"
+   },
+   "PF4": {
+    "preflight": {
+     "mean": 11522.1,
+     "sd": 8292.0,
+     "n": 12,
+     "min": 2156.3,
+     "max": 26633.2
+    },
+    "return_r1": {
+     "mean": 14142.4,
+     "sd": 9992.1,
+     "n": 4
+    },
+    "delta": 2620.3,
+    "fold_change": 1.227,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 15230.7,
+     "R+82": 17694.7,
+     "R+194": 16548.8
+    },
+    "unit": "ng/ml"
+   },
+   "SAP": {
+    "preflight": {
+     "mean": 9159341.7,
+     "sd": 4886142.2,
+     "n": 12,
+     "min": 4048000.0,
+     "max": 18242000.0
+    },
+    "return_r1": {
+     "mean": 10212550.0,
+     "sd": 5314399.4,
+     "n": 4
+    },
+    "delta": 1053208.3,
+    "fold_change": 1.115,
+    "crew_up": 3,
+    "crew_down": 1,
+    "crew_n": 4,
+    "recovery": {
+     "R+45": 10819725.0,
+     "R+82": 11765500.0,
+     "R+194": 11132100.0
+    },
+    "unit": "pg/ml"
+   }
+  },
+  "osd656_urine_selected": {
+   "il6": {
+    "preflight": {
+     "mean": 12.053,
+     "sd": 1.727,
+     "n": 11,
+     "min": 8.535,
+     "max": 14.464
+    },
+    "return_r1": {
+     "mean": 14.048,
+     "sd": 1.21,
+     "n": 3
+    },
+    "delta": 1.995,
+    "fold_change": 3.986,
+    "crew_up": 3,
+    "crew_down": 0,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 12.564,
+     "R+82": 10.561
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Interleukin-6"
+   },
+   "cxcl8": {
+    "preflight": {
+     "mean": 11.446,
+     "sd": 1.507,
+     "n": 11,
+     "min": 9.219,
+     "max": 13.179
+    },
+    "return_r1": {
+     "mean": 15.373,
+     "sd": 2.079,
+     "n": 3
+    },
+    "delta": 3.927,
+    "fold_change": 15.211,
+    "crew_up": 3,
+    "crew_down": 0,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 11.876,
+     "R+82": 10.909
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Interleukin-8, IL8"
+   },
+   "mpo": {
+    "preflight": {
+     "mean": 5.404,
+     "sd": 2.306,
+     "n": 11,
+     "min": 2.607,
+     "max": 11.039
+    },
+    "return_r1": {
+     "mean": 10.612,
+     "sd": 4.484,
+     "n": 3
+    },
+    "delta": 5.208,
+    "fold_change": 36.963,
+    "crew_up": 3,
+    "crew_down": 0,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 6.452,
+     "R+82": 6.901
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Myeloperoxidase"
+   },
+   "lcn2": {
+    "preflight": {
+     "mean": 9.068,
+     "sd": 2.266,
+     "n": 11,
+     "min": 6.954,
+     "max": 12.474
+    },
+    "return_r1": {
+     "mean": 10.62,
+     "sd": 1.722,
+     "n": 3
+    },
+    "delta": 1.551,
+    "fold_change": 2.93,
+    "crew_up": 3,
+    "crew_down": 0,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 9.2,
+     "R+82": 7.889
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Neutrophil gelatinase-associated lipocalin"
+   },
+   "s100a12": {
+    "preflight": {
+     "mean": 5.286,
+     "sd": 0.657,
+     "n": 11,
+     "min": 3.92,
+     "max": 6.144
+    },
+    "return_r1": {
+     "mean": 9.251,
+     "sd": 3.742,
+     "n": 3
+    },
+    "delta": 3.965,
+    "fold_change": 15.617,
+    "crew_up": 3,
+    "crew_down": 0,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 6.509,
+     "R+82": 5.687
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Protein S100-A12"
+   },
+   "mmp8": {
+    "preflight": {
+     "mean": 6.388,
+     "sd": 2.313,
+     "n": 11,
+     "min": 1.657,
+     "max": 9.769
+    },
+    "return_r1": {
+     "mean": 11.198,
+     "sd": 3.193,
+     "n": 3
+    },
+    "delta": 4.81,
+    "fold_change": 28.051,
+    "crew_up": 3,
+    "crew_down": 0,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 8.073,
+     "R+82": 6.467
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Neutrophil collagenase"
+   },
+   "tnf": {
+    "preflight": {
+     "mean": 10.042,
+     "sd": 1.177,
+     "n": 11,
+     "min": 9.12,
+     "max": 12.073
+    },
+    "return_r1": {
+     "mean": 9.45,
+     "sd": 0.129,
+     "n": 3
+    },
+    "delta": -0.592,
+    "fold_change": 0.663,
+    "crew_up": 1,
+    "crew_down": 2,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 9.972,
+     "R+82": 9.389
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Tumor necrosis factor"
+   },
+   "il10": {
+    "preflight": {
+     "mean": 9.863,
+     "sd": 0.351,
+     "n": 11,
+     "min": 9.505,
+     "max": 10.781
+    },
+    "return_r1": {
+     "mean": 9.92,
+     "sd": 0.101,
+     "n": 3
+    },
+    "delta": 0.057,
+    "fold_change": 1.04,
+    "crew_up": 2,
+    "crew_down": 1,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 9.868,
+     "R+82": 9.945
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Interleukin-10"
+   },
+   "ccl2": {
+    "preflight": {
+     "mean": 12.35,
+     "sd": 0.939,
+     "n": 11,
+     "min": 11.176,
+     "max": 14.019
+    },
+    "return_r1": {
+     "mean": 13.407,
+     "sd": 0.85,
+     "n": 3
+    },
+    "delta": 1.056,
+    "fold_change": 2.079,
+    "crew_up": 3,
+    "crew_down": 0,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 12.549,
+     "R+82": 10.973
+    },
+    "unit": "NPQ (log2)",
+    "protein": "C-C motif chemokine 2"
+   },
+   "spp1": {
+    "preflight": {
+     "mean": 17.512,
+     "sd": 0.27,
+     "n": 11,
+     "min": 17.083,
+     "max": 17.939
+    },
+    "return_r1": {
+     "mean": 17.184,
+     "sd": 0.906,
+     "n": 3
+    },
+    "delta": -0.327,
+    "fold_change": 0.797,
+    "crew_up": 2,
+    "crew_down": 1,
+    "crew_n": 3,
+    "recovery": {
+     "R+45": 17.576,
+     "R+82": 17.23
+    },
+    "unit": "NPQ (log2)",
+    "protein": "Osteopontin"
+   }
+  },
+  "osd53_genes_p_lt_0_05": [
+   {
+    "probe": "C259",
+    "genbank": "S83171; Z35491",
+    "symbol": "BAG1",
+    "name": "BCL2-binding athanogene 1 (BAG1); glucocorticoid receptor-associated protein RAP46",
+    "preflight_mean": 20.4,
+    "postflight_mean": 7.5,
+    "ratio": 0.37,
+    "log2_ratio": -1.44,
+    "p_value": 0.014,
+    "astronauts_pre": 5,
+    "astronauts_post": 6
+   },
+   {
+    "probe": "S62",
+    "genbank": "U51166",
+    "symbol": "TDG",
+    "name": "G/T mismatch-specific thymine DNA glycosylase (TDG)",
+    "preflight_mean": 0.67,
+    "postflight_mean": 4.0,
+    "ratio": 6.0,
+    "log2_ratio": 2.58,
+    "p_value": 0.02,
+    "astronauts_pre": 3,
+    "astronauts_post": 3
+   },
+   {
+    "probe": "S120",
+    "genbank": "M16660",
+    "symbol": "HSP90",
+    "name": "90-kDa heat-shock protein beta (HSP90); 84-kDa heat-shock protein beta (HSP84); HSPCB",
+    "preflight_mean": 34.33,
+    "postflight_mean": 14.0,
+    "ratio": 0.41,
+    "log2_ratio": -1.29,
+    "p_value": 0.024,
+    "astronauts_pre": 6,
+    "astronauts_post": 6
+   },
+   {
+    "probe": "869",
+    "genbank": "X83441",
+    "symbol": "LIG4",
+    "name": "DNA ligase IV (LIG4); polydeoxyribonucleotide synthase",
+    "preflight_mean": 3.67,
+    "postflight_mean": 1.0,
+    "ratio": 0.27,
+    "log2_ratio": -1.87,
+    "p_value": 0.025,
+    "astronauts_pre": 3,
+    "astronauts_post": 3
+   },
+   {
+    "probe": "C277",
+    "genbank": "K00650",
+    "symbol": "c-fos",
+    "name": "c-fos proto-oncogene; G0S7 protein",
+    "preflight_mean": 1.5,
+    "postflight_mean": 4.67,
+    "ratio": 3.11,
+    "log2_ratio": 1.64,
+    "p_value": 0.032,
+    "astronauts_pre": 6,
+    "astronauts_post": 6
+   },
+   {
+    "probe": "365",
+    "genbank": "L20046; X69978",
+    "symbol": "XPG",
+    "name": "xeroderma pigmentosum group G complementing protein (XPG); X-ray repair-complementing defe",
+    "preflight_mean": 1.0,
+    "postflight_mean": 3.67,
+    "ratio": 3.67,
+    "log2_ratio": 1.87,
+    "p_value": 0.04,
+    "astronauts_pre": 3,
+    "astronauts_post": 3
+   },
+   {
+    "probe": "658",
+    "genbank": "Y00483; M21304",
+    "symbol": "GPX1",
+    "name": "glutathione peroxidase 1 (GSHPX1; GPX1)",
+    "preflight_mean": 35.67,
+    "postflight_mean": 18.5,
+    "ratio": 0.52,
+    "log2_ratio": -0.95,
+    "p_value": 0.041,
+    "astronauts_pre": 6,
+    "astronauts_post": 6
+   },
+   {
+    "probe": "432",
+    "genbank": "M36089",
+    "symbol": "XRCC1",
+    "name": "X-ray repair-complementing defective repair in Chinese hamster cells 1 (XRCC1)",
+    "preflight_mean": 10.83,
+    "postflight_mean": 4.83,
+    "ratio": 0.45,
+    "log2_ratio": -1.16,
+    "p_value": 0.045,
+    "astronauts_pre": 6,
+    "astronauts_post": 6
+   },
+   {
+    "probe": "637",
+    "genbank": "J03250",
+    "symbol": "TOP1",
+    "name": "DNA topoisomerase I (TOP1)",
+    "preflight_mean": 0.33,
+    "postflight_mean": 1.67,
+    "ratio": 5.0,
+    "log2_ratio": 2.32,
+    "p_value": 0.047,
+    "astronauts_pre": 3,
+    "astronauts_post": 3
+   }
+  ]
+ }
+}

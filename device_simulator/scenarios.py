@@ -12,9 +12,31 @@ for "Apply now". Values are drawn inside fixed bands, so:
   * "caution"  -> inside the yellow band of the chosen system (yellow alerts only)
   * "critical" -> inside the red band of the chosen system (red alerts)
 
+Lab markers (serum CMP/cytokines, urine inflammation proteins) are drawn inside bands derived from
+REAL NASA OSDR data (health/data/nasa_reference.json, built by scripts/build_nasa_reference.py):
+pre-flight Inspiration4 values (OSD-575, OSD-656) for "normal", and the real return-day shift for
+an immune problem. Radiation follows real NASA DONKI space weather when the server reports it
+(see "space_weather" in the resolved scenario).
+
 Only the Python standard library is used (the simulator runs without Django).
 """
+import json
 import random
+from pathlib import Path
+
+REFERENCE_PATH = Path(__file__).resolve().parent.parent / "health" / "data" / "nasa_reference.json"
+
+
+def load_reference(path=REFERENCE_PATH):
+    """The OSDR-derived bands ({} if the file is missing, then no lab markers are sent)."""
+    try:
+        return json.loads(Path(path).read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+REFERENCE = load_reference()
+LAB = {m["metric"]: m for m in REFERENCE.get("monitoring", [])}
 
 LEVELS = ["normal", "caution", "critical"]
 
@@ -24,7 +46,7 @@ SYSTEMS = {
     "respiratory": "Respiratory: SpO2 and breathing rate",
     "radiation": "Radiation: personal dosimeter",
     "behavioral": "Behavioral: stress, sleep and reaction-test lapses",
-    "immune": "Immune: body temperature and blood glucose",
+    "immune": "Immune: fever, glucose and inflammation markers shifted by the real Inspiration4 change (OSD-575/656)",
 }
 # Shared cabin (environment) sensors. Cabin alerts have no astronaut.
 CABIN_SYSTEMS = {
@@ -52,6 +74,9 @@ PRESETS = [
      "description": "CO2 scrubber failure: the cabin raises a red CO2 alert; crew vitals stay green."},
     {"key": "radiation_storm", "label": "Radiation storm",
      "description": "Solar particle event: cabin radiation and every astronaut's dose are red."},
+    {"key": "space_weather", "label": "Replay real space weather",
+     "description": "Replays a real NASA DONKI event (solar energetic particles or a solar flare): SEP or X-class "
+                    "flare = radiation storm for everyone, M-class = caution. Alerts cite the event."},
     {"key": "realistic", "label": "Random / realistic",
      "description": "Mostly green with rare short anomalies (about one yellow blip every few minutes, "
                     "a red one much less often). Blips clear by themselves."},
@@ -60,7 +85,8 @@ PRESETS = [
 ]
 PRESET_KEYS = [p["key"] for p in PRESETS]
 DEFAULT_CONFIG = {"preset": "realistic", "target": 2, "system": "cardiovascular",
-                  "custom": {}, "cabin": {"level": "normal", "system": "co2"}, "anomaly_rate": 0.002}
+                  "custom": {}, "cabin": {"level": "normal", "system": "co2"}, "anomaly_rate": 0.002,
+                  "event": None}
 MAX_ANOMALY_RATE = 0.2
 
 
@@ -122,6 +148,13 @@ def validate(data, crew_ids):
     if cabin.get("system", "co2") not in CABIN_SYSTEMS:
         errors.append(f"cabin.system must be one of {', '.join(CABIN_SYSTEMS)}")
     cfg["cabin"] = {"level": _level(cabin.get("level")), "system": cabin.get("system") if cabin.get("system") in CABIN_SYSTEMS else "co2"}
+    if preset == "space_weather":
+        ev = data.get("event")
+        if not isinstance(ev, dict) or not ev.get("id") or ev.get("level") not in ("caution", "critical"):
+            errors.append("space_weather needs event {id, type, time, level: caution|critical} (pick a real DONKI event)")
+        else:
+            cfg["event"] = {k: str(ev.get(k) or "")[:120] for k in ("id", "type", "time", "label", "link")}
+            cfg["event"]["level"] = ev["level"]
     if data.get("anomaly_rate") not in (None, ""):
         try:
             rate = float(data["anomaly_rate"])
@@ -169,18 +202,43 @@ def resolve(cfg, crew_ids):
         for i in ids:
             astro[str(i)] = {"level": "critical", "system": "radiation"}
         cabin = {"level": "critical", "system": "radiation"}
+    elif preset == "space_weather" and isinstance(cfg.get("event"), dict):
+        lvl = cfg["event"].get("level", "critical")
+        for i in ids:
+            astro[str(i)] = {"level": lvl, "system": "radiation"}
+        cabin = {"level": lvl, "system": "radiation"}
     elif preset == "custom":
         for key, val in (cfg.get("custom") or {}).items():
             if key in astro:
                 astro[key] = {"level": _level(val.get("level")), "system": val.get("system") if val.get("system") in SYSTEMS else "cardiovascular"}
         c = cfg.get("cabin") or {}
         cabin = {"level": _level(c.get("level")), "system": c.get("system") if c.get("system") in CABIN_SYSTEMS else "co2"}
-    return {
+    out = {
         "mode": "random" if preset == "realistic" else "fixed",
         "anomaly_rate": float(cfg.get("anomaly_rate") or 0),
         "astronauts": astro,
         "cabin": cabin,
+        "space_weather": None,
     }
+    if preset == "space_weather" and isinstance(cfg.get("event"), dict):
+        out["space_weather"] = dict(cfg["event"], replay=True)
+    return out
+
+
+def apply_space_weather(resolved, sw):
+    """
+    Live space weather (from NASA DONKI, see health/donki.py) on top of a *realistic* scenario:
+    sw = {"level": "caution"|"critical", "id", "type", "time", ...} raises everyone's radiation.
+    Fixed presets are left alone so "All nominal" really stays nominal.
+    """
+    if not sw or sw.get("level") not in ("caution", "critical") or resolved.get("mode") != "random":
+        return resolved
+    resolved = dict(resolved, space_weather=dict(sw, replay=False))
+    resolved["astronauts"] = {k: (v if v["level"] != "normal" else {"level": sw["level"], "system": "radiation"})
+                              for k, v in resolved["astronauts"].items()}
+    resolved["cabin"] = {"level": sw["level"], "system": "radiation"}
+    resolved["mode"] = "random"
+    return resolved
 
 
 def expected_status(resolved):
@@ -252,6 +310,33 @@ def nominal_cabin(rng):
     }
 
 
+def nominal_labs(rng):
+    """Serum/urine markers inside the green band derived from real pre-flight values (OSD-575/656)."""
+    out = {}
+    for metric, m in LAB.items():
+        lo, hi = m["green"]
+        mu = m["preflight_mean"]
+        v = min(hi, max(lo, rng.gauss(mu, (hi - lo) / 4)))
+        out[metric] = round(v, 3 if abs(v) < 100 else 1)
+    return out
+
+
+def shifted_labs(level, rng):
+    """
+    Immune problem: shift each cytokine / CRP / urine marker by the REAL Inspiration4 return-day change (OSD-575/656).
+    caution = 1.05-1.6 x the observed shift (past the R+1 mean, short of twice the shift),
+    critical = 2.1-2.8 x the observed shift (beyond twice what flight did).
+    """
+    k = (1.05, 1.6) if level == "caution" else (2.1, 2.8)
+    out = {}
+    for metric, m in LAB.items():
+        if metric.startswith("serum_"):      # metabolic panel stays nominal; only immune markers shift
+            continue
+        v = m["preflight_mean"] + m["flight_shift"] * rng.uniform(*k)
+        out[metric] = round(max(v, 0), 3 if abs(v) < 100 else 1)
+    return out
+
+
 def problem_values(a, level, system, rng):
     """Metric -> value overrides for an astronaut in caution/critical."""
     if level == "normal":
@@ -277,9 +362,10 @@ def problem_values(a, level, system, rng):
         return {"stress_level": _u(rng, 78, 88), "sleep_total": _u(rng, 4.2, 4.8, 1),
                 "pvt_lapses": rng.randint(3, 4), "pvt_reaction_time": int(pvt * rng.uniform(1.25, 1.35))}
     if system == "immune":
+        labs = shifted_labs(level, rng)
         if c:
-            return {"body_temperature": _u(rng, 38.3, 39.0, 1), "blood_glucose": _u(rng, 190, 215)}
-        return {"body_temperature": _u(rng, 37.6, 37.9, 1), "blood_glucose": _u(rng, 145, 170)}
+            return {"body_temperature": _u(rng, 38.3, 39.0, 1), "blood_glucose": _u(rng, 190, 215), **labs}
+        return {"body_temperature": _u(rng, 37.6, 37.9, 1), "blood_glucose": _u(rng, 145, 170), **labs}
     return {}
 
 
@@ -311,8 +397,10 @@ UNITS = {
     "cabin_pressure": ("kPa", "cabin"), "cabin_radiation": ("mSv/day", "cabin"), "noise": ("dB", "cabin"),
     "voc": ("mg/m³", "cabin"),
 }
+for _m in LAB.values():
+    UNITS[_m["metric"]] = (_m["unit"], "lab")
 LIVE_KEYS = list(nominal_live({}, random.Random(0)).keys())
-DAILY_KEYS = list(nominal_daily({}, random.Random(0)).keys())
+DAILY_KEYS = list(nominal_daily({}, random.Random(0)).keys()) + list(LAB)
 
 
 def _row(ts, metric, value, astronaut=None):
@@ -360,6 +448,7 @@ def generate_batch(resolved, crew, ts, daily=False, rng=None):
         values = nominal_live(a, rng)
         if daily or any(m in DAILY_KEYS for m in problem):
             values.update(nominal_daily(a, rng))
+            values.update(nominal_labs(rng))
         values.update(problem)
         if "sleep_total" in problem and "sleep_deep" in values:      # keep the sleep stages consistent
             sl = values["sleep_total"]
