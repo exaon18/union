@@ -169,5 +169,6 @@
 
   var start = Number(new URLSearchParams(location.search).get('astronaut'));
   if (start) openDetail(start, false);
+  if (window.AstraSpaceWeather && document.getElementById('sw-body')) AstraSpaceWeather.mount(document.getElementById('sw-body'), { compact: true });   // real NASA DONKI events
   A.poll(refresh);
 })();

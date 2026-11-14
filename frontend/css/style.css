@@ -576,3 +576,60 @@ body.warping .warp { opacity: 1; }
   .sc-row { grid-template-columns: auto minmax(0, 1fr); }
   .sc-row .sc-seg, .sc-row .sc-sys { grid-column: 1 / -1; }
 }
+
+/* ---------- NASA data: space weather (DONKI), immune risk (OSDR), Science page ---------- */
+.sw-state { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--st) 45%, transparent); background: color-mix(in srgb, var(--st) 10%, rgba(0, 0, 0, .25)); margin-bottom: 12px; }
+.sw-state .b-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--st); background: color-mix(in srgb, var(--st) 18%, transparent); }
+.sw-state b { display: block; font-size: 15px; }
+.sw-state small { display: block; color: var(--text-2); font-size: 12.5px; margin: 2px 0 4px; }
+.sw-state a, .sw-list a, .sw-foot a, .sc-preview a, .study a, .foot-data a { color: var(--accent); text-decoration: none; }
+.sw-state a:hover, .sw-list a:hover, .sw-foot a:hover, .study a:hover, .foot-data a:hover { text-decoration: underline; }
+.sw-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sw-body:not(.compact) .sw-list { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.sw-ev { display: grid; grid-template-columns: 46px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: rgba(0, 0, 0, .22); border: 1px solid var(--line); border-left: 3px solid var(--st); font-size: 13px; }
+.sw-ev small { display: block; color: var(--text-3); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sw-type { font: 600 11px/1 var(--mono); letter-spacing: .06em; color: var(--st, var(--text-2)); padding: 5px 0; text-align: center; border-radius: 6px; background: color-mix(in srgb, var(--st, var(--text-3)) 14%, transparent); }
+.sw-lvl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--st, var(--text-3)); }
+.sw-foot { color: var(--text-3); font-size: 12px; margin-top: 10px; line-height: 1.55; }
+.sw-foot .tag { margin-right: 4px; }
+.sc-sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; max-height: 300px; overflow: auto; padding-right: 4px; }
+.sc-ev { display: grid; grid-template-columns: 42px 1fr auto; gap: 9px; align-items: center; text-align: left; padding: 9px 10px; border-radius: 11px; border: 1px solid var(--line); border-left: 3px solid var(--st); background: rgba(0, 0, 0, .22); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; transition: background .2s, border-color .2s; }
+.sc-ev:hover { background: color-mix(in srgb, var(--st) 8%, rgba(0, 0, 0, .22)); }
+.sc-ev.on { border-color: var(--st); background: color-mix(in srgb, var(--st) 16%, rgba(0, 0, 0, .3)); box-shadow: 0 0 0 1px var(--st); }
+.sc-ev small { display: block; color: var(--text-3); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-ev-main { min-width: 0; }
+.imm-wrap { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .imm-wrap { grid-template-columns: 1fr; } }
+.imm-sum { padding: 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--st) 45%, transparent); background: color-mix(in srgb, var(--st) 10%, rgba(0, 0, 0, .25)); }
+.imm-sum b { display: block; font-size: 26px; color: var(--st); letter-spacing: -.01em; }
+.imm-sum span { display: block; font-size: 13.5px; margin-bottom: 8px; }
+.imm-sum p { font-size: 12.5px; line-height: 1.5; }
+.imm-table td small { display: block; font-size: 11px; }
+.imm-table tr.st-red td:first-child, .imm-table tr.st-yellow td:first-child { box-shadow: inset 3px 0 0 var(--st); }
+.imm-genes { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin-top: 12px; font-size: 12.5px; }
+.imm-genes .label { margin: 0 4px 0 0; }
+.gene-chip { padding: 3px 9px; border-radius: 999px; font: 500 12px var(--mono); border: 1px solid var(--line-strong); }
+.gene-chip.up { color: #ffb3a0; border-color: rgba(255, 140, 110, .4); }
+.gene-chip.down { color: #9fd4ff; border-color: rgba(111, 211, 255, .4); }
+.study-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+.study { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 14px; border: 1px solid var(--line); background: rgba(0, 0, 0, .22); }
+.study .btn { align-self: flex-start; margin-top: auto; }
+.study-id { font: 600 12px var(--mono); color: var(--accent); letter-spacing: .08em; }
+.study h3 { font-size: 15px; line-height: 1.35; }
+.study p { font-size: 13px; }
+.study-use { color: var(--text-2); }
+.study-files { margin: 0; padding-left: 18px; font-size: 12px; word-break: break-all; }
+.sci-table td small { display: block; font-size: 11px; }
+.sci-table td.st-green, .sci-table td.st-yellow, .sci-table td.st-red { color: var(--st); }
+.fc-bars { display: grid; gap: 7px; margin-bottom: 10px; }
+.fc-row { display: grid; grid-template-columns: minmax(120px, 210px) 1fr 70px; gap: 10px; align-items: center; font-size: 13px; }
+.fc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-bar { height: 10px; border-radius: 6px; background: rgba(255, 255, 255, .05); overflow: hidden; }
+.fc-bar i { display: block; height: 100%; border-radius: 6px; }
+.fc-bar i.serum { background: linear-gradient(90deg, var(--s1), var(--accent)); }
+.fc-bar i.urine { background: linear-gradient(90deg, var(--s4), var(--warn)); }
+.fc-row b { text-align: right; font-size: 12.5px; }
+.sci-limits { margin: 0 0 10px; padding-left: 20px; color: var(--text-2); font-size: 14px; display: grid; gap: 6px; }
+.foot-data { color: var(--text-3); }
+.sw-ev > div { min-width: 0; }
+.sci-table td.num, .sci-table td:nth-child(2), .imm-table td.num { white-space: nowrap; }

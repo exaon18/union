@@ -60,7 +60,7 @@
                      : '<a class="btn btn-sm" href="checkin.html">' + A.ICONS.clipboard + 'Daily check-in</a><a class="btn btn-sm" href="pvt.html">' + A.ICONS.zap + 'Reaction test</a>') +
         '</div></div>' +
       '<section class="grid g-12">' +
-        '<div class="panel span-8 lg-12 reveal"><div class="panel-head"><h2>Live vitals <span class="sub" data-k="updated"></span></h2><span class="live-tag">Live</span></div><div class="tiles" data-k="tiles"></div></div>' +
+        '<div class="panel span-8 lg-12 reveal"><div class="panel-head"><h2>Live vitals <span class="sub">simulated from published ranges</span> <span class="sub" data-k="updated"></span></h2><span class="live-tag">Live</span></div><div class="tiles" data-k="tiles"></div></div>' +
         '<div class="panel span-4 lg-12 reveal"><div class="panel-head"><h2>' + (isSurgeon ? 'Open alerts' : 'Alerts and what to do') + '</h2><span class="sub" data-k="alert-count"></span></div><ul class="feed mid" data-k="alerts" aria-live="polite"></ul></div>' +
         '<div class="panel span-12 reveal"><div class="panel-head"><h2>Body map <span class="sub">drag to rotate · select an organ</span></h2><button class="btn btn-sm" data-k="body-reset" hidden>Reset view</button></div>' +
           '<div class="body-wrap"><div class="scene body-scene" data-k="body"></div><div><div class="organ-list" data-k="organs"></div>' +
@@ -73,6 +73,7 @@
           '<div class="kv"><div><small>Dose today</small><b data-k="rad-today">—</b><i>mSv/day</i></div><div><small>Cabin</small><b data-k="rad-cabin">—</b><i>mSv/day</i></div></div>' +
           '<div class="rad-row"><span>Est. mission total <b class="mono" data-k="rad-total">—</b> mSv</span><span data-k="rad-pct"></span></div><div class="meter"><span data-k="rad-meter" style="width:0"></span></div>' +
           '<p class="dim" style="font-size:12px;margin-top:8px">Career limit used: 600 mSv (NASA standard).</p></div>' +
+        '<div class="panel span-12 reveal" data-k="immune-panel"><div class="panel-head"><h2>Immune risk <span class="sub">lab markers vs. real Inspiration4 crew data · NASA OSDR</span></h2><span data-k="imm-badge"></span></div><div data-k="immune"></div></div>' +
         '<div class="panel span-6 lg-12 reveal"><div class="panel-head"><h2>Latest check-in</h2><span data-k="ci-when" class="sub"></span></div><div data-k="checkin"></div></div>' +
         '<div class="panel span-6 lg-12 reveal"><div class="panel-head"><h2>Reaction test results <span class="sub">PVT</span></h2></div><div class="table-wrap"><table class="table" data-k="pvt-table"></table></div></div>' +
         '<div class="span-12 disclaimer-box reveal">' + A.ICONS.shield + '<span><b>Decision-support prototype, not a diagnosis.</b> Rule-based thresholds on simulated data. Every alert must be confirmed by the flight surgeon before any action.</span></div>' +
@@ -178,6 +179,41 @@
       });
     }
 
+    /* ---------- Immune risk card (OSD-575 serum + OSD-656 urine bands, OSD-53 genes as context) ---------- */
+    var NASA = global.ASTRA_NASA || null;
+    function renderImmune() {
+      var box = q('[data-k="immune"]');
+      if (!NASA || !NASA.monitoring) { box.innerHTML = '<p class="empty">NASA reference data not loaded.</p>'; return; }
+      var mons = NASA.monitoring.filter(function (m) { return m.system === 'immune' && m.metric !== 'serum_glucose'; });
+      var n = { red: 0, yellow: 0, green: 0 }, have = 0;
+      var rows = mons.map(function (m) {
+        var r = latest[m.metric], v = r && typeof r.value === 'number' ? r.value : null, lv = v === null ? 'none' : AstraRules.levelFor(m.metric, v);
+        if (v !== null) { have++; n[lv]++; }
+        var arrow = m.direction === 'up' ? '↑' : '↓';
+        return '<tr class="st-' + lv + '"><td><b>' + A.esc(m.label) + '</b><small class="dim">' + A.esc(m.meaning) + '</small></td>' +
+          '<td class="num"><b>' + (v === null ? '—' : A.esc(String(v))) + '</b> <span class="dim">' + A.esc(m.unit) + '</span></td>' +
+          '<td class="num">' + A.esc(String(m.preflight_mean)) + '</td>' +
+          '<td class="num">' + A.esc(String(m.yellow_at)) + ' <span class="dim">' + arrow + ' ×' + m.fold_change + '</span></td>' +
+          '<td>' + (v === null ? '<span class="dim">no sample</span>' : A.badge(lv, lv === 'green' ? 'pre-flight range' : lv === 'yellow' ? 'like return day' : '2× flight change')) + '</td>' +
+          '<td class="dim">' + A.esc(m.study) + '</td></tr>';
+      }).join('');
+      var risk = n.red ? 'red' : n.yellow >= 2 ? 'yellow' : n.yellow ? 'yellow' : 'green';
+      var word = n.red ? 'High' : n.yellow >= 3 ? 'Elevated' : n.yellow ? 'Watch' : 'Low';
+      q('[data-k="imm-badge"]').innerHTML = have ? A.badge(risk, word + ' immune risk') : '';
+      var genes = (NASA.shifted && NASA.shifted['OSD-53']) || [];
+      var shifted575 = (NASA.shifted && NASA.shifted['OSD-575']) || [];
+      var html =
+        '<div class="imm-wrap"><div class="imm-sum st-' + risk + '"><b>' + word + '</b><span>' + (have ? (n.red + n.yellow) + ' of ' + have + ' markers past the Inspiration4 return-day level' : 'No lab sample yet') + '</span>' +
+          '<p class="dim">Yellow = at least as far from pre-flight as the 4 Inspiration4 crew moved on return day (R+1). Red = beyond twice that change. ' +
+          'Their consistent shifts (all 4 crew): ' + shifted575.map(function (x) { return A.esc(x.marker) + ' ×' + x.fold_change; }).join(', ') + ' (OSD-575).</p></div>' +
+        '<div class="table-wrap"><table class="table imm-table"><thead><tr><th>Marker</th><th>Latest</th><th>Pre-flight mean</th><th>Return day (R+1)</th><th>Status</th><th>Source</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
+        '<div class="imm-genes"><span class="label">Gene context · OSD-53</span>' + genes.map(function (g) {
+          return '<span class="gene-chip ' + (g.direction === 'up' ? 'up' : 'down') + '" title="' + A.esc(g.name) + ' · p=' + g.p_value + ' · ' + A.esc(g.astronauts) + '"><b>' + A.esc(g.marker) + '</b> ×' + g.fold_change + '</span>';
+        }).join('') + '<span class="dim">Stress and DNA-repair genes changed in the blood of 6 Shuttle astronauts on landing day (p &lt; 0.05). Context only, not measured here.</span></div>' +
+        '<p class="dim" style="font-size:12px;margin:10px 0 0">Lab values are simulated inside bands built from real NASA OSDR data. <a href="science.html#osdr">How the bands are built</a>.</p>';
+      if (box.dataset.sig !== html) { box.dataset.sig = html; box.innerHTML = html; }
+    }
+
     function refresh() {
       if (stopped) return Promise.resolve();
       return Promise.all([Api.getCrewMember(aid), Api.getLatest(aid), Api.getAlerts({ astronaut: aid, resolved: false, limit: 50 }), Api.getCabin()]).then(function (res) {
@@ -214,6 +250,7 @@
         q('[data-k="rad-total"]').textContent = total.toFixed(1);
         q('[data-k="rad-pct"]').textContent = pct.toFixed(1) + '% of career limit';
         var meter = q('[data-k="rad-meter"]'); meter.style.width = Math.min(100, pct) + '%'; meter.className = pct > 80 ? 'bad' : pct > 50 ? 'warn' : '';
+        renderImmune();
         var red = openAlerts.filter(function (a) { return a.level === 'red'; })[0];
         if (red) redPopup(red);
         if (!isSurgeon) A.alarm.set(member.status === 'red', { sound: true });

@@ -139,6 +139,11 @@
 
   function addAlert(aid, ev, ts, metric) {
     var a = crewById(aid);
+    if (ev.system === 'radiation' && scen && scen.preset === 'space_weather' && scen.event) {   // like health/donki.py
+      var e = scen.event, rec = ev.recommendation;
+      if (rec.indexOf('storm shelter') < 0) rec += ' Shelter in the storm shelter.';
+      ev = Object.assign({}, ev, { recommendation: (rec + ' Cause: NASA DONKI ' + e.label + ', ' + e.id + ' (' + e.time.replace('T', ' ').replace('Z', ' UTC') + ').').slice(0, 255) });
+    }
     var alert = {
       id: state.nextAlertId++, astronaut_id: aid, astronaut: a ? a.name : null,
       system: ev.system, level: ev.level, message: ev.message, recommendation: ev.recommendation,
@@ -189,6 +194,9 @@
       Object.keys(LIVE).forEach(function (m) {
         latest[m] = reading(m, LIVE[m][2](a, seedRng, false, { emergency: !!a.emergency, hourOfDay: hourOfDayEAT(now) }), LIVE[m][0], LIVE[m][1], now);
       });
+      // lab markers inside the bands derived from real NASA OSDR data (OSD-575 serum, OSD-656 urine)
+      var labs = SC.nominalLabs(mulberry32(hash('labs', a.id, md)));
+      SC.LAB.forEach(function (m) { latest[m.metric] = reading(m.metric, labs[m.metric], m.unit, 'lab', dailyTs); });
       state.latest[a.id] = latest;
     });
     Object.keys(CABIN).forEach(function (m) { state.cabin[m] = reading(m, CABIN[m][1](seedRng, false), CABIN[m][0], 'cabin', now); });
@@ -248,6 +256,16 @@
       });
       ['urine_calcium', 'exercise_minutes', 'recovery_score'].forEach(function (m) {
         var cur = state.latest[a.id][m]; if (cur && typeof cur.value === 'number') cur.value = SC.clamp(m, cur.value);
+      });
+      var labs = null;
+      SC.LAB.forEach(function (m) {      // keep a nominal lab value; redraw it after a problem
+        var prev = state.latest[a.id][m.metric], k = m.metric, v;
+        if (k in prob) v = prob[k];
+        else if (prev && prev._labok !== false && R.levelFor(k, prev.value) === 'green') v = prev.value;
+        else v = (labs = labs || SC.nominalLabs(g))[k];
+        var r = reading(k, v, m.unit, 'lab', k in prob || !prev ? now : prev.timestamp);
+        Object.defineProperty(r, '_labok', { value: !(k in prob), enumerable: false });
+        state.latest[a.id][k] = r; if (k in prob || !prev || prev._labok === false) batch.push(r);
       });
       out[a.id] = batch;
     });
@@ -509,8 +527,15 @@
       if (data.preset === 'story') { localStorage.removeItem(LS_SCEN); scen = null; }
       else {
         if (!SC.PRESETS.some(function (p) { return p.key === data.preset; })) err(400, 'preset must be one of ' + SC.PRESETS.map(function (p) { return p.key; }).join(', '));
+        var event = null;
+        if (data.preset === 'space_weather') {
+          var eid = data.event_id || (data.event || {}).id;
+          event = ((global.ASTRA_DONKI || {}).events || []).filter(function (e) { return e.id === eid && (e.level === 'critical' || e.level === 'caution'); })[0];
+          if (!event) err(400, 'pick a real DONKI SEP event or M/X-class flare (event_id)');
+          event = { id: event.id, type: event.type, time: event.time, label: event.label, link: event.link, level: event.level };
+        }
         scen = { preset: data.preset, target: Number(data.target) || 2, system: data.system || 'cardiovascular',
-          custom: data.custom || {}, cabin: data.cabin || { level: 'normal', system: 'co2' }, anomaly_rate: data.anomaly_rate || 0.002 };
+          custom: data.custom || {}, cabin: data.cabin || { level: 'normal', system: 'co2' }, anomaly_rate: data.anomaly_rate || 0.002, event: event };
         lsSet(LS_SCEN, scen); scenarioMode();
       }
       var meta = lsGet(LS_SCEN + '_meta', { version: 0 });
@@ -529,6 +554,12 @@
     simTick: function () {
       var fired = tick();
       return { saved: CREW.length * 16 + 8, errors: [], alerts: fired.map(function (al) { return { level: al.level, message: al.message, astronaut: al.astronaut || 'CABIN' }; }) };
+    },
+    getSpaceWeather: function () {
+      if (!global.AstraSpaceWeather) err(404, 'space weather not loaded on this page');
+      var d = global.AstraSpaceWeather.fromSnapshot();
+      d.active_replay = scen && scen.preset === 'space_weather' ? clone(scen.event) : null;
+      return d;
     },
     onTick: function (fn) { state.listeners.push(fn); },
     missionDay: function () { return missionDay(Date.now()); },

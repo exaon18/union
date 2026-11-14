@@ -359,6 +359,7 @@
     var links = [['index.html', 'Mission', 'mission']];
     if (s && s.role === 'astronaut') links.push(['my-health.html', 'My Health', 'health'], ['checkin.html', 'Daily Check-in', 'checkin'], ['pvt.html', 'Reaction Test', 'pvt'], ['history.html', 'History', 'history']);
     if (s && s.role === 'surgeon') links.push(['support.html', 'Support Console', 'support'], ['scenarios.html', 'Scenario Control', 'scenarios'], ['history.html', 'Crew History', 'history']);
+    links.push(['science.html', 'NASA Data', 'science']);
     return links;
   }
   function renderNav(active) {
@@ -408,6 +409,7 @@
     var el = document.getElementById('footer'); if (!el) return;
     el.className = 'footer';
     el.innerHTML = '<span class="disclaimer">' + ICONS.shield + '<span><b>Decision-support prototype, not a medical diagnosis.</b> Thresholds are demo values. Always confirm with the flight surgeon.</span></span>' +
+      '<span class="foot-data">Data: vitals simulated from published ranges · lab bands from <a href="science.html#osdr">NASA OSDR OSD-575, OSD-656, OSD-53</a> · space weather from <a href="science.html#donki">NASA DONKI</a></span>' +
       '<span>ASTRA HEALTH · Team Union · NASA Space Apps 2026 · Addis Ababa</span>';
   }
   var clockStarted = false;

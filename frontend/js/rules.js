@@ -35,7 +35,7 @@
       [RED, function (v) { return v > 90; }, 'Very high stress level', 'Stop critical tasks; contact the flight surgeon and psychologist.'],
       [YELLOW, function (v) { return v > 75; }, 'High stress level', 'Take a break; schedule a call with the flight psychologist.']]],
     radiation_dose: ['radiation', [
-      [RED, function (v) { return v > 1; }, 'High personal radiation dose', 'Move to the shielded area and contact mission support.'],
+      [RED, function (v) { return v > 1; }, 'High personal radiation dose', 'Go to the storm shelter (most shielded module) and contact mission support.'],
       [YELLOW, function (v) { return v > 0.8; }, 'Elevated personal radiation dose', 'Limit time in unshielded modules today.']]],
     sleep_total: ['behavioral', [
       [YELLOW, function (v) { return v < 5; }, 'Short sleep', 'Adjust the schedule to allow a full sleep period.']]],
@@ -54,12 +54,28 @@
       [RED, function (v) { return v < 19.5; }, 'Cabin O2 low', 'Check life support and alert mission control.'],
       [YELLOW, function (v) { return v < 20; }, 'Cabin O2 slightly low', 'Check the oxygen generator.']]],
     cabin_radiation: ['radiation', [
-      [RED, function (v) { return v > 1; }, 'Cabin radiation spike (possible solar event)', 'All crew to the shielded area.'],
+      [RED, function (v) { return v > 1; }, 'Cabin radiation spike (possible solar event)', 'All crew to the storm shelter now.'],
       [YELLOW, function (v) { return v > 0.8; }, 'Cabin radiation elevated', 'Watch space-weather reports; prepare the shielded area.']]],
     noise: ['environment', [
       [RED, function (v) { return v > 85; }, 'Cabin noise dangerously high', 'Hearing protection on now; find the source (fan or pump fault).'],
       [YELLOW, function (v) { return v > 70; }, 'Cabin noise high', 'Use hearing protection; affects sleep and stress.']]]
   };
+
+  // Lab markers: bands derived from real NASA OSDR data (OSD-575 serum, OSD-656 urine), same as
+  // health/nasa.py lab_rules(). window.ASTRA_NASA comes from js/nasa-reference.js (generated).
+  function nasaCitation(m) {
+    return 'Inspiration4 crew: ' + m.preflight_mean + ' pre-flight -> ' + m.yellow_at + ' ' + m.unit +
+      ' on return day (x' + m.fold_change + ', ' + m.crew + ' crew; NASA OSDR ' + m.study + ')';
+  }
+  ((global.ASTRA_NASA && global.ASTRA_NASA.monitoring) || []).forEach(function (m) {
+    var up = m.direction === 'up';
+    var cite = nasaCitation(m);
+    SENSOR_RULES[m.metric] = [m.system, [
+      [RED, up ? function (v) { return v >= m.red_at; } : function (v) { return v <= m.red_at; },
+        m.label + ' beyond twice the spaceflight change', ('Repeat the sample and contact the flight surgeon. ' + cite + '.').slice(0, 255)],
+      [YELLOW, up ? function (v) { return v >= m.yellow_at; } : function (v) { return v <= m.yellow_at; },
+        m.label + (up ? ' above' : ' below') + ' the post-flight level', ('Like the shift seen after flight; repeat the sample tomorrow. ' + cite + '.').slice(0, 255)]]];
+  });
 
   function fmtNum(v) {
     if (typeof v !== 'number') return String(v);
@@ -102,7 +118,7 @@
     if (c.sleep_hours < 5) found.push(['behavioral', YELLOW, 'Short sleep: ' + c.sleep_hours.toFixed(1) + ' h', 'Adjust the schedule to allow a full sleep period.']);
     if (c.mood <= 2 || c.stress >= 4) found.push(['behavioral', YELLOW, 'Low mood / high stress (mood ' + c.mood + ', stress ' + c.stress + ')', 'Schedule a private conference with the flight psychologist.']);
     if (c.exercise_minutes < 60) found.push(['musculoskeletal', YELLOW, 'Only ' + c.exercise_minutes + ' min exercise (target ≥ 60)', 'Bone and muscle loss risk in microgravity; complete the exercise session.']);
-    if (c.radiation_msv > 1) found.push(['radiation', RED, 'High radiation dose: ' + c.radiation_msv.toFixed(2) + ' mSv today', 'Move to the shielded area and contact mission support.']);
+    if (c.radiation_msv > 1) found.push(['radiation', RED, 'High radiation dose: ' + c.radiation_msv.toFixed(2) + ' mSv today', 'Go to the storm shelter (most shielded module) and contact mission support.']);
     // Optional lab value: uses the sensor rule table (health/sensor_rules.py urine_calcium)
     if (typeof c.urine_calcium === 'number' && !isNaN(c.urine_calcium)) {
       var uc = evaluateReading({ metric: 'urine_calcium', value: c.urine_calcium, unit: 'mg/day' });

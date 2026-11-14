@@ -11,7 +11,7 @@
   var SYS_SHORT = { cardiovascular: 'Cardio', respiratory: 'Respiratory', radiation: 'Radiation', behavioral: 'Behavioral', immune: 'Immune' };
   var CAB_SHORT = { co2: 'CO₂', o2: 'O₂', radiation: 'Radiation', noise: 'Noise' };
   var PRESET_ICON = { nominal: 'shield', one_caution: 'user', one_critical: 'heart', mixed: 'users', several_caution: 'users',
-    all_critical: 'alert', cabin_co2: 'wind', radiation_storm: 'radiation', realistic: 'pulse', custom: 'gauge' };
+    all_critical: 'alert', cabin_co2: 'wind', radiation_storm: 'radiation', space_weather: 'radiation', realistic: 'pulse', custom: 'gauge' };
 
   document.querySelectorAll('#counters small').forEach(function (s) {
     s.innerHTML = s.innerHTML.replace('__RED__', A.ST_ICON.red).replace('__YELLOW__', A.ST_ICON.yellow).replace('__GREEN__', A.ST_ICON.green);
@@ -31,12 +31,14 @@
   /* ---------- draft state ---------- */
   function fromConfig(cfg) {
     var d = { preset: cfg.preset === 'story' ? 'realistic' : cfg.preset, target: Number(cfg.target) || 2, system: cfg.system || 'cardiovascular',
-      anomaly_rate: Number(cfg.anomaly_rate) || 0.002, custom: {}, cabin: Object.assign({ level: 'normal', system: 'co2' }, cfg.cabin || {}) };
+      anomaly_rate: Number(cfg.anomaly_rate) || 0.002, custom: {}, cabin: Object.assign({ level: 'normal', system: 'co2' }, cfg.cabin || {}),
+      event: cfg.event || null };
     crew.forEach(function (a) { d.custom[a.id] = Object.assign({ level: 'normal', system: 'cardiovascular' }, (cfg.custom || {})[a.id] || {}); });
     return d;
   }
   function payload() {
-    return { preset: draft.preset, target: draft.target, system: draft.system, anomaly_rate: draft.anomaly_rate, custom: draft.custom, cabin: draft.cabin };
+    return { preset: draft.preset, target: draft.target, system: draft.system, anomaly_rate: draft.anomaly_rate, custom: draft.custom, cabin: draft.cabin,
+      event: draft.event, event_id: draft.event ? draft.event.id : undefined };
   }
   function resolvedDraft() { return S.resolve(payload(), crew.map(function (a) { return a.id; })); }
   function markDirty() { dirty = true; renderAll(); }
@@ -62,8 +64,35 @@
   }
   $('sc-presets').addEventListener('click', function (e) {
     var b = e.target.closest('[data-p]'); if (!b) return;
-    draft.preset = b.dataset.p; markDirty();
+    draft.preset = b.dataset.p;
+    if (draft.preset === 'space_weather' && !draft.event && sw && sw.replay.length) draft.event = pickEvent(sw.replay[0]);
+    markDirty();
   });
+
+  /* ---------- replay a real NASA DONKI event ---------- */
+  var sw = null;
+  function pickEvent(e) { return { id: e.id, type: e.type, time: e.time, label: e.label, link: e.link, level: e.level }; }
+  function utc(t) { return String(t || '').replace('T', ' ').replace('Z', ' UTC'); }
+  function renderReplay() {
+    if (!sw) return;
+    var st = sw.state || {};
+    $('sc-sw-src').innerHTML = (sw.source === 'live' ? '<span class="tag ack">live DONKI + cached history</span>' : '<span class="tag">cached snapshot ' + A.esc((sw.fetched_at || '').slice(0, 10)) + '</span>') +
+      ' now: <b>' + A.esc(st.level || 'quiet') + '</b>';
+    var sel = draft && draft.preset === 'space_weather' && draft.event ? draft.event.id : null;
+    $('sc-sw').innerHTML = sw.replay.length ? sw.replay.map(function (e) {
+      var col = e.level === 'critical' ? 'red' : 'yellow';
+      return '<button type="button" class="sc-ev st-' + col + (e.id === sel ? ' on' : '') + '" data-ev="' + A.esc(e.id) + '" aria-pressed="' + (e.id === sel) + '">' +
+        '<span class="sw-type">' + A.esc(e.type) + '</span><span class="sc-ev-main"><b>' + A.esc(e.label) + '</b><small>' + A.esc(utc(e.time)) + ' · ' + A.esc(e.id) + '</small></span>' +
+        '<span class="badge st-' + col + '">' + (e.level === 'critical' ? 'storm' : 'caution') + '</span></button>';
+    }).join('') : '<p class="empty">No replayable events.</p>';
+  }
+  $('sc-sw').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ev]'); if (!b || !sw) return;
+    var ev = sw.replay.filter(function (x) { return x.id === b.dataset.ev; })[0]; if (!ev) return;
+    draft.preset = 'space_weather'; draft.event = pickEvent(ev); markDirty();
+  });
+  Api.getSpaceWeather().then(function (d) { sw = d; if (draft) renderAll(); })
+    .catch(function (e) { $('sc-sw').innerHTML = '<p class="empty">NASA DONKI unavailable: ' + A.esc(e.message) + '</p>'; });
 
   /* ---------- options ---------- */
   function fillOptions() {
@@ -141,11 +170,16 @@
       }).join('') + '<span class="badge st-' + COL[res.cabin.level] + '">' + A.ST_ICON[COL[res.cabin.level]] + 'Cabin' + (res.cabin.level !== 'normal' ? ' · ' + CAB_SHORT[res.cabin.system] : '') + '</span></div>' +
         '<div class="dim" style="font-size:12.5px">Expected: ' + n.red + ' critical · ' + n.yellow + ' caution · ' + n.green + ' nominal' + (res.cabin.level !== 'normal' ? ' · cabin ' + res.cabin.level : '') + '</div>';
     }
+    if (draft.preset === 'space_weather') {
+      html += draft.event ? '<div class="dim" style="font-size:12.5px">Event: <b>' + A.esc(draft.event.label) + '</b> · ' + A.esc(utc(draft.event.time)) +
+        ' · <a href="' + A.esc(draft.event.link) + '" target="_blank" rel="noopener">' + A.esc(draft.event.id) + ' ↗</a></div>'
+        : '<div class="dim">Pick an event in “Replay a real event”.</div>';
+    }
     $('sc-preview').innerHTML = html;
     $('sc-dirty').textContent = dirty ? 'not applied yet' : (active ? 'this is the active scenario' : '');
     $('sc-apply-btn').classList.toggle('pulse', dirty);
   }
-  function renderAll() { renderPresets(); renderOptions(); renderCustom(); renderPreview(); }
+  function renderAll() { renderPresets(); renderOptions(); renderCustom(); renderPreview(); renderReplay(); }
 
   /* ---------- actions ---------- */
   function run(btn, fn) {

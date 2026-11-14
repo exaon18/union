@@ -138,7 +138,11 @@
     // POST /api/sim/reset/ (surgeon) -> {resolved: n}
     resetSim: function () { return USE_MOCK ? mock(MockAPI.resetSim) : post('/sim/reset/'); },
     // POST /api/sim/tick/ (surgeon) -> {saved, alerts, errors}
-    simTick: function () { return USE_MOCK ? mock(MockAPI.simTick) : post('/sim/tick/'); }
+    simTick: function () { return USE_MOCK ? mock(MockAPI.simTick) : post('/sim/tick/'); },
+
+    /* ---- NASA data ---- */
+    // GET /api/space-weather/ (public) -> {source, fetched_at, state, latest, replay, ...} (real NASA DONKI events)
+    getSpaceWeather: function () { return USE_MOCK ? mock(MockAPI.getSpaceWeather) : get('/space-weather/'); }
   };
 
   global.Api = Api;

@@ -50,9 +50,13 @@
       </div>
       <ul class="feed tall" id="con-alerts" aria-live="polite"></ul>
     </div>
-    <div class="panel span-12 reveal">
+    <div class="panel span-7 lg-12 reveal">
       <div class="panel-head"><h2>Cabin environment <span class="sub" id="cabin-updated"></span></h2><span class="live-tag">Live</span></div>
       <div class="gauges" id="gauges"></div>
+    </div>
+    <div class="panel span-5 lg-12 reveal" id="space-weather">
+      <div class="panel-head"><h2>Space weather <span class="sub">NASA DONKI</span></h2><a class="btn btn-sm" href="scenarios.html#sc-replay">Replay an event</a></div>
+      <div class="sw-body compact" id="sw-body"><p class="empty">Loading NASA DONKI…</p></div>
     </div>
     <div class="span-12 disclaimer-box reveal">__SHIELD__<span><b>Decision-support prototype, not a diagnosis.</b> Alerts come from simple rule-based thresholds on simulated data. The flight surgeon confirms every alert before any medical action.</span></div>
   </section>
@@ -60,6 +64,7 @@
 <div id="detail" hidden></div>
 </main>
 <footer id="footer"></footer>
+<script src="js/nasa-reference.js"></script>
 <script src="js/rules.js"></script>
 <script src="js/scenarios.js"></script>
 <script src="js/mock-data.js"></script>
@@ -67,6 +72,8 @@
 <script src="js/charts.js"></script>
 <script src="js/common.js"></script>
 <script src="js/health-view.js"></script>
+<script src="js/donki-snapshot.js"></script>
+<script src="js/space-weather.js"></script>
 <script src="js/pages/support.js"></script>
 </body>
 </html>

@@ -123,5 +123,6 @@
     });
   }
 
+  if (window.AstraSpaceWeather && document.getElementById('sw-body')) AstraSpaceWeather.mount(document.getElementById('sw-body'), { compact: false });   // real NASA DONKI events
   A.poll(function () { return Promise.all([refreshCrew(), refreshCabin(), refreshAlerts()]); });
 })();

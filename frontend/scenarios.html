@@ -52,6 +52,12 @@
       </div>
     </div>
 
+    <div class="panel reveal" id="sc-replay">
+      <div class="panel-head"><h2><span class="step-no">1b</span>Replay a real event <span class="sub">NASA DONKI solar particle events and flares</span></h2><span class="sub" id="sc-sw-src"></span></div>
+      <p class="muted" style="font-size:13.5px;margin:0 0 10px">Pick a real event: SEP or X-class flare = radiation storm (everyone to the storm shelter), M-class flare = caution. Radiation alerts then cite the event ID and time. Dose values stay simulated: DONKI tells us when and how strong, not our crew's dose.</p>
+      <div class="sc-sw" id="sc-sw"><p class="empty">Loading NASA DONKI…</p></div>
+    </div>
+
     <div class="panel reveal">
       <div class="panel-head"><h2><span class="step-no">2</span>Custom: each astronaut <span class="sub">changing a row switches to Custom</span></h2></div>
       <div class="sc-table" id="sc-custom"></div>
@@ -88,12 +94,15 @@
 </section>
 </main>
 <footer id="footer"></footer>
+<script src="js/nasa-reference.js"></script>
 <script src="js/rules.js"></script>
 <script src="js/scenarios.js"></script>
 <script src="js/mock-data.js"></script>
 <script src="js/api.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/common.js"></script>
+<script src="js/donki-snapshot.js"></script>
+<script src="js/space-weather.js"></script>
 <script src="js/pages/scenarios.js"></script>
 </body>
 </html>

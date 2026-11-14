@@ -11,7 +11,7 @@
     respiratory: 'Respiratory: SpO2 and breathing rate',
     radiation: 'Radiation: personal dosimeter',
     behavioral: 'Behavioral: stress, sleep and reaction-test lapses',
-    immune: 'Immune: body temperature and blood glucose'
+    immune: 'Immune: fever, glucose and inflammation markers shifted by the real Inspiration4 change (OSD-575/656)'
   };
   var CABIN_SYSTEMS = { co2: 'Cabin CO2', o2: 'Cabin oxygen', radiation: 'Cabin radiation (solar event)', noise: 'Cabin noise' };
   var CYCLE = ['cardiovascular', 'respiratory', 'behavioral', 'immune', 'radiation'];
@@ -24,10 +24,11 @@
     { key: 'all_critical', label: 'All critical', description: 'Every astronaut is red, each in a different system. Worst case for the console.' },
     { key: 'cabin_co2', label: 'Cabin CO2 problem', description: 'CO2 scrubber failure: the cabin raises a red CO2 alert; crew vitals stay green.' },
     { key: 'radiation_storm', label: 'Radiation storm', description: "Solar particle event: cabin radiation and every astronaut's dose are red." },
+    { key: 'space_weather', label: 'Replay real space weather', description: 'Replays a real NASA DONKI event (solar energetic particles or a solar flare): SEP or X-class flare = radiation storm for everyone, M-class = caution. Alerts cite the event.' },
     { key: 'realistic', label: 'Random / realistic', description: 'Mostly green with rare short anomalies (about one yellow blip every few minutes, a red one much less often). Blips clear by themselves.' },
     { key: 'custom', label: 'Custom', description: 'Pick a level and system for each astronaut and the cabin yourself.' }
   ];
-  var DEFAULT = { preset: 'realistic', target: 2, system: 'cardiovascular', custom: {}, cabin: { level: 'normal', system: 'co2' }, anomaly_rate: 0.002 };
+  var DEFAULT = { preset: 'realistic', target: 2, system: 'cardiovascular', custom: {}, cabin: { level: 'normal', system: 'co2' }, anomaly_rate: 0.002, event: null };
 
   function lv(v) { return LEVELS.indexOf(v) >= 0 ? v : 'normal'; }
 
@@ -52,7 +53,10 @@
     else if (p === 'all_critical') ids.forEach(function (i, n) { astro[i] = { level: 'critical', system: CYCLE[n % CYCLE.length] }; });
     else if (p === 'cabin_co2') cabin = { level: 'critical', system: 'co2' };
     else if (p === 'radiation_storm') { ids.forEach(function (i) { astro[i] = { level: 'critical', system: 'radiation' }; }); cabin = { level: 'critical', system: 'radiation' }; }
-    else if (p === 'custom') {
+    else if (p === 'space_weather' && cfg.event && cfg.event.level) {
+      var el = lv(cfg.event.level);
+      ids.forEach(function (i) { astro[i] = { level: el, system: 'radiation' }; }); cabin = { level: el, system: 'radiation' };
+    } else if (p === 'custom') {
       Object.keys(cfg.custom || {}).forEach(function (k) {
         var v = cfg.custom[k] || {};
         if (astro[k]) astro[k] = { level: lv(v.level), system: SYSTEMS[v.system] ? v.system : 'cardiovascular' };
@@ -60,7 +64,8 @@
       var c = cfg.cabin || {};
       cabin = { level: lv(c.level), system: CABIN_SYSTEMS[c.system] ? c.system : 'co2' };
     }
-    return { mode: p === 'realistic' ? 'random' : 'fixed', anomaly_rate: Number(cfg.anomaly_rate) || 0, astronauts: astro, cabin: cabin };
+    return { mode: p === 'realistic' ? 'random' : 'fixed', anomaly_rate: Number(cfg.anomaly_rate) || 0, astronauts: astro, cabin: cabin,
+      space_weather: p === 'space_weather' && cfg.event ? Object.assign({ replay: true }, cfg.event) : null };
   }
 
   function expected(resolved) {
@@ -81,7 +86,7 @@
       case 'radiation': return { radiation_dose: c ? U(g, 1.2, 1.6, 2) : U(g, 0.82, 0.95, 2) };
       case 'behavioral': return c ? { stress_level: U(g, 92, 97), sleep_total: U(g, 3.5, 4.2, 1), pvt_lapses: U(g, 6, 8), pvt_reaction_time: Math.round(pvt * U(g, 1.5, 1.7, 2)) }
         : { stress_level: U(g, 78, 88), sleep_total: U(g, 4.2, 4.8, 1), pvt_lapses: U(g, 3, 4), pvt_reaction_time: Math.round(pvt * U(g, 1.25, 1.35, 2)) };
-      case 'immune': return c ? { body_temperature: U(g, 38.3, 39, 1), blood_glucose: U(g, 190, 215) } : { body_temperature: U(g, 37.6, 37.9, 1), blood_glucose: U(g, 145, 170) };
+      case 'immune': return Object.assign(c ? { body_temperature: U(g, 38.3, 39, 1), blood_glucose: U(g, 190, 215) } : { body_temperature: U(g, 37.6, 37.9, 1), blood_glucose: U(g, 145, 170) }, shiftedLabs(level, g));
     }
     return {};
   }
@@ -94,6 +99,26 @@
       radiation: { cabin_radiation: c ? U(g, 1.3, 1.8, 2) : U(g, 0.85, 0.95, 2) },
       noise: { noise: c ? U(g, 87, 92) : U(g, 72, 78) }
     })[system] || {};
+  }
+  /* Lab markers from real NASA OSDR data (js/nasa-reference.js, same as Python nominal_labs/shifted_labs). */
+  var LAB = (global.ASTRA_NASA && global.ASTRA_NASA.monitoring) || [];
+  function r3(v) { return Math.abs(v) < 100 ? Math.round(v * 1000) / 1000 : Math.round(v * 10) / 10; }
+  function nominalLabs(g) {
+    var out = {};
+    LAB.forEach(function (m) {
+      var lo = m.green[0], hi = m.green[1];
+      var z = Math.sqrt(-2 * Math.log(g() || 1e-9)) * Math.cos(2 * Math.PI * g());
+      out[m.metric] = r3(Math.min(hi, Math.max(lo, m.preflight_mean + z * (hi - lo) / 4)));
+    });
+    return out;
+  }
+  function shiftedLabs(level, g) {
+    var k = level === 'caution' ? [1.05, 1.6] : [2.1, 2.8], out = {};
+    LAB.forEach(function (m) {
+      if (m.metric.indexOf('serum_') === 0) return;
+      out[m.metric] = r3(Math.max(0, m.preflight_mean + m.flight_shift * (k[0] + g() * (k[1] - k[0]))));
+    });
+    return out;
   }
   /* Nominal clamps: any value outside is pulled back inside the green range. */
   var CLAMP = {
@@ -120,6 +145,7 @@
 
   global.AstraScenarios = {
     LEVELS: LEVELS, SYSTEMS: SYSTEMS, CABIN_SYSTEMS: CABIN_SYSTEMS, PRESETS: PRESETS, DEFAULT: DEFAULT,
-    resolve: resolve, expected: expected, problem: problem, cabinProblem: cabinProblem, clamp: clamp, plan: plan
+    resolve: resolve, expected: expected, problem: problem, cabinProblem: cabinProblem, clamp: clamp, plan: plan,
+    LAB: LAB, nominalLabs: nominalLabs, shiftedLabs: shiftedLabs
   };
 })(window);
