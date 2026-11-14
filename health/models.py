@@ -1,3 +1,6 @@
+import hashlib
+import secrets
+
 from django.conf import settings
 from django.db import models
 
@@ -64,7 +67,8 @@ class Alert(models.Model):
 
     # astronaut is empty for cabin/environment alerts
     astronaut = models.ForeignKey(Astronaut, on_delete=models.CASCADE, related_name="alerts", null=True, blank=True)
-    reading = models.ForeignKey("SensorReading", on_delete=models.CASCADE, related_name="alerts", null=True, blank=True)
+    # SET_NULL so pruning old sensor readings keeps the alert history
+    reading = models.ForeignKey("SensorReading", on_delete=models.SET_NULL, related_name="alerts", null=True, blank=True)
     checkin = models.ForeignKey(DailyCheckIn, on_delete=models.CASCADE, related_name="alerts", null=True, blank=True)
     system = models.CharField(max_length=20, choices=SYSTEM_CHOICES)
     level = models.CharField(max_length=10, choices=LEVEL_CHOICES)
@@ -73,8 +77,21 @@ class Alert(models.Model):
     resolved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Mission support workflow (flight surgeon)
+    acknowledged = models.BooleanField(default=False)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                        related_name="acknowledged_alerts")
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="resolved_alerts")
+
     class Meta:
         ordering = ["resolved", "-created_at"]
+        indexes = [
+            models.Index(fields=["resolved", "created_at"], name="alert_resolved_created_idx"),
+            models.Index(fields=["astronaut", "resolved", "created_at"], name="alert_astro_resolved_idx"),
+        ]
 
     def __str__(self):
         return f"[{self.level.upper()}] {self.astronaut or 'CABIN'}: {self.message}"
@@ -97,7 +114,57 @@ class SensorReading(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
+        indexes = [
+            # latest-per-metric and history for one astronaut (or cabin when astronaut is NULL).
+            # Ascending on purpose: SQLite scans it backwards for ORDER BY timestamp DESC, id DESC.
+            models.Index(fields=["astronaut", "metric", "timestamp"], name="reading_astro_metric_ts_idx"),
+            # last reading per astronaut (crew status)
+            models.Index(fields=["astronaut", "timestamp"], name="reading_astro_ts_idx"),
+            models.Index(fields=["metric", "timestamp"], name="reading_metric_ts_idx"),
+        ]
 
     def __str__(self):
         who = self.astronaut or "CABIN"
         return f"{who} {self.metric}={self.value if self.value is not None else self.text_value} {self.unit}"
+
+
+class PVTResult(models.Model):
+    """One Psychomotor Vigilance Task run (reaction-time test for fatigue)."""
+    astronaut = models.ForeignKey(Astronaut, on_delete=models.CASCADE, related_name="pvt_results")
+    mean_rt_ms = models.PositiveIntegerField()
+    fastest_ms = models.PositiveIntegerField(null=True, blank=True)
+    lapses = models.PositiveSmallIntegerField(default=0, help_text="responses slower than 500 ms")
+    false_starts = models.PositiveSmallIntegerField(default=0)
+    trials = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["astronaut", "created_at"], name="pvt_astro_created_idx")]
+
+    def __str__(self):
+        return f"PVT {self.astronaut} {self.mean_rt_ms} ms, {self.lapses} lapses"
+
+
+class AuthToken(models.Model):
+    """
+    API login token for the static frontend (header: Authorization: Token <key>).
+    Only a SHA-256 hash of the key is stored; the plain key is shown once at login.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="api_tokens")
+    key_hash = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    @staticmethod
+    def hash_key(key):
+        return hashlib.sha256(key.encode()).hexdigest()
+
+    @classmethod
+    def issue(cls, user):
+        """Create a token for `user`; returns (token_obj, plain_key)."""
+        key = secrets.token_hex(20)
+        return cls.objects.create(user=user, key_hash=cls.hash_key(key)), key
+
+    def __str__(self):
+        return f"token for {self.user} ({self.created_at:%Y-%m-%d %H:%M})"

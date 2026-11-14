@@ -5,6 +5,11 @@ Each entry: metric -> list of (level, test, message, recommendation).
 The first matching rule wins (put RED before YELLOW).
 Thresholds are prototype values for a demo, NOT clinical guidance.
 """
+from datetime import timedelta
+
+from django.conf import settings
+from django.utils import timezone
+
 from .models import Alert
 
 RED, YELLOW = Alert.RED, Alert.YELLOW
@@ -76,8 +81,8 @@ RULES = {
 }
 
 
-def evaluate_reading(reading):
-    """Check one SensorReading against RULES and create an Alert if a rule matches."""
+def match_reading(reading):
+    """Return an UNSAVED Alert if `reading` breaks a rule in RULES, else None."""
     rule = RULES.get(reading.metric)
     if not rule:
         return None
@@ -90,8 +95,50 @@ def evaluate_reading(reading):
             continue
         if hit:
             text = f"{message}: {value:g} {reading.unit}".strip() if isinstance(value, (int, float)) else message
-            return Alert.objects.create(
+            return Alert(
                 astronaut=reading.astronaut, reading=reading, system=system, level=level,
                 message=text, recommendation=recommendation,
             )
     return None
+
+
+def _open_alert_keys(minutes):
+    """(astronaut_id, metric, level) of open sensor alerts created in the last `minutes`."""
+    if minutes <= 0:
+        return set()
+    since = timezone.now() - timedelta(minutes=minutes)
+    return set(
+        Alert.objects.filter(resolved=False, created_at__gte=since, reading__isnull=False)
+        .values_list("astronaut_id", "reading__metric", "level")
+    )
+
+
+def evaluate_readings(readings, dedup_minutes=None):
+    """
+    Check many saved SensorReadings and bulk-create the alerts they trigger.
+    An alert is skipped when the same astronaut/metric/level already has an open
+    alert from the last ALERT_DEDUP_MINUTES (so a stuck sensor doesn't flood the
+    crew with identical alerts). Returns the created alerts.
+    """
+    if dedup_minutes is None:
+        dedup_minutes = getattr(settings, "ALERT_DEDUP_MINUTES", 0)
+    seen = _open_alert_keys(dedup_minutes)
+    new = []
+    for reading in readings:
+        alert = match_reading(reading)
+        if alert is None:
+            continue
+        key = (reading.astronaut_id, reading.metric, alert.level)
+        if key in seen:
+            continue
+        seen.add(key)
+        new.append(alert)
+    if new:
+        Alert.objects.bulk_create(new)
+    return new
+
+
+def evaluate_reading(reading):
+    """Check one SensorReading against RULES and create an Alert if a rule matches."""
+    created = evaluate_readings([reading])
+    return created[0] if created else None

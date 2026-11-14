@@ -15,10 +15,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path, re_path
+
+from health.frontend import serve_frontend
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('health.urls')),
+    # Static ASTRA HEALTH frontend (frontend/) served by Django: http://<host>:8000/app/
+    path('app', serve_frontend),
+    re_path(r'^app/(?P<path>.*)$', serve_frontend, name='frontend'),
     path('', include('core.urls')),
 ]

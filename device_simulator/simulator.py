@@ -10,6 +10,7 @@ Run (in a second terminal, while Django is running):
   python device_simulator/simulator.py --interval 2 --url http://127.0.0.1:8000/api/webhook/readings/
   python device_simulator/simulator.py --daily        # also send daily data (sleep, PVT, urine calcium...) each cycle
   python device_simulator/simulator.py --emergency 2  # force a medical emergency for astronaut 2 (for the demo)
+  python device_simulator/simulator.py --anomaly-rate 0.05  # many random abnormal readings (stress test)
 
 Only the Python standard library is used.
 """
@@ -22,8 +23,9 @@ import random
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 
+import generators
 from generators import CREW, cabin, daily_summary, reading, wearable_and_patch
 
 DEFAULT_URL = "http://127.0.0.1:8000/api/webhook/readings/"
@@ -63,21 +65,30 @@ def main():
     p.add_argument("--daily", action="store_true", help="include daily metrics in every batch")
     p.add_argument("--emergency", type=int, metavar="ASTRONAUT_ID", help="force an emergency for one astronaut")
     p.add_argument("--once", action="store_true", help="send one batch and exit")
+    p.add_argument("--anomaly-rate", type=float, default=0.0005,
+                   help="chance that one reading is abnormal (default 0.0005 = an occasional blip "
+                        "every few minutes per astronaut; the dummy-history default is 0.08)")
     args = p.parse_args()
+    generators.ANOMALY_CHANCE = args.anomaly_rate
 
     print(f"Device simulator -> {args.url}  (every {args.interval}s, Ctrl+C to stop)")
     while True:
-        ts = datetime.now()
+        # Timezone-aware UTC, e.g. 2026-11-14T19:30:00+00:00, so the server never has to guess.
+        ts = datetime.now(timezone.utc)
         batch = cabin(ts)
         for a in CREW:
-            batch += wearable_and_patch(a, ts)
+            normal = wearable_and_patch(a, ts)
+            if args.emergency == a["id"]:
+                bad = emergency(a, ts)
+                replaced = {item["metric"] for item in bad}
+                # replace (not duplicate) the normal values of the emergency metrics
+                normal = [item for item in normal if item["metric"] not in replaced] + bad
+            batch += normal
             if args.daily:
                 batch += daily_summary(a, ts, 0)
-            if args.emergency == a["id"]:
-                batch += emergency(a, ts)
 
         result = send(args.url, batch)
-        stamp = ts.strftime("%H:%M:%S")
+        stamp = ts.astimezone().strftime("%H:%M:%S")   # local time for the console
         if "error" in result:
             print(f"[{stamp}] sent {len(batch)} readings -> ERROR {result['error']}")
         else:

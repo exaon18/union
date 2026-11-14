@@ -89,6 +89,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        # Wait up to 20 s for a write lock instead of failing with "database is locked".
+        # WAL mode (set in health/apps.py) lets the API read while the simulator writes.
+        'OPTIONS': {
+            'timeout': 20,
+            'transaction_mode': 'IMMEDIATE',
+        },
     }
 }
 
@@ -117,7 +123,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Mission control is in Addis Ababa (EAT, UTC+3). Naive device timestamps are read as EAT.
+TIME_ZONE = 'Africa/Addis_Ababa'
 
 USE_I18N = True
 
@@ -158,5 +165,21 @@ if _cors_origins:
     CORS_ALLOWED_ORIGINS = _cors_origins
 else:
     CORS_ALLOW_ALL_ORIGINS = True
-# Public API is read-only. The device webhook is POST + HMAC and is not called from browsers.
-CORS_ALLOW_METHODS = ["GET", "HEAD", "OPTIONS"]
+# GET endpoints are public. Writes (check-ins, PVT, alerts) use POST + "Authorization: Token <key>".
+# The default CORS_ALLOW_HEADERS already includes authorization and content-type.
+CORS_ALLOW_METHODS = ["GET", "HEAD", "OPTIONS", "POST"]
+
+# Skip a new sensor alert when the same astronaut/metric/level already has an open
+# alert from the last N minutes (stops a stuck sensor from creating thousands). 0 = off.
+ALERT_DEDUP_MINUTES = int(os.environ.get("ASTRA_ALERT_DEDUP_MINUTES", "5"))
+
+# An open sensor alert closes automatically once a newer reading of the same metric is back
+# in range and the alert is at least this old (one-off spikes stay visible briefly). 0 = off.
+ALERT_CLEAR_AFTER_SECONDS = int(os.environ.get("ASTRA_ALERT_CLEAR_AFTER_SECONDS", "120"))
+
+# Open sensor alerts older than this are closed automatically on the next webhook call
+# (a still-abnormal sensor raises a fresh one). Check-in and PVT alerts are never auto-closed. 0 = off.
+ALERT_AUTO_RESOLVE_MINUTES = int(os.environ.get("ASTRA_ALERT_AUTO_RESOLVE_MINUTES", "30"))
+
+# API login tokens expire after this many hours.
+API_TOKEN_TTL_HOURS = int(os.environ.get("ASTRA_TOKEN_TTL_HOURS", "72"))
