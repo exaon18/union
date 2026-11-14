@@ -89,7 +89,7 @@ def evaluate_reading(reading):
         except TypeError:
             continue
         if hit:
-            text = f"{message}: {value:g} {reading.unit}".strip() if isinstance(value, float) else message
+            text = f"{message}: {value:g} {reading.unit}".strip() if isinstance(value, (int, float)) else message
             return Alert.objects.create(
                 astronaut=reading.astronaut, reading=reading, system=system, level=level,
                 message=text, recommendation=recommendation,
