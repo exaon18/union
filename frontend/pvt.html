@@ -3,54 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vigilance Test (PVT) · ASTRA HEALTH</title>
+<title>Reaction Test · ASTRA HEALTH</title>
 <meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2322d3ee' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236fd3ff' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="preload" href="vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="page-pvt">
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
 <header id="topnav"></header>
-<main>
-<div class="page-head">
-  <div>
-    <span class="eyebrow">Behavioral health · fatigue screening</span>
-    <h1>Psychomotor Vigilance Task (PVT)</h1>
-    <p>NASA uses the PVT on the ISS to measure alertness. Wait for the yellow circle, then click it or press <b>Space</b> as fast as you can. Reactions slower than 500 ms count as <b>lapses</b>; pressing too early is a <b>false start</b>.</p>
-  </div>
-  <div class="row">
-    <label class="muted" for="trials" style="font-size:13px">Trials</label>
-    <select id="trials" style="width:auto"><option value="5">5 · quick</option><option value="10" selected>10 · demo</option><option value="20">20 · extended</option></select>
-  </div>
-</div>
-
-<div class="split">
-  <div class="panel">
-    <div class="pvt-stage" id="stage" tabindex="0" role="button" aria-label="PVT response area">
-      <div class="msg" id="stageMsg"><b>Ready?</b>Find a quiet moment. The test takes about a minute. Press <b>Start</b> or hit Space.</div>
-    </div>
-    <div class="pvt-progress" id="progress"></div>
-    <div class="row mt" style="justify-content:center">
-      <button class="btn btn-primary btn-lg" id="startBtn">Start test</button>
-      <button class="btn btn-ghost btn-lg hidden" id="abortBtn">Stop</button>
+<main class="page" id="main">
+<div class="wizard" style="width:min(900px,100%)">
+  <div class="row reveal" style="justify-content:space-between;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap">
+    <div><div class="eyebrow" style="margin-bottom:4px">Psychomotor vigilance test</div><h1 style="font-size:clamp(24px,3vw,34px)">Reaction test</h1></div>
+    <div class="seg" role="group" aria-label="Number of trials" id="trials">
+      <button type="button" data-n="5" aria-pressed="false">5 trials</button>
+      <button type="button" data-n="10" aria-pressed="true">10 trials</button>
+      <button type="button" data-n="20" aria-pressed="false">20 trials</button>
     </div>
   </div>
-  <div class="stack">
-    <div class="panel">
-      <div class="panel-head"><h2 id="resTitle">Result</h2><span id="resPill"></span></div>
-      <div class="pvt-results" id="results" style="grid-template-columns:repeat(2,1fr)">
-        <div class="panel big-result"><small>Mean RT</small><b id="rMean">—</b></div>
-        <div class="panel big-result"><small>Lapses &gt;500 ms</small><b id="rLapses">—</b></div>
-        <div class="panel big-result"><small>False starts</small><b id="rFalse">—</b></div>
-        <div class="panel big-result"><small>Fastest</small><b id="rFast">—</b></div>
+  <div class="panel reveal">
+    <div class="panel-head">
+      <h2>Wait for the yellow light, then react <span class="sub" id="pvt-progress"></span></h2>
+      <span class="sub">Tap, click or press Space</span>
+    </div>
+    <div class="pvt-stage wait" id="stage" role="button" tabindex="0" aria-live="assertive" aria-label="Reaction test area">
+      <div id="stage-body">
+        <div class="pvt-count">PVT</div>
+        <div class="pvt-msg">Tap here or press Space to start.</div>
       </div>
-      <div class="rt-bars mt" id="rtBars"></div>
-      <div id="resNote" class="module-note">Rules: ≥ 3 lapses = caution, ≥ 6 lapses = critical (health/sensor_rules.py). Mean RT &gt; 350 ms is also flagged as caution.</div>
+      <div class="pvt-dots" id="pvt-dots"></div>
     </div>
-    <div class="panel">
-      <div class="panel-head"><h2 id="histTitle">Reaction time · 7 days</h2></div>
-      <div class="chart-wrap" style="height:180px"><canvas id="pvtChart"></canvas></div>
-    </div>
+    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="abortBtn" type="button" hidden>Stop test</button></div>
   </div>
+
+  <div class="panel reveal" id="result" hidden style="margin-top:16px">
+    <div class="panel-head"><h2>Your result</h2><span id="resBadge"></span></div>
+    <div class="kv">
+      <div><small>Mean reaction</small><b id="rMean">—</b><i>ms</i></div>
+      <div><small>Fastest</small><b id="rFast">—</b><i>ms</i></div>
+      <div><small>Lapses &gt; 500 ms</small><b id="rLapses">—</b></div>
+      <div><small>False starts</small><b id="rFalse">—</b></div>
+    </div>
+    <div class="pvt-bars" id="rtBars" aria-hidden="true"></div>
+    <div class="rec" id="rAdvice" style="margin-top:22px"></div>
+  </div>
+
+  <div class="panel reveal" style="margin-top:16px">
+    <div class="panel-head"><h2>Reaction time history <span class="sub">7 days · ms</span></h2></div>
+    <div class="chart-box"><canvas id="pvtChart"></canvas></div>
+  </div>
+  <p class="dim reveal" style="font-size:12.5px;margin-top:12px;text-align:center">A lapse is a reaction slower than 500 ms. Slower reactions than usual can mean fatigue; 3+ lapses raise a caution, 6+ a critical alert.</p>
 </div>
 </main>
 <footer id="footer"></footer>

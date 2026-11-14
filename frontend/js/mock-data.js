@@ -347,7 +347,15 @@
         if (opts.resolved !== undefined && opts.resolved !== null && opts.resolved !== '' && String(al.resolved) !== String(opts.resolved)) return false;
         return true;
       }).slice(0, Number(opts.limit) || 50);
-      return { count: list.length, alerts: clone(list) };
+      var ack = lsGet(LS_ACK, []);
+      list = clone(list).map(function (al) {
+        al.acknowledged = al.resolved || ack.indexOf(al.id) >= 0;
+        al.acknowledged_by = al.acknowledged ? 'surgeon' : null;
+        al.resolved_by = al.resolved ? (al.resolved_by || 'surgeon') : null;
+        return al;
+      });
+      if (opts.acknowledged !== undefined && opts.acknowledged !== null && opts.acknowledged !== '') list = list.filter(function (al) { return String(al.acknowledged) === String(opts.acknowledged); });
+      return { count: list.length, alerts: list };
     },
     getCheckins: function (opts) {
       opts = opts || {};
@@ -374,10 +382,10 @@
     },
     submitPvt: function (aid, result) {
       var a = need(aid), now = Date.now();
-      var rt = reading('pvt_reaction_time', result.mean_rt, 'ms', 'pvt_test', now);
+      var rt = reading('pvt_reaction_time', result.mean_rt || result.mean_rt_ms, 'ms', 'pvt_test', now);
       var lp = reading('pvt_lapses', result.lapses, 'count', 'pvt_test', now);
       state.latest[a.id].pvt_reaction_time = rt; state.latest[a.id].pvt_lapses = lp;
-      var hist = lsGet(LS_PVT, []); hist.unshift({ astronaut_id: a.id, at: iso(now), mean_rt: result.mean_rt, lapses: result.lapses, false_starts: result.false_starts }); lsSet(LS_PVT, hist.slice(0, 30));
+      var hist = lsGet(LS_PVT, []); hist.unshift({ astronaut_id: a.id, at: iso(now), mean_rt: result.mean_rt || result.mean_rt_ms, fastest_ms: result.fastest_ms, lapses: result.lapses, false_starts: result.false_starts, trials: result.trials }); lsSet(LS_PVT, hist.slice(0, 30));
       var fired = evaluateBatch(a.id, [lp], now, 0);
       return { saved: 2, alerts_created: fired.length, alerts: clone(fired) };
     },
@@ -394,6 +402,26 @@
       return { id: Number(id), acknowledged: true };
     },
     acknowledged: function () { return lsGet(LS_ACK, []); },
+    /** GET /api/pvt/ shape: own runs (localStorage) + one seeded run per past day. */
+    getPvt: function (opts) {
+      opts = opts || {};
+      var now = Date.now(), md = missionDay(now), list = [];
+      CREW.forEach(function (a) {
+        if (opts.astronaut && a.id !== Number(opts.astronaut)) return;
+        lsGet(LS_PVT, []).forEach(function (p, i) {
+          if (p.astronaut_id !== a.id) return;
+          list.push({ id: 9000 + i, astronaut_id: a.id, created_at: p.at, mean_rt_ms: p.mean_rt, fastest_ms: p.fastest_ms || null, lapses: p.lapses, false_starts: p.false_starts || 0, trials: p.trials || 10 });
+        });
+        for (var d = 1; d <= 7; d++) {
+          var g = mulberry32(hash('pvt', a.id, md - d)), rt = Math.round(dailyFor(a, 'pvt_reaction_time', md - d, now));
+          list.push({ id: a.id * 100 + d, astronaut_id: a.id, created_at: isoMicro(now - d * DAY), mean_rt_ms: rt, fastest_ms: Math.round(rt * 0.72),
+            lapses: Math.round(dailyFor(a, 'pvt_lapses', md - d, now)), false_starts: Math.floor(g() * 2), trials: 10 });
+        }
+      });
+      list.sort(function (p, q) { return Date.parse(q.created_at) - Date.parse(p.created_at); });
+      list = list.slice(0, Number(opts.limit) || 30);
+      return { count: list.length, results: list };
+    },
     pvtHistory: function (aid) { return lsGet(LS_PVT, []).filter(function (p) { return p.astronaut_id === Number(aid); }); },
     resetDemo: function () { [LS_RESOLVED, LS_ACK, LS_CHECKINS, LS_PVT].forEach(function (k) { localStorage.removeItem(k); }); },
     onTick: function (fn) { state.listeners.push(fn); },

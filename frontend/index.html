@@ -5,78 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mission Dashboard · ASTRA HEALTH</title>
 <meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2322d3ee' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236fd3ff' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="preload" href="vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="page-index">
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
 <header id="topnav"></header>
-<main>
+<main class="page" id="main">
 <section class="hero">
-  <div class="panel hero-main reveal">
-    <div class="row space wrap">
-      <span class="eyebrow">Public mission dashboard</span>
-      <span class="live" data-conn><i></i><span>LIVE</span></span>
+  <div class="hero-copy">
+    <div class="eyebrow reveal"><span id="mission-name">Artemis Mars Transit</span> · Mission day <span id="mission-day" class="mono">—</span></div>
+    <h1 class="reveal">Crew health, live from orbit.</h1>
+    <p class="lede reveal">Every few seconds the spacecraft reports its cabin air and the condition of each crew member. Anyone can follow the mission here; medical detail stays with the crew and their flight surgeon.</p>
+    <div class="hero-stats reveal">
+      <div class="hero-stat"><b id="stat-crew">—</b><small>Crew aboard</small></div>
+      <div class="hero-stat"><b id="stat-ok">—</b><small>Nominal</small></div>
+      <div class="hero-stat"><b id="stat-alerts">—</b><small>Open alerts</small></div>
+      <div class="hero-stat"><span id="stat-overall"></span><small style="display:block;margin-top:8px">Mission status</small></div>
     </div>
-    <h1 id="missionName">Artemis Mars Transit</h1>
-    <p id="missionSub">Real-time crew health and cabin environment, monitored by ASTRA HEALTH's rule-based early-warning engine.</p>
-    <div class="hero-stats">
-      <div class="stat"><small>Mission day</small><b id="missionDay" class="num">—</b></div>
-      <div class="stat"><small>Earth time · EAT</small><b data-clock class="num">--:--:--</b></div>
-      <div class="stat"><small>UTC</small><b data-utc class="num">--:--:--</b></div>
-      <div class="stat"><small>Crew aboard</small><b id="crewCount" class="num">4</b></div>
+    <div class="hero-cta reveal">
+      <a class="btn btn-primary btn-lg" href="login.html" id="cta-main">Crew &amp; surgeon log in</a>
+      <a class="btn btn-lg" href="#crew">See the crew</a>
     </div>
   </div>
-  <div class="hero-side">
-    <div class="panel summary s-green reveal"><small>Nominal</small><b id="sumGreen" class="num">—</b></div>
-    <div class="panel summary s-yellow reveal"><small>Caution</small><b id="sumYellow" class="num">—</b></div>
-    <div class="panel summary s-red reveal"><small>Critical</small><b id="sumRed" class="num">—</b></div>
-    <div class="panel summary s-cyan reveal"><small>Open alerts</small><b id="sumAlerts" class="num">—</b></div>
+  <div class="scene reveal" id="station">
+    <div class="scene-tools"><button class="btn btn-sm" id="station-reset" hidden>Reset view</button></div>
+    <div class="scene-hint" id="station-hint">Drag to rotate · select a crew member</div>
   </div>
 </section>
 
-<section class="panel ticker" aria-label="Live alert ticker">
-  <div class="ticker-label"><span id="tickerIcon"></span>LIVE ALERTS</div>
-  <div class="ticker-track"><div class="ticker-move" id="ticker"><span class="ticker-item muted">Waiting for telemetry…</span></div></div>
-</section>
-
-<section>
-  <div class="panel-head" style="margin-bottom:12px">
-    <h2 id="crewTitle">Crew status</h2>
-    <span class="sub">Status = worst open alert · refreshes every 3 s</span>
-  </div>
-  <div class="crew-grid" id="crewGrid"></div>
-</section>
-
-<section class="split mt">
-  <div class="stack">
-  <div class="panel">
+<section class="grid g-12">
+  <div class="panel span-12 reveal" id="crew">
     <div class="panel-head">
-      <h2 id="cabinTitle">Cabin environment</h2>
-      <span class="sub" id="cabinUpdated">—</span>
+      <h2>Crew <span class="sub">select a card for basic status</span></h2>
+      <span class="live-tag">Live</span>
     </div>
-    <div class="cabin-grid" id="cabinGrid"></div>
-    <div class="row wrap mt" id="cabinExtra" style="gap:22px;font-size:13px;color:var(--muted)"></div>
+    <div class="crew-grid" id="crew-grid"></div>
   </div>
-  <div class="panel">
-    <div class="panel-head"><h2 id="snapTitle">Crew vitals at a glance</h2><span class="sub">latest wearable &amp; patch readings</span></div>
-    <div class="table-wrap"><table id="snapTable"></table></div>
-  </div>
-  </div>
-  <div class="stack">
-    <div class="panel">
-      <div class="panel-head"><h2 id="recentTitle">Recent alerts</h2><span class="sub">open only</span></div>
-      <div class="alert-list" id="recentAlerts"></div>
+
+  <div class="panel span-8 lg-12 reveal">
+    <div class="panel-head">
+      <h2>Cabin environment <span class="sub" id="cabin-updated"></span></h2>
+      <span class="live-tag">Live</span>
     </div>
-    <div class="panel" id="loginCta">
-      <div class="row" style="align-items:flex-start;gap:16px">
-        <div class="module-icon" style="--c:var(--cyan)" id="ctaIcon"></div>
-        <div style="flex:1">
-          <h3 style="font-size:17px">Crew &amp; Mission Support login</h3>
-          <p class="muted" style="margin:4px 0 14px;font-size:14px">Astronauts log in to see their own health dashboard, do the daily check-in and the PVT. The flight surgeon gets the full mission support console.</p>
-          <a class="btn btn-primary" href="login.html" id="ctaBtn">Login</a>
-        </div>
-      </div>
+    <div class="gauges" id="gauges"></div>
+  </div>
+
+  <div class="panel span-4 lg-12 reveal">
+    <div class="panel-head">
+      <h2>Live alerts <span class="sub">headlines only</span></h2>
+      <span class="sub" id="feed-count"></span>
     </div>
+    <ul class="feed" id="feed" aria-live="polite"></ul>
   </div>
 </section>
 </main>

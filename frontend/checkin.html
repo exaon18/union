@@ -5,85 +5,105 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Daily Check-in · ASTRA HEALTH</title>
 <meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2322d3ee' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236fd3ff' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="preload" href="vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="page-checkin">
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
 <header id="topnav"></header>
-<main>
-<div class="page-head">
-  <div>
-    <span class="eyebrow">Daily routine · ~1 minute</span>
-    <h1>Daily check-in</h1>
-    <p>Your wearable already sends vitals automatically. The check-in adds what sensors can't measure (how you slept, mood, stress, symptoms) so the rule engine can spot fatigue, illness and bone-loss risk early.</p>
+<main class="page" id="main">
+<div class="wizard">
+  <div class="row reveal" style="justify-content:space-between;align-items:flex-end;margin-bottom:10px">
+    <div><div class="eyebrow" style="margin-bottom:4px">Daily check-in</div><h1 style="font-size:clamp(24px,3vw,34px)">How are you today?</h1></div>
+    <span id="lastCheckin"></span>
   </div>
-  <div class="row" id="lastCheckin"></div>
-</div>
+  <div class="panel reveal">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px;font-size:12.5px">
+      <span class="dim">Step <span id="step-n" class="mono">1</span> / <span id="step-total" class="mono">7</span></span>
+      <span class="dim">About one minute</span>
+    </div>
+    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="progress"><span></span></div>
 
-<div class="split">
-  <form class="panel" id="checkinForm" novalidate>
-    <div class="form-grid">
-      <div class="field">
-        <label for="sleep_hours">Sleep last night <small>hours</small></label>
-        <div class="range-row"><input type="range" id="sleepRange" min="0" max="12" step="0.1" value="7"><output id="sleepOut">7.0 h</output></div>
-        <input class="input" id="sleep_hours" type="number" min="0" max="16" step="0.1" value="7.0" inputmode="decimal">
-        <div class="err" data-err="sleep_hours"></div>
-      </div>
-      <div class="field">
-        <label for="exercise_minutes">Exercise today <small>minutes · target ≥ 60</small></label>
-        <div class="range-row"><input type="range" id="exRange" min="0" max="180" step="5" value="90"><output id="exOut">90 min</output></div>
-        <input class="input" id="exercise_minutes" type="number" min="0" max="300" step="1" value="90" inputmode="numeric">
-        <div class="err" data-err="exercise_minutes"></div>
-      </div>
-      <div class="field full">
-        <label>Mood <small>1 = very low · 5 = great</small></label>
-        <div class="scale" id="moodScale"></div>
-        <div class="err" data-err="mood"></div>
-      </div>
-      <div class="field full">
-        <label>Stress <small>1 = calm · 5 = overwhelmed</small></label>
-        <div class="scale" id="stressScale"></div>
-        <div class="err" data-err="stress"></div>
-      </div>
-      <div class="field full">
-        <label for="symptoms">Symptoms <small>optional</small></label>
-        <div class="demo-users" id="symptomChips" style="margin:0 0 4px"></div>
-        <textarea id="symptoms" maxlength="500" placeholder="e.g. headache since morning, congestion…"></textarea>
-        <div class="err" data-err="symptoms"></div>
-      </div>
-      <div class="field">
-        <label for="urine_calcium">Urine calcium <small>optional · mg/day · lab kit</small></label>
-        <input class="input" id="urine_calcium" type="number" min="0" max="1000" step="1" placeholder="e.g. 210" inputmode="numeric">
-        <div class="err" data-err="urine_calcium"></div>
-      </div>
-      <div class="field"></div>
-      <fieldset class="full">
-        <legend>From your devices · auto-filled, edit if needed</legend>
-        <div class="form-grid">
-          <div class="field"><label for="heart_rate">Resting heart rate <small>bpm</small></label><input class="input" id="heart_rate" type="number" min="30" max="220" step="1"><div class="err" data-err="heart_rate"></div></div>
-          <div class="field"><label for="temperature">Body temperature <small>°C</small></label><input class="input" id="temperature" type="number" min="34" max="43" step="0.1"><div class="err" data-err="temperature"></div></div>
-          <div class="field"><label for="systolic_bp">Blood pressure <small>systolic / diastolic mmHg</small></label>
-            <div class="row"><input class="input" id="systolic_bp" type="number" min="70" max="250" step="1"><span class="muted">/</span><input class="input" id="diastolic_bp" type="number" min="40" max="150" step="1"></div>
-            <div class="err" data-err="systolic_bp"></div></div>
-          <div class="field"><label for="radiation_msv">Radiation today <small>mSv</small></label><input class="input" id="radiation_msv" type="number" min="0" max="50" step="0.01"><div class="err" data-err="radiation_msv"></div></div>
+    <form id="wizard" novalidate>
+      <section class="step" data-step="mood">
+        <h2>How do you feel right now?</h2>
+        <p>Pick the face that fits best.</p>
+        <div class="faces" role="group" aria-label="Mood" id="mood">
+          <button type="button" class="face" data-v="1" aria-pressed="false"><span aria-hidden="true">😞</span><em>Very low</em></button>
+          <button type="button" class="face" data-v="2" aria-pressed="false"><span aria-hidden="true">🙁</span><em>Low</em></button>
+          <button type="button" class="face" data-v="3" aria-pressed="false"><span aria-hidden="true">😐</span><em>Okay</em></button>
+          <button type="button" class="face" data-v="4" aria-pressed="true"><span aria-hidden="true">🙂</span><em>Good</em></button>
+          <button type="button" class="face" data-v="5" aria-pressed="false"><span aria-hidden="true">😄</span><em>Great</em></button>
         </div>
-      </fieldset>
-    </div>
-    <div class="row mt" style="justify-content:flex-end">
-      <button type="reset" class="btn btn-ghost">Reset</button>
-      <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">Submit check-in</button>
-    </div>
-  </form>
+      </section>
 
-  <div class="stack">
-    <div class="panel" id="resultPanel">
-      <div class="panel-head"><h2 id="resultTitle">Rule feedback</h2><span id="resultPill"></span></div>
-      <div id="result"><div class="empty" style="color:var(--muted)">Submit the form to get instant feedback from the same rules the server uses (health/rules.py).</div></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head"><h2 id="recentTitle">Recent check-ins</h2></div>
-      <div class="table-wrap"><table id="recentTable"></table></div>
-    </div>
+      <section class="step" data-step="stress">
+        <h2>How stressed are you?</h2>
+        <p>1 is calm, 5 is severe.</p>
+        <div class="slider-read"><b id="stress-out">2</b><span class="muted" id="stress-word"></span></div>
+        <input type="range" id="stress" min="1" max="5" step="1" value="2" aria-label="Stress level, 1 to 5">
+        <div class="slider-scale"><span>Calm</span><span>Severe</span></div>
+      </section>
+
+      <section class="step" data-step="symptoms">
+        <h2>Any symptoms today?</h2>
+        <p>Select all that apply, or continue if you have none.</p>
+        <div class="chips" id="symptoms"></div>
+        <div class="field" style="margin-top:18px"><label for="notes">Anything else for the flight surgeon</label><textarea class="input" id="notes" maxlength="400" placeholder="e.g. headache since morning"></textarea></div>
+      </section>
+
+      <section class="step" data-step="vitals">
+        <h2>Your vitals</h2>
+        <p>Filled in from your devices. Correct anything that looks wrong.</p>
+        <div class="field-row">
+          <div class="field"><label for="heart_rate">Heart rate · bpm</label><input class="input" id="heart_rate" type="number" inputmode="numeric" min="30" max="220"><small class="err" data-err="heart_rate"></small></div>
+          <div class="field"><label for="temperature">Temperature · °C</label><input class="input" id="temperature" type="number" inputmode="decimal" step="0.1" min="34" max="43"><small class="err" data-err="temperature"></small></div>
+          <div class="field"><label for="systolic_bp">Systolic · mmHg</label><input class="input" id="systolic_bp" type="number" inputmode="numeric" min="70" max="250"><small class="err" data-err="systolic_bp"></small></div>
+          <div class="field"><label for="diastolic_bp">Diastolic · mmHg</label><input class="input" id="diastolic_bp" type="number" inputmode="numeric" min="40" max="150"><small class="err" data-err="diastolic_bp"></small></div>
+        </div>
+      </section>
+
+      <section class="step" data-step="routine">
+        <h2>Sleep and exercise</h2>
+        <p>Last night's sleep and today's exercise so far.</p>
+        <div class="label">Sleep</div>
+        <div class="slider-read" style="margin-top:6px"><b><span id="sleep-out">7.0</span><small style="font-size:18px;color:var(--text-3)"> h</small></b><span class="muted" id="sleep-word"></span></div>
+        <input type="range" id="sleep_hours" min="0" max="12" step="0.5" value="7" aria-label="Sleep hours">
+        <div class="label" style="margin-top:26px">Exercise</div>
+        <div class="slider-read" style="margin-top:6px"><b><span id="ex-out">90</span><small style="font-size:18px;color:var(--text-3)"> min</small></b><span class="muted" id="ex-word"></span></div>
+        <input type="range" id="exercise_minutes" min="0" max="180" step="5" value="90" aria-label="Exercise minutes">
+      </section>
+
+      <section class="step" data-step="extra">
+        <h2>Radiation and lab values</h2>
+        <p>Radiation comes from your dosimeter. Urine calcium is optional (enter only if measured today).</p>
+        <div class="field-row">
+          <div class="field"><label for="radiation_msv">Radiation today · mSv</label><input class="input" id="radiation_msv" type="number" inputmode="decimal" step="0.01" min="0" max="50"><small class="err" data-err="radiation_msv"></small></div>
+          <div class="field"><label for="urine_calcium">Urine calcium · mg/day</label><input class="input" id="urine_calcium" type="number" inputmode="numeric" min="0" max="1000" placeholder="optional"><small class="err" data-err="urine_calcium"></small></div>
+        </div>
+      </section>
+
+      <section class="step" data-step="review">
+        <h2>Check your answers</h2>
+        <p>Submit when everything looks right.</p>
+        <div class="kv summary" id="summary"></div>
+        <div class="form-error" id="ci-error" role="alert" style="margin-top:10px"></div>
+      </section>
+
+      <section class="step" data-step="done" id="done"></section>
+
+      <div class="wizard-nav" id="wizard-nav">
+        <button type="button" class="btn" id="back">Back</button>
+        <button type="button" class="btn btn-primary" id="next">Continue</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel reveal" style="margin-top:16px">
+    <div class="panel-head"><h2>Recent check-ins <span class="sub">last 7</span></h2></div>
+    <div class="table-wrap"><table class="table" id="recentTable"></table></div>
   </div>
 </div>
 </main>

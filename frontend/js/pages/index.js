@@ -1,137 +1,125 @@
-/* Public Mission Dashboard */
+/* Public Mission Dashboard: 3D station hero, crew cards, cabin gauges, alert headlines. */
 (function () {
   'use strict';
-  var A = Astra, C = A.COLORS;
+  var A = Astra;
   A.init('mission');
   var session = A.getSession();
-  var hrBuf = {};     // astronaut id -> recent HR values for sparklines
-  var seenAlerts = null;
+  var $ = function (id) { return document.getElementById(id); };
 
-  document.getElementById('crewTitle').insertAdjacentHTML('afterbegin', A.ICONS.users);
-  document.getElementById('cabinTitle').insertAdjacentHTML('afterbegin', A.ICONS.rocket);
-  document.getElementById('snapTitle').insertAdjacentHTML('afterbegin', A.ICONS.pulse);
-  document.getElementById('recentTitle').insertAdjacentHTML('afterbegin', A.ICONS.alert);
-  document.getElementById('tickerIcon').innerHTML = A.ICONS.alert;
-  document.getElementById('ctaIcon').innerHTML = A.ICONS.login;
-  document.getElementById('missionDay').textContent = A.missionDay();
+  $('mission-day').textContent = A.missionDay();
   if (session) {
-    var cta = document.getElementById('ctaBtn');
-    cta.textContent = session.role === 'surgeon' ? 'Open Mission Support' : 'Open My Health';
+    var cta = $('cta-main');
+    cta.textContent = session.role === 'surgeon' ? 'Open the Support Console' : 'Open My Health';
     cta.href = session.role === 'surgeon' ? 'support.html' : 'my-health.html';
   }
 
-  // Cabin metrics shown as tiles: [metric, max for the bar, limit text]
-  var CABIN_TILES = [
-    ['co2', 6000, 'Caution > 4,000 · Critical > 5,000 ppm'],
-    ['o2', 25, 'Critical < 19.5 %'],
-    ['cabin_radiation', 2, 'Critical > 1.0 mSv/day'],
-    ['noise', 90, 'Caution > 70 dB'],
-    ['cabin_temperature', 30, 'Comfort 18 – 27 °C'],
-    ['humidity', 100, 'Comfort 25 – 70 %']
+  // Cabin gauges: [metric, config]
+  var GAUGES = [
+    ['co2', { name: 'CO₂', unit: 'ppm', min: 0, max: 6000, marks: [4000, 5000] }],
+    ['o2', { name: 'O₂', unit: '%', min: 16, max: 23, decimals: 1, marks: [19.5] }],
+    ['cabin_temperature', { name: 'Temperature', unit: '°C', min: 14, max: 30, decimals: 1, marks: [18, 27] }],
+    ['humidity', { name: 'Humidity', unit: '%', min: 0, max: 100, marks: [25, 70] }],
+    ['cabin_pressure', { name: 'Pressure', unit: 'kPa', min: 92, max: 106, decimals: 1, marks: [97.9] }],
+    ['cabin_radiation', { name: 'Radiation', unit: 'mSv/day', min: 0, max: 2.5, decimals: 2, marks: [1] }],
+    ['noise', { name: 'Noise', unit: 'dB', min: 30, max: 85, marks: [70] }]
   ];
+  var gaugeFns = {};
+  GAUGES.forEach(function (g) { var host = document.createElement('div'); $('gauges').appendChild(host); gaugeFns[g[0]] = A.gauge(host, g[1]); });
 
-  function crewCard(a, latest) {
-    var m = A.byMetric(latest.readings);
-    var hr = m.heart_rate, sp = m.spo2;
-    var hl = A.levelOf(hr), sl = A.levelOf(sp);
-    var href = session && session.role === 'surgeon' ? 'my-health.html?astronaut=' + a.id : (session && session.astronaut_id === a.id ? 'my-health.html' : '#');
-    return '<article class="panel crew-card st-' + a.status + '" data-id="' + a.id + '">' +
-      '<div class="crew-top"><div class="avatar">' + A.initials(a.name) + '</div><div class="crew-name"><h3>' + A.esc(a.name) + '</h3><small>' + A.esc(a.role) + '</small></div></div>' +
-      '<div class="crew-status">' + A.pill(a.status) + '<span class="alerts-n"><b>' + a.open_alerts + '</b> open alert' + (a.open_alerts === 1 ? '' : 's') + '</span></div>' +
-      '<div class="crew-vitals">' +
-      '<div class="cv l-' + hl + '"><small><span class="beat">' + A.ICONS.heart + '</span>Heart rate</small><b class="num">' + A.fmtVal(hr) + '</b><em>bpm</em></div>' +
-      '<div class="cv l-' + sl + '"><small>' + A.ICONS.lungs + 'SpO₂</small><b class="num">' + A.fmtVal(sp) + '</b><em>%</em></div>' +
-      '</div>' +
-      '<canvas class="crew-spark" id="spark' + a.id + '"></canvas>' +
-      '<div class="crew-foot"><span>' + A.ICONS.clock + ' ' + (a.last_reading_at ? 'updated ' + A.fmtTime(a.last_reading_at, true) + ' EAT' : 'no data') + '</span><span>heart-rate trend</span></div>' +
-      (href !== '#' ? '<a href="' + href + '" style="position:absolute;inset:0" aria-label="Open ' + A.esc(a.name) + '"></a>' : '') +
-      '</article>';
+  // Which module each crew member is shown in on the 3D station (the API has no location yet).
+  var MODULES = ['command', 'lab', 'habitat', 'cupola', 'node'];
+  var station = null, lastCrew = null;
+  A.load3d('station').then(function (m) {
+    station = m.createStation($('station'), { onSelect: function (id) { $('station-reset').hidden = false; openCrew(id); } });
+    if (lastCrew) station.setCrew(lastCrew);
+  }).catch(function (e) {
+    console.warn('3D station unavailable:', e.message);
+    $('station-hint').textContent = '3D view not available on this device';
+    $('station').classList.add('scene-fallback');
+    $('station').insertAdjacentHTML('afterbegin', '<div class="station-fallback" aria-hidden="true">' + A.ICONS.globe + '</div>');
+  });
+  $('station-reset').addEventListener('click', function (e) { if (station) station.reset(); e.currentTarget.hidden = true; });
+
+  var cards = {}, latestById = {}, crewById = {};
+  function crewCard(a) {
+    var n = document.createElement('button');
+    n.type = 'button'; n.className = 'crew-card st-green';
+    n.innerHTML = '<div class="cc-top"><span class="avatar lg">' + A.esc(A.initials(a.name)) + '</span><div><div class="cc-name">' + A.esc(a.name) + '</div><div class="cc-role">' + A.esc(a.role) + '</div></div></div>' +
+      '<span class="cc-badge"></span>' +
+      '<div class="cc-vitals"><div class="cc-vital" data-k="heart_rate"><small>Heart rate</small><b>—</b><i>bpm</i></div><div class="cc-vital" data-k="spo2"><small>SpO₂</small><b>—</b><i>%</i></div></div>' +
+      '<div class="cc-meta"><span>Open alerts <b data-k="open">0</b></span><span data-k="upd">—</span></div>';
+    n.addEventListener('click', function () { openCrew(a.id); if (station) { station.select(a.id, true); $('station-reset').hidden = false; } });
+    A.tilt(n);
+    $('crew-grid').appendChild(n); cards[a.id] = n;
+    return n;
   }
 
-  function seedSparks(crew) {
-    crew.forEach(function (a) {
-      Api.getHistory(a.id, 'heart_rate', 6, 40).then(function (h) {
-        hrBuf[a.id] = h.readings.map(function (r) { return r.value; }).slice(-40);
-      }).catch(function () {});
-    });
+  function openCrew(id) {
+    var a = crewById[id], m = latestById[id] || {};
+    if (!a) return;
+    var link = '';
+    if (session && session.role === 'surgeon') link = '<a class="btn btn-primary" href="support.html?astronaut=' + a.id + '">Open in Support Console</a>';
+    else if (session && session.astronaut_id === a.id) link = '<a class="btn btn-primary" href="my-health.html">Open My Health</a>';
+    A.modal('<div class="row" style="gap:14px"><span class="avatar lg">' + A.esc(A.initials(a.name)) + '</span><div><h2 style="margin:0">' + A.esc(a.name) + '</h2><p>' + A.esc(a.role) + ' · ' + A.esc(a.mission) + '</p></div></div>' +
+      '<div style="margin-top:14px">' + A.badge(a.status) + '</div>' +
+      '<div class="cc-vitals" style="margin-top:14px"><div class="cc-vital st-' + A.levelOf(m.heart_rate) + '"><small>Heart rate</small><b>' + A.fmtVal(m.heart_rate) + '</b><i>bpm</i></div><div class="cc-vital st-' + A.levelOf(m.spo2) + '"><small>SpO₂</small><b>' + A.fmtVal(m.spo2) + '</b><i>%</i></div></div>' +
+      '<p class="dim" style="margin-top:14px;font-size:13px">This is the public view. Full medical detail is visible only to the crew member and the flight surgeon.</p>' +
+      '<div class="modal-actions"><button class="btn" data-close>Close</button>' + link + '</div>');
   }
 
   function refreshCrew() {
     return Api.getCrew().then(function (crew) {
-      if (!Object.keys(hrBuf).length) seedSparks(crew.astronauts);
-      var counts = { green: 0, yellow: 0, red: 0 }, open = 0;
-      crew.astronauts.forEach(function (a) { counts[a.status]++; open += a.open_alerts; });
-      document.getElementById('sumGreen').textContent = counts.green;
-      document.getElementById('sumYellow').textContent = counts.yellow;
-      document.getElementById('sumRed').textContent = counts.red;
-      document.getElementById('crewCount').textContent = crew.count;
-      return Promise.all(crew.astronauts.map(function (a) { return Api.getLatest(a.id); })).then(function (latest) {
-        document.getElementById('crewGrid').innerHTML = crew.astronauts.map(function (a, i) { return crewCard(a, latest[i]); }).join('');
-        renderSnapshot(crew.astronauts, latest);
-        crew.astronauts.forEach(function (a, i) {
-          var hr = A.byMetric(latest[i].readings).heart_rate;
-          var buf = hrBuf[a.id] = hrBuf[a.id] || [];
-          if (hr && typeof hr.value === 'number') { buf.push(hr.value); if (buf.length > 40) buf.shift(); }
-          AstraChart.sparkline(document.getElementById('spark' + a.id), buf, C[a.status === 'green' ? 'cyan' : a.status]);
+      var list = crew.astronauts;
+      return Promise.all(list.map(function (a) { return Api.getLatest(a.id); })).then(function (latest) {
+        var ok = 0, open = 0, worst = [];
+        if (list[0]) $('mission-name').textContent = list[0].mission;
+        list.forEach(function (a, i) {
+          crewById[a.id] = a; latestById[a.id] = A.byMetric(latest[i].readings);
+          var m = latestById[a.id], n = cards[a.id] || crewCard(a);
+          if (a.status === 'green') ok++;
+          open += a.open_alerts; worst.push(a.status);
+          A.setStatus(n, a.status);
+          n.querySelector('.cc-badge').innerHTML = A.badge(a.status);
+          ['heart_rate', 'spo2'].forEach(function (k) {
+            var cell = n.querySelector('[data-k="' + k + '"]');
+            A.setStatus(cell, A.levelOf(m[k]));
+            A.countTo(cell.querySelector('b'), m[k] ? m[k].value : null, 0);
+          });
+          n.querySelector('[data-k="open"]').textContent = a.open_alerts;
+          n.querySelector('[data-k="upd"]').textContent = a.last_reading_at ? 'updated ' + A.fmtTime(a.last_reading_at, true) + ' EAT' : 'no data';
+          n.setAttribute('aria-label', a.name + ', ' + a.role + ', ' + A.statusLabel(a.status));
         });
-        A.setConn(true);
+        A.countTo($('stat-crew'), list.length); A.countTo($('stat-ok'), ok); A.countTo($('stat-alerts'), open);
+        var overall = AstraRules.worst(worst);
+        $('stat-overall').innerHTML = A.badge(overall);
+        lastCrew = list.map(function (a, i) { return { id: a.id, name: a.name, status: a.status, location: MODULES[i % MODULES.length] }; });
+        if (station) station.setCrew(lastCrew);
+        A.alarm.set(overall === 'red', { sound: false });
       });
     });
-  }
-
-  var SNAP = [['systolic_bp', 'BP'], ['body_temperature', 'Temp'], ['respiration_rate', 'Resp'], ['hrv', 'HRV'], ['blood_glucose', 'Glucose'], ['stress_level', 'Stress'], ['ecg_rhythm', 'ECG']];
-  function renderSnapshot(crew, latest) {
-    var head = '<tr><th>Astronaut</th>' + SNAP.map(function (c) { return '<th class="num">' + c[1] + '</th>'; }).join('') + '</tr>';
-    var rows = crew.map(function (a, i) {
-      var m = A.byMetric(latest[i].readings);
-      return '<tr class="row-' + a.status + '"><td><b>' + A.esc(a.name) + '</b></td>' + SNAP.map(function (c) {
-        var r = m[c[0]], lv = A.levelOf(r), v = A.fmtVal(r);
-        if (c[0] === 'systolic_bp') v = A.fmtVal(r) + '/' + A.fmtVal(m.diastolic_bp);
-        return '<td class="num"><span class="l-' + lv + '">' + v + '</span></td>';
-      }).join('') + '</tr>';
-    }).join('');
-    document.getElementById('snapTable').innerHTML = '<thead>' + head + '</thead><tbody>' + rows + '</tbody>';
   }
 
   function refreshCabin() {
     return Api.getCabin().then(function (cab) {
       var m = A.byMetric(cab.readings);
-      document.getElementById('cabinGrid').innerHTML = CABIN_TILES.map(function (t) {
-        var r = m[t[0]], meta = A.METRICS[t[0]], lv = A.levelOf(r);
-        var pct = r && typeof r.value === 'number' ? Math.min(100, r.value / t[1] * 100) : 0;
-        return '<div class="env l-' + lv + '"><small>' + A.ICONS[meta.icon] + meta.label + '</small><b>' + A.fmtVal(r) + '<em>' + meta.unit + '</em></b>' +
-          '<div class="bar"><i style="width:' + pct.toFixed(1) + '%"></i></div><div class="lim">' + t[2] + '</div></div>';
-      }).join('');
-      document.getElementById('cabinExtra').innerHTML =
-        '<span>' + A.ICONS.gauge + ' Pressure <b class="num" style="color:var(--text)">' + A.fmtVal(m.cabin_pressure) + ' kPa</b></span>' +
-        '<span>' + A.ICONS.leaf + ' VOC <b class="num" style="color:var(--text)">' + A.fmtVal(m.voc) + ' mg/m³</b></span>';
+      GAUGES.forEach(function (g) { var r = m[g[0]]; gaugeFns[g[0]](r ? r.value : null, A.levelOf(r)); });
       var ts = cab.readings.length ? cab.readings[0].timestamp : null;
-      document.getElementById('cabinUpdated').textContent = ts ? 'updated ' + A.fmtTime(ts, true) + ' EAT' : '—';
+      $('cabin-updated').textContent = ts ? 'updated ' + A.fmtTime(ts, true) + ' EAT' : '';
     });
   }
 
+  var seen = null;
   function refreshAlerts() {
     return Api.getAlerts({ resolved: false, limit: 30 }).then(function (res) {
       var list = res.alerts;
-      document.getElementById('sumAlerts').textContent = list.length >= 30 ? '30+' : list.length;
-      // Ticker (duplicated content for seamless loop)
-      var items = list.slice(0, 12).map(function (al) {
-        return '<span class="ticker-item"><span class="dot" style="background:' + C[al.level] + ';box-shadow:0 0 10px ' + C[al.level] + '"></span>' +
-          '<b>' + A.esc(al.astronaut || 'CABIN') + '</b> ' + A.esc(al.message) + ' <span class="t">' + A.fmtTime(al.created_at) + '</span></span>';
-      }).join('');
-      if (!items) items = '<span class="ticker-item"><span class="dot" style="background:' + C.green + '"></span>All systems nominal</span>';
-      var tk = document.getElementById('ticker');
-      if (tk.dataset.sig !== items) { tk.innerHTML = items + items; tk.dataset.sig = items; }
-      document.getElementById('recentAlerts').innerHTML = list.length ? list.slice(0, 5).map(function (al) {
-        return '<div class="alert-item' + A.animCls(al.id) + ' l-' + al.level + '"><div class="alert-ico">' + A.ICONS.alert + '</div><div><h4>' + A.esc(al.message) + '</h4>' +
-          '<div class="meta"><span>' + A.esc(al.astronaut || 'Cabin') + '</span><span>' + A.esc(al.system) + '</span><span>' + A.ago(al.created_at) + '</span></div></div><span></span></div>';
-      }).join('') : '<div class="empty">' + A.ICONS.check + 'No open alerts</div>';
-      // toast for brand-new red alerts
-      if (seenAlerts) {
-        var fresh = list.filter(function (al) { return !seenAlerts[al.id] && al.level === 'red'; });
-        if (fresh.length) A.toast((fresh[0].astronaut || 'Cabin') + ': ' + fresh[0].message + (fresh.length > 1 ? ' (+' + (fresh.length - 1) + ' more)' : ''), 'red');
+      $('feed-count').textContent = list.length ? (list.length >= 30 ? '30+' : list.length) + ' open' : '';
+      $('feed').innerHTML = list.length ? list.slice(0, 12).map(function (al) { return A.alertItem(al, { detail: false }); }).join('')
+        : '<li class="empty">' + A.ST_ICON.green + 'No open alerts. All systems nominal.</li>';
+      if (seen) {
+        var fresh = list.filter(function (al) { return !seen[al.id] && al.level === 'red'; });
+        if (fresh.length) A.toast((fresh[0].astronaut || 'Cabin') + ': ' + fresh[0].message, 'red', fresh.length > 1 ? '+' + (fresh.length - 1) + ' more critical' : 'Critical');
       }
-      seenAlerts = {}; list.forEach(function (al) { seenAlerts[al.id] = 1; });
+      seen = {}; list.forEach(function (al) { seen[al.id] = 1; });
     });
   }
 

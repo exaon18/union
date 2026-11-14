@@ -11,7 +11,6 @@
   var metric = params.get('metric') || 'heart_rate';
   var hours = Number(params.get('hours')) || 24;
   var alertFilter = 'all';
-  ['chartTitle:chart', 'tableTitle:clipboard', 'alertTitle:alert'].forEach(function (x) { var p = x.split(':'); document.getElementById(p[0]).insertAdjacentHTML('afterbegin', A.ICONS[p[1]]); });
 
   // Alert thresholds drawn on the chart (mirror of health/sensor_rules.py)
   var THRESH = {
@@ -43,7 +42,7 @@
   sel.addEventListener('change', function () { metric = sel.value; sync(); load(); });
 
   if (isSurgeon) {
-    var as = document.getElementById('astroSel'); as.classList.remove('hidden');
+    var as = document.getElementById('astroSel'); as.hidden = false;
     Api.getCrew().then(function (c) {
       as.innerHTML = c.astronauts.map(function (a) { return '<option value="' + a.id + '"' + (a.id === aid ? ' selected' : '') + '>' + A.esc(a.name) + '</option>'; }).join('');
     });
@@ -51,12 +50,12 @@
   }
 
   var seg = document.getElementById('rangeSeg');
-  function markRange() { seg.querySelectorAll('button').forEach(function (b) { b.classList.toggle('active', Number(b.dataset.h) === hours); }); }
+  function markRange() { seg.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', Number(b.dataset.h) === hours); }); }
   seg.addEventListener('click', function (e) { var h = e.target.dataset && e.target.dataset.h; if (!h) return; hours = Number(h); markRange(); sync(); load(); });
   markRange();
   document.getElementById('alertSeg').addEventListener('click', function (e) {
     var f = e.target.dataset && e.target.dataset.f; if (!f) return; alertFilter = f;
-    this.querySelectorAll('button').forEach(function (b) { b.classList.toggle('active', b.dataset.f === f); });
+    this.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.f === f); });
     loadAlerts();
   });
 
@@ -66,7 +65,7 @@
   }
 
   function stat(label, value, unit, lv) {
-    return '<div class="panel env l-' + (lv || 'green') + '" style="padding:16px 18px"><small>' + label + '</small><b>' + value + '<em>' + (unit || '') + '</em></b></div>';
+    return '<div class="st-' + (lv || 'green') + '" style="border-left:3px solid var(--st)"><small>' + label + '</small><b>' + value + '</b><i>' + (unit || '') + '</i></div>';
   }
 
   function load() {
@@ -84,33 +83,31 @@
         stat('Min / Max', Math.min.apply(null, vals).toFixed(d) + ' / ' + Math.max.apply(null, vals).toFixed(d), meta.unit),
         stat('Out of range', nAlert + ' / ' + vals.length, 'readings', nAlert ? 'yellow' : 'green')
       ].join('') : '';
-      document.getElementById('chartTitle').lastChild.textContent = ' ' + meta.label + ' (' + meta.unit + ')';
+      document.getElementById('chartTitle').innerHTML = A.esc(meta.label) + ' <span class="sub">' + A.esc(meta.unit) + '</span>';
       document.getElementById('chartSub').textContent = h.count + ' points · last ' + (hours === 168 ? '7 days' : hours + ' h');
       var th = (THRESH[metric] || []).map(function (t) { return { v: t[0], color: C[t[1]], label: t[1] + ' ' + t[2] }; });
       var multiDay = hours > 24;
       var daily = rs.length <= 8 && hours >= 24;
       AstraChart.line(document.getElementById('histChart'), rs.map(function (r) { return { t: Date.parse(r.timestamp), v: r.value }; }), {
-        color: C.cyan, thresholds: th, unit: meta.unit, decimals: d > 1 ? d : undefined, bars: daily,
+        color: C.blue, thresholds: th, unit: meta.unit, decimals: d > 1 ? d : undefined, bars: daily,
         xFormat: function (t) { var iso = new Date(t).toISOString(); return multiDay ? new Date(t).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: A.TZ }) : A.fmtTime(iso); },
         tipFormat: function (t) { return A.fmtDateTime(new Date(t).toISOString()) + ' EAT'; },
         pointColor: function (v) { var l = A.levelOf({ metric: metric, value: v, text_value: '' }); return l === 'green' ? (daily ? C.cyan : null) : C[l]; }
       });
       var rows = h.readings.slice().reverse().slice(0, 150).map(function (r) {
         var lv = A.levelOf(r);
-        return '<tr class="row-' + lv + '"><td>' + A.fmtDateTime(r.timestamp) + '</td><td class="num"><span class="l-' + lv + '">' + A.fmtVal(r) + '</span> <span class="dim">' + A.esc(r.unit) + '</span></td><td>' + A.esc(r.source) + '</td><td>' + A.pill(lv) + '</td></tr>';
+        return '<tr><td>' + A.fmtDateTime(r.timestamp) + '</td><td class="num">' + A.fmtVal(r) + ' <span class="dim">' + A.esc(r.unit) + '</span></td><td class="dim">' + A.esc(r.source) + '</td><td>' + A.badge(lv) + '</td></tr>';
       }).join('');
-      document.getElementById('readTable').innerHTML = '<thead><tr><th>Time (EAT)</th><th class="num">Value</th><th>Source</th><th>Status</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4" class="dim">No readings</td></tr>') + '</tbody>';
+      document.getElementById('readTable').innerHTML = '<thead><tr><th>Time (EAT)</th><th>Value</th><th>Source</th><th>Status</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4" class="dim">No readings</td></tr>') + '</tbody>';
       document.getElementById('tableSub').textContent = 'newest first' + (h.readings.length > 150 ? ' · showing 150 of ' + h.readings.length : '');
-    }).catch(function (e) { A.toast('Could not load history: ' + e.message, 'red'); });
+    }).catch(function (e) { A.toast('Could not load history', 'red', e.message); });
   }
 
   function loadAlerts() {
     var opts = { astronaut: aid, limit: 50 }; if (alertFilter !== 'all') opts.resolved = alertFilter;
     Api.getAlerts(opts).then(function (res) {
-      document.getElementById('alertHist').innerHTML = res.alerts.length ? res.alerts.map(function (al) {
-        return '<div class="alert-item' + A.animCls(al.id) + ' l-' + al.level + (al.resolved ? ' resolved' : '') + '"><div class="alert-ico">' + (al.resolved ? A.ICONS.check : A.ICONS.alert) + '</div><div><h4>' + A.esc(al.message) + '</h4><p>' + A.esc(al.recommendation) + '</p>' +
-          '<div class="meta"><span>' + A.fmtDateTime(al.created_at) + ' EAT</span><span>' + A.esc(al.system) + '</span><span>' + (al.resolved ? 'resolved' : 'open') + '</span></div></div>' + A.pill(al.level) + '</div>';
-      }).join('') : '<div class="empty">' + A.ICONS.check + 'No alerts</div>';
+      document.getElementById('alertHist').innerHTML = res.alerts.length ? res.alerts.map(function (al) { return A.alertItem(al, { showName: false }); }).join('')
+        : '<li class="empty">' + A.ST_ICON.green + 'No alerts in this filter.</li>';
     });
   }
 

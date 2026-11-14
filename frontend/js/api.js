@@ -116,7 +116,7 @@
     },
     getAlerts: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getAlerts(opts); }) : get('/alerts/', opts); },
     getCheckins: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getCheckins(opts); }) : get('/checkins/', opts); },
-    getPvt: function (opts) { return USE_MOCK ? mock(function () { return { count: 0, results: [] }; }) : get('/pvt/', opts); },
+    getPvt: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getPvt(opts); }) : get('/pvt/', opts); },
 
     /* ---- write endpoints (Authorization: Token <key>) ---- */
     // POST /api/checkins/ -> {checkin, alerts, status}
