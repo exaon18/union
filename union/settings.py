@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'core',
+    'health',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -122,3 +123,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Use our custom User model from the core app (must be set before the first migrate)
+AUTH_USER_MODEL = 'core.User'
+
+# Uploaded files (e.g. user avatars)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
