@@ -3,41 +3,61 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mission Support · ASTRA HEALTH</title>
+<title>Support Console · ASTRA HEALTH</title>
 <meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2322d3ee' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236fd3ff' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="preload" href="vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="page-support">
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
 <header id="topnav"></header>
-<main>
-<div class="page-head">
-  <div>
-    <span class="eyebrow">Flight surgeon · Mission support</span>
-    <h1>Mission Support Console</h1>
-    <p>Whole-crew view, sorted by severity. Acknowledge an alert when you've seen it; resolve it when it has been handled.</p>
-  </div>
-  <div class="row wrap" id="headChips"></div>
-</div>
-
-<section class="panel">
-  <div class="panel-head"><h2 id="crewTitle">Crew overview</h2><span class="live" data-conn><i></i><span>LIVE</span></span></div>
-  <div class="table-wrap"><table id="crewTable"></table></div>
-</section>
-
-<section class="split mt">
-  <div class="panel">
-    <div class="panel-head">
-      <h2 id="alertsTitle">Open alerts</h2>
-      <div class="seg" id="levelSeg"><button data-l="" class="active">All</button><button data-l="red">Critical</button><button data-l="yellow">Caution</button></div>
+<main class="page" id="main">
+<div id="overview" class="view">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow reveal">Flight surgeon · Mission support</div>
+      <h1 class="reveal">Support Console</h1>
+      <p class="muted reveal" id="con-mission">Whole crew, most urgent first. Acknowledge an alert when you have seen it; resolve it when it has been handled.</p>
     </div>
-    <div class="alert-list" id="openAlerts" style="max-height:640px;overflow:auto"></div>
+    <div class="row wrap reveal"><span class="live-tag">Live · every 3 s</span><span class="chip"><span class="mono" data-clock>--:--:--</span>&nbsp;EAT</span></div>
   </div>
-  <div class="panel" id="drill">
-    <div class="panel-head"><h2 id="drillTitle">Drill-down</h2><a class="btn btn-ghost btn-sm" id="drillOpen" href="#">Full dashboard</a></div>
-    <div id="drillBody"><div class="empty" style="color:var(--muted)">Select an astronaut in the table.</div></div>
+
+  <div id="con-banner"></div>
+
+  <div class="counters reveal" id="counters">
+    <div class="counter-tile st-red" id="ct-red"><small>__RED__Critical</small><b id="con-red">—</b></div>
+    <div class="counter-tile st-yellow"><small>__YELLOW__Caution</small><b id="con-yellow">—</b></div>
+    <div class="counter-tile st-green"><small>__GREEN__Nominal</small><b id="con-green">—</b></div>
+    <div class="counter-tile st-none" style="--st:var(--accent)"><small>Open alerts</small><b id="con-open">—</b><span class="dim" style="font-size:12px" id="con-unack"></span></div>
   </div>
-</section>
+
+  <section class="grid g-12">
+    <div class="panel span-8 lg-12 reveal">
+      <div class="panel-head"><h2>Crew vitals <span class="sub">most urgent first · select a crew member for the full view</span></h2><span class="live-tag">Live</span></div>
+      <div class="con-grid" id="con-grid"></div>
+    </div>
+    <div class="panel span-4 lg-12 reveal">
+      <div class="panel-head">
+        <h2>Active alerts <span class="sub" id="con-count"></span></h2>
+        <div class="seg" role="group" aria-label="Filter alerts" id="con-filter">
+          <button type="button" data-f="" aria-pressed="true">All</button>
+          <button type="button" data-f="red" aria-pressed="false">Critical</button>
+          <button type="button" data-f="yellow" aria-pressed="false">Caution</button>
+          <button type="button" data-f="new" aria-pressed="false">New</button>
+        </div>
+      </div>
+      <ul class="feed tall" id="con-alerts" aria-live="polite"></ul>
+    </div>
+    <div class="panel span-12 reveal">
+      <div class="panel-head"><h2>Cabin environment <span class="sub" id="cabin-updated"></span></h2><span class="live-tag">Live</span></div>
+      <div class="gauges" id="gauges"></div>
+    </div>
+    <div class="span-12 disclaimer-box reveal">__SHIELD__<span><b>Decision-support prototype, not a diagnosis.</b> Alerts come from simple rule-based thresholds on simulated data. The flight surgeon confirms every alert before any medical action.</span></div>
+  </section>
+</div>
+<div id="detail" hidden></div>
 </main>
 <footer id="footer"></footer>
 <script src="js/rules.js"></script>
@@ -45,6 +65,7 @@
 <script src="js/api.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/common.js"></script>
+<script src="js/health-view.js"></script>
 <script src="js/pages/support.js"></script>
 </body>
 </html>
