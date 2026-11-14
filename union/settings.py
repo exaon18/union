@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!i*$w(m8(i*j+svy-ya^edtcw!rr7@a=uf3htrhwzgx(md%&ia'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-!i*$w(m8(i*j+svy-ya^edtcw!rr7@a=uf3htrhwzgx(md%&ia',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if h.strip()
+]
 
 
 # Application definition
@@ -133,5 +141,4 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Shared secret for the device webhook (the simulator signs requests with it).
 # Change it, or set the ASTRA_WEBHOOK_SECRET environment variable.
-import os
 WEBHOOK_SECRET = os.environ.get("ASTRA_WEBHOOK_SECRET", "astra-dev-secret")
