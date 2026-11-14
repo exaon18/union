@@ -39,6 +39,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'core',
     'health',
     'django.contrib.admin',
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -142,3 +144,19 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Shared secret for the device webhook (the simulator signs requests with it).
 # Change it, or set the ASTRA_WEBHOOK_SECRET environment variable.
 WEBHOOK_SECRET = os.environ.get("ASTRA_WEBHOOK_SECRET", "astra-dev-secret")
+
+
+# CORS: frontend apps on other origins can call the GET endpoints.
+# Set DJANGO_CORS_ALLOWED_ORIGINS to a comma-separated list of origins
+# (e.g. https://your-frontend.com). If unset, all origins are allowed (hackathon default).
+_cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+if _cors_origins:
+    CORS_ALLOWED_ORIGINS = _cors_origins
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
+# Public API is read-only. The device webhook is POST + HMAC and is not called from browsers.
+CORS_ALLOW_METHODS = ["GET", "HEAD", "OPTIONS"]
