@@ -50,27 +50,55 @@ or the database was reset) the page says so and sends you to the login page.
 
 | Page | Who | What |
 |------|-----|------|
-| `index.html` | public | Mission header (mission day, Earth time EAT), 4 crew cards with green/yellow/red status, HR, SpO₂, cabin environment, live alert ticker, login |
-| `login.html` | public | Login form with demo credentials |
-| `my-health.html` | astronaut (surgeon via `?astronaut=<id>`) | Live vitals vs personal baseline, 6 health modules, recommendations (red → *Contact mission support*), HR 24 h / sleep 7 d / cumulative radiation charts |
-| `checkin.html` | astronaut | Daily check-in (sleep, mood, stress, exercise, symptoms, optional urine calcium, device values pre-filled) with validation and instant rule feedback |
-| `pvt.html` | astronaut | Working Psychomotor Vigilance Task: random 2–10 s delay, click/Space, 5/10/20 trials, mean RT, lapses (> 500 ms), false starts |
-| `history.html` | astronaut / surgeon | Metric selector, 6 h / 24 h / 7 d, chart with thresholds, readings table, alert history |
-| `support.html` | surgeon | Crew table sorted by severity, open alerts with Acknowledge / Resolve, drill-down per astronaut |
+| `index.html` | public | Mission dashboard: 3D Earth backdrop, rotatable 3D station with a pin per crew member, mission stats, tilting crew cards (status, HR, SpO₂), cabin gauges, live alert feed, red toasts + red alarm frame |
+| `login.html` | public | Login card with all 5 demo accounts (one click fills), warp transition into the app |
+| `my-health.html` | astronaut (a surgeon is redirected to the Support Console detail) | Status banner (red → *Contact mission support*), 8 live vital tiles vs personal baseline, alerts with what to do, 3D body with organs coloured from readings/alerts, HR / SpO₂ 24 h, sleep and PVT 7 d, radiation, latest check-in, PVT results, red-alert popup |
+| `checkin.html` | astronaut | 7-step check-in wizard (mood, stress, symptoms + notes, device values pre-filled, sleep/exercise, radiation/urine calcium, review), instant rule feedback and server alerts after submit |
+| `pvt.html` | astronaut | Psychomotor Vigilance Task: random 2–10 s delay, click/tap/Space, 5/10/20 trials, mean/fastest RT, lapses (> 500 ms), false starts, per-trial bars, 7-day history |
+| `history.html` | astronaut / surgeon | Metric chips, 6 h / 24 h / 7 d, chart with thresholds, stats, readings table, alert history |
+| `support.html` | surgeon | **Support Console**: critical/caution/nominal/open-alert counters, crew grid sorted most urgent first, alert feed with filters and Acknowledge / Resolve, cabin gauges, per-astronaut detail view (same as My Health, plus Ack/Resolve) |
 
 ## Files
 
 ```
 frontend/
   index.html login.html my-health.html checkin.html pvt.html history.html support.html
-  css/style.css          dark space theme, responsive
+  css/style.css          mission-control design system (glass panels, status colours, animations), responsive
   js/rules.js            port of health/sensor_rules.py + health/rules.py (same thresholds)
   js/mock-data.js        mock backend for ?api=mock: same JSON as the Django API, live every 3 s
   js/api.js              API client: base URL, token header, errors, mock ↔ real
   js/charts.js           tiny canvas charts (line, bars, sparkline)
-  js/common.js           nav, session, formatting, icons, starfield
+  js/common.js           nav, session, formatting, icons, toasts, modal, gauges, alert items, organ mapping, 3D loader
+  js/health-view.js      astronaut health view (used by my-health.html and the Support Console detail)
+  js/3d/space.js         three.js Earth + starfield backdrop
+  js/3d/station.js       rotatable 3D station with crew beacons
+  js/3d/body.js          hologram body with organ hotspots (heart beats at the live heart rate)
+  js/3d/tween.js         small camera tween (no GSAP)
   js/pages/*.js          one script per page
+  vendor/                three.js + fonts, served locally (no CDN)
+  img/                   Earth textures
 ```
+
+## 3D, sound and fallbacks
+
+* All 3D is three.js r169 loaded from `vendor/` with native ES modules; nothing is fetched from a CDN at runtime.
+* No WebGL (or `?no3d=1` in the URL): the pages add `html.no-webgl`, show a CSS starfield and gradient instead of the
+  Earth, an icon instead of the station, and the organ list without the 3D body. Everything else works the same.
+* `prefers-reduced-motion` turns off count-ups, tilts, the warp transition and auto-rotation.
+* The alarm sound for new red alerts is **off by default**; the speaker button in the top bar turns it on (saved in
+  `localStorage` as `astra_sound`).
+
+## Third-party assets and licences
+
+| Asset | Path | Licence |
+|-------|------|---------|
+| three.js r169 (`three.module.min.js`, `OrbitControls.js`, `MeshSurfaceSampler.js`) | `vendor/three/` | MIT, see `vendor/three/LICENSE` |
+| Space Grotesk (variable, latin + latin-ext) | `vendor/fonts/` | SIL Open Font License 1.1, via Fontsource |
+| JetBrains Mono (variable, latin) | `vendor/fonts/` | SIL Open Font License 1.1, via Fontsource |
+| Earth day / night lights / water mask textures | `img/earth-*.jpg` | From the three.js examples (`examples/textures/planets`, MIT repo), derived from NASA Blue Marble / Black Marble imagery (public domain) |
+
+Total added size: about 1.3 MB (three.js 0.7 MB, fonts 0.1 MB, textures 0.5 MB).
+The visual design follows the "UNION Mission Health" mock-up made by a teammate.
 
 ## Mock data (`?api=mock`)
 
