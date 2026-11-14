@@ -50,6 +50,20 @@ red forever. With 4 astronauts × 13 metrics every 3 s, alerts piled up faster t
 The shared secret defaults to `astra-dev-secret`. To change it, set `ASTRA_WEBHOOK_SECRET`
 to the same value in both terminals.
 
+## NASA data in the simulated values
+
+* **Lab markers** (sent with `--daily` and whenever an immune problem is active): serum glucose,
+  calcium, albumin, IL-6, TNF-α, IL-10, MCP-1, CRP (OSD-575) and urine IL-6, IL-8, MPO, NGAL (OSD-656).
+  Normal values are drawn inside the green band around the **real Inspiration4 pre-flight mean**; an
+  `immune` problem shifts every cytokine/CRP/urine marker by **1.05-1.6×** (caution) or **2.1-2.8×**
+  (critical) the **real return-day shift**. Bands: `health/data/nasa_reference.json` (see
+  [NASA_DATA.md](../NASA_DATA.md)). If that file is missing, no lab markers are sent.
+* **Radiation** follows real NASA DONKI space weather: in "Random / realistic" a real SEP event,
+  X-class flare or recent M-class flare (stored by `manage.py fetch_donki`) raises everyone's
+  radiation; "Replay real space weather" replays one past event. The simulator prints
+  `space weather: NASA DONKI FLR 2026-07-04T20:29:00-FLR-001 (X1.3 solar flare) -> crew radiation critical`.
+  DONKI gives timing and class, not a dose: the dose values are simulated (radiation bands above).
+
 ## Payload
 ```json
 {"readings": [

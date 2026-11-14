@@ -52,6 +52,8 @@ Demo accounts (password for all: `astra2026`):
 | POST | `/api/sim/scenario/` | token (surgeon) | Change the scenario. Optional `reset` (resolve open alerts) and `apply_now` (push one batch). |
 | POST | `/api/sim/reset/` | token (surgeon) | Resolve every open alert. |
 | POST | `/api/sim/tick/` | token (surgeon) | Generate and save one simulated batch now. |
+| GET | `/api/space-weather/` | none | Real NASA DONKI space weather: crew state, latest events, replayable events. |
+| GET | `/api/nasa/reference/` | none | Bands derived from NASA OSDR OSD-575, OSD-656, OSD-53, with provenance. |
 | POST | `/api/webhook/readings/` | HMAC (X-Astra-Signature) | Device webhook. HMAC-signed. Not for the frontend. |
 
 `GET /api/` returns this list as JSON (plus `server_time`).
@@ -649,12 +651,18 @@ Presets and value bands live in `device_simulator/scenarios.py` (the simulator a
 | `critical` | values inside the red band |
 
 Astronaut systems: `cardiovascular` (HR, ECG, BP, HRV), `respiratory` (SpO₂, breathing rate),
-`radiation` (dosimeter), `behavioral` (stress, sleep, PVT lapses), `immune` (body temperature, glucose).
+`radiation` (dosimeter), `behavioral` (stress, sleep, PVT lapses), `immune` (body temperature, glucose,
+plus serum cytokines/CRP and urine markers shifted by the real Inspiration4 return-day change, see
+[NASA_DATA.md](NASA_DATA.md)).
 Cabin systems: `co2`, `o2`, `radiation`, `noise` (cabin alerts have no astronaut).
 
 Presets: `nominal`, `one_caution`, `one_critical`, `mixed` (one critical + one caution), `several_caution`,
-`all_critical`, `cabin_co2`, `radiation_storm`, `realistic` (default: mostly green, rare one-tick blips at
-`anomaly_rate` per astronaut per tick), `custom`.
+`all_critical`, `cabin_co2`, `radiation_storm`, `space_weather` (replay one real NASA DONKI event),
+`realistic` (default: mostly green, rare one-tick blips at `anomaly_rate` per astronaut per tick; a real
+DONKI SEP event, X-class flare or recent M-class flare raises everyone's radiation automatically), `custom`.
+
+`resolved.space_weather` is `null`, or the real DONKI event driving the radiation
+(`{"id", "type", "time", "label", "link", "level", "replay": true|false}`); the simulator prints it.
 
 ### `GET /api/sim/scenario/`  (public)
 
@@ -688,6 +696,9 @@ Presets: `nominal`, `one_caution`, `one_critical`, `mixed` (one critical + one c
 
 * `target` (astronaut id) is used by `one_caution`, `one_critical`, `mixed` and `several_caution` (everyone *except* the target).
 * `system` is used by `one_caution`, `one_critical`, `mixed`.
+* `space_weather` needs `event_id`: a real DONKI SEP event or M/X-class flare id from
+  `GET /api/space-weather/` → `replay` (e.g. `"2026-07-04T20:29:00-FLR-001"`). SEP or X = critical
+  (everyone + cabin radiation red), M = caution. Unknown ids give 400.
 * `reset: true` resolves every open alert first, so the console starts clean.
 * `apply_now: true` generates and saves one batch immediately (no waiting for the simulator).
 
@@ -701,6 +712,45 @@ Resolves every open alert (sensor, check-in and PVT). `{"resolved": 11}`. `resol
 ### `POST /api/sim/tick/`  (token, surgeon only)
 
 Pushes one batch from the active scenario, exactly like one simulator tick. `201 {"saved": 112, "alerts": [...], "errors": []}`.
+
+---
+
+## NASA data
+
+Details, numbers and limits: [NASA_DATA.md](NASA_DATA.md).
+
+### `GET /api/space-weather/`  (public)
+
+Real NASA DONKI events stored by `python manage.py fetch_donki` (`source: "live"`), merged with the
+bundled cached snapshot `health/data/donki_snapshot.json` for older history (each event has its own
+`source`). If nothing was fetched yet, everything comes from the snapshot (`source: "snapshot"`).
+
+```json
+{
+  "source": "live", "fetched_at": "2026-11-14T22:03:19+00:00", "snapshot_fetched_at": "2026-11-14T22:03:34+00:00",
+  "provider": "NASA DONKI (…)", "provider_url": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/",
+  "state": {"level": "quiet", "event": null, "reason": "No solar particle event, X-class or recent M-class flare in DONKI right now."},
+  "latest": [{"id": "2026-11-11T21:06:00-FLR-001", "type": "FLR", "time": "2026-11-11T21:06Z", "class": "M1.7",
+              "level": "caution", "label": "M1.7 solar flare", "impact": "…", "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/49504/-1",
+              "source": "live"}, "…"],
+  "replay": [{"id": "2026-07-04T20:29:00-FLR-001", "type": "FLR", "label": "X1.3 solar flare", "level": "critical", "…": "…"}, "…"],
+  "counts": {"FLR": 199, "SEP": 214, "CME": 113, "GST": 62},
+  "mapping": {"SEP": "critical", "X-class flare": "critical", "M-class flare": "caution", "CME >= 1000 km/s": "caution", "GST": "info (near-Earth only)"},
+  "note": "DONKI gives event times and classes, not the crew's dose; dose values are simulated."
+}
+```
+
+`state.level` is `critical` (SEP in the last 48 h or X flare in the last 24 h), `caution`
+(M flare in the last 6 h or CME ≥ 1000 km/s in the last 24 h) or `quiet`.
+
+### `GET /api/nasa/reference/`  (public)
+
+The whole `health/data/nasa_reference.json`: study titles, OSDR file URLs, publications, the
+monitoring bands (`monitoring`), the consistent shifts (`shifted`) and the per-analyte tables.
+The lab alert rules (metrics `serum_glucose`, `serum_calcium`, `serum_albumin`, `il6`, `tnf_alpha`,
+`il10`, `mcp1`, `crp`, `urine_il6`, `urine_il8`, `urine_mpo`, `urine_lcn2`) are built from it; the
+alert recommendation cites the study, e.g. *"… Inspiration4 crew: 3.703 pre-flight -> 6.64 pg/mL on
+return day (x1.793, 4/4 crew; NASA OSDR OSD-575)."*
 
 ---
 

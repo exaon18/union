@@ -115,6 +115,34 @@ curl -s -X POST http://127.0.0.1:8000/api/sim/scenario/ -H "Authorization: Token
   -H 'Content-Type: application/json' -d '{"preset":"nominal","reset":true,"apply_now":true}' | head -c 200; echo
 ```
 
+## NASA data (OSDR + DONKI)
+
+After pulling the NASA data update:
+
+```bash
+cd ~/astra && git pull \
+  && venv/bin/python manage.py migrate \
+  && venv/bin/python manage.py fetch_donki --days 30 \
+  && sudo systemctl restart astra astra-sim
+curl -s http://127.0.0.1:8000/api/space-weather/ | head -c 300; echo
+sudo journalctl -u astra-sim -n 5 --no-pager
+```
+
+* `migrate` adds the `health_spaceweatherevent` table.
+* `fetch_donki` downloads real flares, SEP events, CMEs and geomagnetic storms. It tries
+  `api.nasa.gov` with `NASA_API_KEY` (falls back to `DEMO_KEY`), then the CCMC DONKI service (no key
+  needed). If both fail it loads the bundled snapshot and says so. A new SEP event or X-class flare
+  from the last 48 h raises a cabin radiation alert.
+* Keep it fresh with cron (`crontab -e`), e.g. every 3 hours:
+
+  ```
+  0 */3 * * * cd /home/USER/astra && NASA_API_KEY=your_key venv/bin/python manage.py fetch_donki --days 7 >> /home/USER/donki.log 2>&1
+  ```
+
+  A free key: https://api.nasa.gov/ (leave `NASA_API_KEY=` out to use `DEMO_KEY`).
+* The OSDR bands are committed (`health/data/nasa_reference.json`, `frontend/js/nasa-reference.js`);
+  nothing to download on the VPS. To rebuild them: `venv/bin/python scripts/build_nasa_reference.py`.
+
 ## Optional tuning (`.env.prod`)
 
 | variable | default | meaning |
@@ -124,3 +152,4 @@ curl -s -X POST http://127.0.0.1:8000/api/sim/scenario/ -H "Authorization: Token
 | `ASTRA_ALERT_AUTO_RESOLVE_MINUTES` | 30 | open sensor alerts older than this close automatically |
 | `ASTRA_TOKEN_TTL_HOURS` | 72 | login token lifetime |
 | `DJANGO_CORS_ALLOWED_ORIGINS` | (all) | comma-separated origins allowed to call the API |
+| `NASA_API_KEY` | `DEMO_KEY` | api.nasa.gov key for `fetch_donki` (CCMC fallback needs none) |
