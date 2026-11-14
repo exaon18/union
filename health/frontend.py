@@ -13,6 +13,11 @@ from django.views.decorators.http import require_GET
 
 FRONTEND_DIR = (Path(settings.BASE_DIR) / "frontend").resolve()
 
+# ES modules (three.js) need a JavaScript MIME type; some servers' mime tables lack woff2.
+mimetypes.add_type("text/javascript", ".js")
+mimetypes.add_type("text/javascript", ".mjs")
+mimetypes.add_type("font/woff2", ".woff2")
+
 
 @require_GET
 def serve_frontend(request, path=""):
@@ -28,5 +33,8 @@ def serve_frontend(request, path=""):
         raise Http404("not found")
     content_type, _ = mimetypes.guess_type(str(target))
     response = FileResponse(open(target, "rb"), content_type=content_type or "application/octet-stream")
-    response["Cache-Control"] = "no-cache"   # demo: always pick up the latest deploy
+    if path.startswith(("vendor/", "img/")):
+        response["Cache-Control"] = "public, max-age=86400"   # three.js, fonts, Earth textures never change
+    else:
+        response["Cache-Control"] = "no-cache"   # demo: always pick up the latest deploy
     return response
