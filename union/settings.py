@@ -130,3 +130,8 @@ AUTH_USER_MODEL = 'core.User'
 # Uploaded files (e.g. user avatars)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Shared secret for the device webhook (the simulator signs requests with it).
+# Change it, or set the ASTRA_WEBHOOK_SECRET environment variable.
+import os
+WEBHOOK_SECRET = os.environ.get("ASTRA_WEBHOOK_SECRET", "astra-dev-secret")

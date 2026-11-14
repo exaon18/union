@@ -62,7 +62,9 @@ class Alert(models.Model):
         ("environment", "Environment"),
     ]
 
-    astronaut = models.ForeignKey(Astronaut, on_delete=models.CASCADE, related_name="alerts")
+    # astronaut is empty for cabin/environment alerts
+    astronaut = models.ForeignKey(Astronaut, on_delete=models.CASCADE, related_name="alerts", null=True, blank=True)
+    reading = models.ForeignKey("SensorReading", on_delete=models.CASCADE, related_name="alerts", null=True, blank=True)
     checkin = models.ForeignKey(DailyCheckIn, on_delete=models.CASCADE, related_name="alerts", null=True, blank=True)
     system = models.CharField(max_length=20, choices=SYSTEM_CHOICES)
     level = models.CharField(max_length=10, choices=LEVEL_CHOICES)
@@ -75,4 +77,27 @@ class Alert(models.Model):
         ordering = ["resolved", "-created_at"]
 
     def __str__(self):
-        return f"[{self.level.upper()}] {self.astronaut}: {self.message}"
+        return f"[{self.level.upper()}] {self.astronaut or 'CABIN'}: {self.message}"
+
+
+class SensorReading(models.Model):
+    """
+    One value from one device at one moment (wearable, patch, CGM, cabin sensor, lab, PVT...).
+    Stored one-metric-per-row so new devices/metrics need no database changes.
+    """
+    astronaut = models.ForeignKey(Astronaut, on_delete=models.CASCADE, related_name="readings",
+                                  null=True, blank=True)  # empty = cabin/environment data
+    source = models.CharField(max_length=30)   # wearable, patch, cgm, bp_cuff, cabin, lab, pvt_test...
+    metric = models.CharField(max_length=40, db_index=True)  # heart_rate, spo2, co2...
+    value = models.FloatField(null=True, blank=True)          # numeric values
+    text_value = models.CharField(max_length=50, blank=True)  # non-numeric, e.g. ecg_rhythm = "irregular"
+    unit = models.CharField(max_length=20, blank=True)
+    timestamp = models.DateTimeField(db_index=True)
+    received_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        who = self.astronaut or "CABIN"
+        return f"{who} {self.metric}={self.value if self.value is not None else self.text_value} {self.unit}"

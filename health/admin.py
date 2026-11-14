@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Alert, Astronaut, DailyCheckIn
+from .models import Alert, Astronaut, DailyCheckIn, SensorReading
 
 
 @admin.register(Astronaut)
@@ -19,3 +19,9 @@ class AlertAdmin(admin.ModelAdmin):
     list_display = ("astronaut", "level", "system", "message", "resolved", "created_at")
     list_filter = ("level", "system", "resolved")
     list_editable = ("resolved",)
+
+
+@admin.register(SensorReading)
+class SensorReadingAdmin(admin.ModelAdmin):
+    list_display = ("timestamp", "astronaut", "source", "metric", "value", "text_value", "unit")
+    list_filter = ("source", "metric", "astronaut")
