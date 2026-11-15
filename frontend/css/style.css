@@ -665,3 +665,13 @@ body.warping .warp { opacity: 1; }
 @keyframes lbPop{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
 @media (max-width:640px){.lb-list li{grid-template-columns:36px 1fr 64px;grid-template-areas:"rank name pts" "rank tier tier" "rank bar bar" "rank extra extra"}.lb-step{width:92px}}
 @media (prefers-reduced-motion:reduce){.lb-step,.lb-list li,.lb-bar i,.lb-you.pop{animation:none}}
+
+/* PVT page: leaderboard in a right-hand sidebar */
+.pvt-layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
+.pvt-side{position:sticky;top:84px}
+.pvt-side .lb-panel{max-height:calc(100vh - 110px);overflow:auto}
+.pvt-side .lb-podium{gap:8px}.pvt-side .lb-step{width:96px}
+.pvt-side .lb-list li{grid-template-columns:34px 1fr 54px;grid-template-areas:"rank name pts" "rank bar tier" "rank extra extra";column-gap:10px;padding:9px 11px}
+.pvt-side .lb-rank{font-size:18px}
+@media (max-width:1000px){.pvt-layout{grid-template-columns:1fr}.pvt-side{position:static}.pvt-side .lb-panel{max-height:none}}
+.pvt-side .panel-head{flex-wrap:nowrap;align-items:center}.pvt-side .panel-head h2{white-space:nowrap}.pvt-side .panel-head h2 .sub{display:none}
