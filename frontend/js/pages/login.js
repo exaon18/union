@@ -12,7 +12,7 @@
   var allowed = function (s, n) {
     if (!n || !/^[a-z-]+\.html(\?[\w=&%.-]*)?$/i.test(n)) return false;
     var page = n.split('?')[0];
-    var pages = s.role === 'surgeon' ? ['support.html', 'scenarios.html', 'my-health.html', 'history.html', 'index.html', 'science.html'] : ['my-health.html', 'checkin.html', 'pvt.html', 'history.html', 'index.html', 'science.html'];
+    var pages = s.role === 'surgeon' ? ['support.html', 'my-health.html', 'history.html', 'index.html', 'science.html'] : ['my-health.html', 'checkin.html', 'pvt.html', 'history.html', 'index.html', 'science.html'];
     return pages.indexOf(page) >= 0;
   };
 

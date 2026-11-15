@@ -5,7 +5,7 @@
  * Where the API is:
  *   1. ?api_base=http://127.0.0.1:8000/api   (saved in localStorage; ?api_base=reset clears it)
  *   2. localStorage "astra_api_base"
- *   3. same origin "/api" when this page is served by Django at /app/
+ *   3. same origin "/api" when this page is served by Django at /app/ (or the lab at /lab/)
  *   4. DEFAULT_API_BASE (the VPS)
  * Mock data (no backend): add ?api=mock (saved; ?api=real switches back).
  */
@@ -13,7 +13,7 @@
   'use strict';
 
   var DEFAULT_API_BASE = 'http://2.24.53.231:8000/api';   // no trailing slash
-  var BASE_KEY = 'astra_api_base', MODE_KEY = 'astra_api_mode', SESSION_KEY = 'astra_session';
+  var BASE_KEY = 'astra_api_base', MODE_KEY = 'astra_api_mode', SESSION_KEY = global.ASTRA_SESSION_KEY || 'astra_session';   // the Simulation Lab uses its own key
 
   function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -31,7 +31,7 @@
     if (qBase === 'reset') store(BASE_KEY, null);
     else store(BASE_KEY, qBase.replace(/\/+$/, ''));
   }
-  var servedByDjango = /^https?:$/.test(location.protocol) && /^\/app(\/|$)/.test(location.pathname);
+  var servedByDjango = /^https?:$/.test(location.protocol) && /^\/(app|lab)(\/|$)/.test(location.pathname);
   var API_BASE = read(BASE_KEY) || (servedByDjango ? location.origin + '/api' : DEFAULT_API_BASE);
 
   function qs(p) {
@@ -130,7 +130,7 @@
     resolveAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.resolveAlert(id); }) : post('/alerts/' + id + '/resolve/'); },
     acknowledgeAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.acknowledgeAlert(id); }) : post('/alerts/' + id + '/acknowledge/'); },
 
-    /* ---- simulation lab (Scenario Control) ---- */
+    /* ---- simulation lab (used by the Simulation Lab at /lab/, not by the crew app) ---- */
     // GET /api/sim/scenario/ (public) -> {preset, label, config, resolved, expected_status, version, presets, ...}
     getScenario: function () { return USE_MOCK ? mock(MockAPI.getScenario) : get('/sim/scenario/'); },
     // POST /api/sim/scenario/ (surgeon) {preset, target, system, custom, cabin, reset, apply_now} -> {scenario, reset?, batch?}

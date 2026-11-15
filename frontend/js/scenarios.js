@@ -1,5 +1,5 @@
 /* ASTRA HEALTH - simulation scenarios (browser copy of device_simulator/scenarios.py).
- * Used by the Scenario Control page (labels, preview) and by mock mode (?api=mock) so the
+ * Used by the Simulation Lab (/lab/) (labels, preview) and by mock mode (?api=mock) so the
  * demo data follows the chosen scenario without a server. Keep the bands in sync with Python.
  */
 (function (global) {

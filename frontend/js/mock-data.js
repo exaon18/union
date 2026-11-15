@@ -5,7 +5,7 @@
  * runs the "emergency" scenario (simulator --emergency 2).
  * Live mode: every 3 s a new batch of readings is generated, run through the
  * same threshold rules as health/sensor_rules.py, and alerts are created.
- * Scenario Control (scenarios.html) can replace that story with a scenario
+ * The Simulation Lab (/lab/) can replace that story with a scenario
  * (all nominal, one critical...), kept in localStorage "astra_mock_scenario".
  */
 (function (global) {
@@ -27,7 +27,7 @@
 
   var TICK_MS = 3000;
 
-  /* ---------- scenario (Scenario Control page; null = the built-in demo story) ---------- */
+  /* ---------- scenario (Simulation Lab at /lab/; null = the built-in demo story) ---------- */
   var SC = global.AstraScenarios;
   var LS_SCEN = 'astra_mock_scenario', LS_RESET_AT = 'astra_mock_reset_at';
   var scen = SC ? lsGet(LS_SCEN, null) : null;

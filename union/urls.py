@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path, re_path
 
-from health.frontend import serve_frontend
+from health.frontend import serve_frontend, serve_lab
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,5 +25,8 @@ urlpatterns = [
     # Static ASTRA HEALTH frontend (frontend/) served by Django: http://<host>:8000/app/
     path('app', serve_frontend),
     re_path(r'^app/(?P<path>.*)$', serve_frontend, name='frontend'),
+    # Simulation Lab (testing tool, not part of the crew system): http://<host>:8000/lab/
+    path('lab', serve_lab),
+    re_path(r'^lab/(?P<path>.*)$', serve_lab, name='lab'),
     path('', include('core.urls')),
 ]

@@ -1,5 +1,5 @@
 /* ASTRA HEALTH - "Space weather (NASA DONKI)" panel, shared by the Mission dashboard, the Support
- * Console and Scenario Control. Data: GET /api/space-weather/ (real DONKI events stored by
+ * Console, the Science page and the Simulation Lab (/lab/). Data: GET /api/space-weather/ (real DONKI events stored by
  * `manage.py fetch_donki`, or the bundled cached snapshot), or js/donki-snapshot.js in mock mode.
  * Same mapping as health/donki.py: SEP / X-class flare = critical (storm shelter), M-class = caution. */
 (function (global) {
@@ -55,7 +55,7 @@
       (st.event && st.event.link ? '<a href="' + A.esc(st.event.link) + '" target="_blank" rel="noopener">DONKI ' + A.esc(st.event.id) + ' ↗</a>' : '') + '</div></div>';
     var rp = d.active_replay;
     if (rp) head += '<div class="sw-state st-' + (rp.level === 'critical' ? 'red' : 'yellow') + '"><span class="b-ico">' + A.ICONS.radiation + '</span><div>' +
-      '<b>Simulation replaying: ' + A.esc(rp.label) + '</b><small>Scenario Control is replaying this real event (' + A.esc(utc(rp.time)) + '). Crew radiation follows it' +
+      '<b>Simulation replaying: ' + A.esc(rp.label) + '</b><small>The Simulation Lab (testing tool) is replaying this real event (' + A.esc(utc(rp.time)) + '). Crew radiation follows it' +
       (rp.level === 'critical' ? ': storm shelter.' : '.') + '</small>' + (rp.link ? '<a href="' + A.esc(rp.link) + '" target="_blank" rel="noopener">DONKI ' + A.esc(rp.id) + ' ↗</a>' : '') + '</div></div>';
     var rows = (d.latest || []).slice(0, opts.compact ? 5 : 8).map(function (e) {
       return '<li class="sw-ev st-' + (COL[e.level] || 'none') + '"><span class="sw-type">' + A.esc(e.type) + '</span><div><b>' + A.esc(e.label) + '</b>' +

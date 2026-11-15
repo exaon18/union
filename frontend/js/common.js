@@ -132,7 +132,7 @@
    * Real mode: POST /api/auth/login/ returns a token; the session (user + token) is kept in
    * localStorage and the token is sent as "Authorization: Token <key>" on writes.
    * Mock mode (?api=mock): the demo users below, checked in the browser. */
-  var SESSION_KEY = 'astra_session';
+  var SESSION_KEY = global.ASTRA_SESSION_KEY || 'astra_session';   // the Simulation Lab (/lab/) sets its own
   var USERS = {
     abebe: { role: 'astronaut', astronaut_id: 1, name: 'Abebe Kebede' },
     sara: { role: 'astronaut', astronaut_id: 2, name: 'Sara Tesfaye' },
@@ -358,8 +358,8 @@
   function navLinks(s) {
     var links = [['index.html', 'Mission', 'mission']];
     if (s && s.role === 'astronaut') links.push(['my-health.html', 'My Health', 'health'], ['checkin.html', 'Daily Check-in', 'checkin'], ['pvt.html', 'Reaction Test', 'pvt'], ['history.html', 'History', 'history']);
-    if (s && s.role === 'surgeon') links.push(['support.html', 'Support Console', 'support'], ['scenarios.html', 'Scenario Control', 'scenarios'], ['history.html', 'Crew History', 'history']);
-    links.push(['science.html', 'NASA Data', 'science']);
+    if (s && s.role === 'surgeon') links.push(['support.html', 'Support Console', 'support'], ['history.html', 'Crew History', 'history']);
+    links.push(['science.html', 'Science / Sources', 'science']);
     return links;
   }
   function renderNav(active) {

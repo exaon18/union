@@ -1,11 +1,9 @@
-/* Scenario Control (flight surgeon): choose what the device simulator sends - presets, a
- * per-astronaut custom grid, Apply / Reset alerts / Push batch now - and watch the crew react. */
-(function () {
+/* Simulation Lab - Scenario Control (flight surgeon, testing tool): choose what the device
+ * simulator sends - presets, a per-astronaut custom grid, Apply / Reset alerts / Push batch now -
+ * and watch the crew react. Started by lab.js once a flight surgeon is signed in. */
+AstraLab.onReady(function () {
   'use strict';
   var A = Astra, S = AstraScenarios;
-  var session = A.requireLogin(['surgeon']);
-  if (!session) return;
-  A.init('scenarios');
   var $ = function (id) { return document.getElementById(id); };
   var COL = { normal: 'green', caution: 'yellow', critical: 'red' };
   var SYS_SHORT = { cardiovascular: 'Cardio', respiratory: 'Respiratory', radiation: 'Radiation', behavioral: 'Behavioral', immune: 'Immune' };
@@ -22,7 +20,7 @@
   if (Api.USE_MOCK) {
     $('sc-note').innerHTML = '<div class="banner st-yellow reveal in"><span class="b-ico">' + A.ST_ICON.yellow + '</span><div><div class="b-tag">Demo data mode</div>' +
       '<h3>Scenarios run in this browser only</h3><p>Mock mode has no simulator; the demo data follows the scenario you apply here (saved in this browser). ' +
-      '<button class="linkish" type="button" id="sc-story">Back to the built-in demo story</button></p></div></div>';
+      '<button class="linkish" type="button" id="sc-story">Back to the built-in demo story</button> · The <a href=\"/app/support.html\">crew app</a> in this browser follows it.</p></div></div>';
     $('sc-story').addEventListener('click', function () { Api.setScenario({ preset: 'story', reset: true }).then(function () { location.reload(); }); });
   }
 
@@ -266,4 +264,4 @@
     });
   }
   A.poll(refresh);
-})();
+});

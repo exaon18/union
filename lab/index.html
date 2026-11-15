@@ -3,22 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scenario Control · ASTRA HEALTH</title>
-<meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
+<title>ASTRA Simulation Lab · testing tool</title>
+<meta name="description" content="ASTRA Simulation Lab: choose what the device simulator sends. A testing tool, not part of the crew health system.">
+<meta name="robots" content="noindex">
 <meta name="theme-color" content="#04060c">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236fd3ff' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
-<link rel="preload" href="vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='24' height='24' rx='6' fill='none' stroke='%23f5b83d' stroke-width='3'/%3E%3Cpath d='M11 9v6l-4 8h18l-4-8V9' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/app/css/style.css">
+<link rel="stylesheet" href="/lab/lab.css">
+<!-- The lab keeps its own login, separate from the crew app's session. -->
+<script>window.ASTRA_SESSION_KEY = 'astra_lab_session';</script>
 </head>
-<body>
-<a class="skip-link" href="#main">Skip to content</a>
-<header id="topnav"></header>
+<body class="lab">
+<header class="lab-bar" id="lab-bar"></header>
 <main class="page" id="main">
+<section id="lab-login" class="lab-login" hidden>
+  <form class="panel lab-login-card" id="lab-login-form" autocomplete="on">
+    <div class="eyebrow">Simulation Lab · flight surgeon only</div>
+    <h1>Sign in to the lab</h1>
+    <p class="muted">This testing tool changes what the device simulator sends to the crew system. Use the flight surgeon account.</p>
+    <label class="field"><span class="label">Username</span><input class="input" id="lab-user" name="username" autocomplete="username" value="surgeon" required></label>
+    <label class="field"><span class="label">Password</span><input class="input" id="lab-pass" name="password" type="password" autocomplete="current-password" required></label>
+    <p class="lab-err" id="lab-err" role="alert" hidden></p>
+    <button class="btn btn-primary btn-lg" id="lab-login-btn" type="submit">Sign in</button>
+    <p class="dim lab-mode" id="lab-mode-note"></p>
+  </form>
+</section>
+<section id="lab-app" hidden>
 <div class="page-head">
   <div>
-    <div class="eyebrow reveal">Flight surgeon · Simulation lab</div>
+    <div class="eyebrow reveal">Simulation Lab · testing tool</div>
     <h1 class="reveal">Scenario Control</h1>
-    <p class="muted reveal">Choose what the device simulator sends. It reads this before every batch (every 3 s), so the Support Console and the Mission dashboard react within one tick. Simulated data only.</p>
+    <p class="muted reveal">Choose what the device simulator sends. It reads this before every batch (every 3 s), so the crew app (Support Console, Mission dashboard) reacts within one tick. This page is for testing only; it is not part of the crew health system. Simulated data only.</p>
   </div>
   <div class="row wrap reveal">
     <span class="chip" id="sc-sim"><span class="dot"></span><span id="sc-sim-text">Simulator…</span></span>
@@ -82,7 +97,7 @@
     <div class="panel reveal">
       <div class="panel-head"><h2>Live crew status <span class="sub">expected → now</span></h2><span class="live-tag">Live</span></div>
       <ul class="sc-live" id="sc-live"></ul>
-      <a class="btn btn-sm" href="support.html" style="margin-top:12px">Open Support Console __ARROW__</a>
+      <a class="btn btn-sm" href="/app/support.html" target="_blank" rel="noopener" style="margin-top:12px">Open the crew Support Console __ARROW__</a>
     </div>
     <div class="panel reveal">
       <div class="panel-head"><h2>Latest alerts <span class="sub" id="sc-alert-count"></span></h2></div>
@@ -92,17 +107,19 @@
 
   <div class="span-12 disclaimer-box reveal">__SHIELD__<span><b>Simulation lab.</b> Scenarios only change the simulated device data, so you can check how the console, alerts and dashboards react. Thresholds are demo values, not clinical guidance.</span></div>
 </section>
+</section>
 </main>
-<footer id="footer"></footer>
-<script src="js/nasa-reference.js"></script>
-<script src="js/rules.js"></script>
-<script src="js/scenarios.js"></script>
-<script src="js/mock-data.js"></script>
-<script src="js/api.js"></script>
-<script src="js/charts.js"></script>
-<script src="js/common.js"></script>
-<script src="js/donki-snapshot.js"></script>
-<script src="js/space-weather.js"></script>
-<script src="js/pages/scenarios.js"></script>
+<footer class="lab-foot">ASTRA Simulation Lab · testing tool for the ASTRA HEALTH prototype · not part of the crew system · <a href="/app/">crew app</a> · <a href="/app/science.html">Science / Sources</a></footer>
+<script src="/app/js/nasa-reference.js"></script>
+<script src="/app/js/rules.js"></script>
+<script src="/app/js/scenarios.js"></script>
+<script src="/app/js/mock-data.js"></script>
+<script src="/app/js/api.js"></script>
+<script src="/app/js/charts.js"></script>
+<script src="/app/js/common.js"></script>
+<script src="/app/js/donki-snapshot.js"></script>
+<script src="/app/js/space-weather.js"></script>
+<script src="/lab/lab.js"></script>
+<script src="/lab/scenarios.js"></script>
 </body>
 </html>

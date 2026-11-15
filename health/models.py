@@ -173,7 +173,7 @@ class AuthToken(models.Model):
 class SimScenario(models.Model):
     """
     The device simulator's active scenario (one row, pk=1). The simulator reads it from
-    GET /api/sim/scenario/ every tick; the flight surgeon changes it from the Scenario Control page.
+    GET /api/sim/scenario/ every tick; the flight surgeon changes it in the Simulation Lab (/lab/).
     `config` is validated by device_simulator/scenarios.py:
       {"preset": "one_critical", "target": 2, "system": "cardiovascular",
        "custom": {"1": {"level": "caution", "system": "behavioral"}}, "cabin": {"level", "system"},

@@ -7,7 +7,7 @@ ASTRA HEALTH webhook, signed with a shared secret (HMAC-SHA256).
 
 What it sends follows the ACTIVE SCENARIO on the server (all nominal, one critical,
 cabin CO2 problem, radiation storm...). Before every batch it reads
-GET /api/sim/scenario/, so a change on the Scenario Control page (or
+GET /api/sim/scenario/, so a change in the Simulation Lab at /lab/ (or
 POST /api/sim/scenario/) takes effect on the next tick. See device_simulator/scenarios.py.
 
 Run (in a second terminal, while Django is running):
@@ -115,7 +115,7 @@ def main():
         print(f"Device simulator (legacy generator) -> {args.url}  (every {args.interval}s, Ctrl+C to stop)")
     else:
         if args.emergency or args.anomaly_rate != 0.0005:
-            print("  note: --emergency / --anomaly-rate only apply with --legacy; use the Scenario Control page instead")
+            print("  note: --emergency / --anomaly-rate only apply with --legacy; use the Simulation Lab (/lab/) instead")
         src = f"preset '{args.scenario}' (local)" if args.scenario else scenario_url
         print(f"Device simulator -> {args.url}\n  scenario from {src}  (every {args.interval}s, Ctrl+C to stop)")
 
