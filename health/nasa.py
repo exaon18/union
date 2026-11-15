@@ -18,7 +18,7 @@ REFERENCE_FILE = DATA / "nasa_reference.json"
 @lru_cache(maxsize=1)
 def reference():
     try:
-        return json.loads(REFERENCE_FILE.read_text())
+        return json.loads(REFERENCE_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 
