@@ -269,6 +269,8 @@ ENDPOINTS = [
      "description": "Save a PVT run; also stores pvt_reaction_time and pvt_lapses readings so sensor rules fire."},
     {"method": "POST", "path": "/api/voice-alert/", "auth": "token",
      "description": "Generate cached Gemini warning audio for an astronaut. Body {\"astronaut_id\"}; returns audio/wav."},
+    {"method": "GET", "path": "/api/leaderboard/", "auth": "public",
+     "description": "PVT leaderboard: crew ranked by alertness score (0-1000) of their latest run, with best score, streak and attempts."},
     {"method": "GET", "path": "/api/sim/scenario/", "auth": "public",
      "description": "Active simulation scenario (what the device simulator sends), resolved per astronaut, and the presets."},
     {"method": "POST", "path": "/api/sim/scenario/", "auth": "token (surgeon)",
@@ -733,3 +735,63 @@ def pvt_create(request):
         "alerts": [_alert_json(a) for a in alerts],
         "status": _worst(a.level for a in alerts),
     }, status=201)
+
+def _pvt_score(p):
+    """Alertness score 0-1000: faster mean reaction is better; lapses and false starts cost points."""
+    score = 1000 - (p.mean_rt_ms - 150) * 2.5 - p.lapses * 40 - p.false_starts * 20
+    return int(max(0, min(1000, round(score))))
+
+
+def _pvt_tier(score):
+    if score >= 800:
+        return "Ace"
+    if score >= 650:
+        return "Sharp"
+    if score >= 500:
+        return "Steady"
+    return "Needs rest"
+
+
+@require_GET
+def leaderboard_view(request):
+    """Crew ranked by the alertness score of each astronaut's latest PVT run (public, like /api/pvt/)."""
+    runs = {}
+    for result in PVTResult.objects.select_related("astronaut__user").order_by("-created_at", "-id"):
+        runs.setdefault(result.astronaut_id, []).append(result)   # newest first
+
+    rows = []
+    for astronaut_id, results in runs.items():
+        latest = results[0]
+        scores = [_pvt_score(r) for r in results]
+        best_i = max(range(len(results)), key=lambda i: (scores[i], -results[i].mean_rt_ms))
+        days = sorted({timezone.localdate(r.created_at) for r in results}, reverse=True)
+        streak = 1
+        for a, b in zip(days, days[1:]):
+            if (a - b).days != 1:
+                break
+            streak += 1
+        if days[0] < timezone.localdate() - timedelta(days=1):
+            streak = 0
+        rows.append({
+            "astronaut_id": astronaut_id,
+            "astronaut": _astronaut_name(latest.astronaut),
+            "role": latest.astronaut.role,
+            "score": scores[0],
+            "tier": _pvt_tier(scores[0]),
+            "best_score": scores[best_i],
+            "best_mean_rt_ms": results[best_i].mean_rt_ms,
+            "personal_best": best_i == 0,
+            "change": (scores[0] - scores[1]) if len(scores) > 1 else None,
+            "attempts": len(results),
+            "streak_days": streak,
+            "mean_rt_ms": latest.mean_rt_ms,
+            "fastest_ms": latest.fastest_ms,
+            "lapses": latest.lapses,
+            "false_starts": latest.false_starts,
+            "trials": latest.trials,
+            "created_at": _iso(latest.created_at),
+        })
+    rows.sort(key=lambda r: (-r["score"], r["mean_rt_ms"], r["lapses"], r["astronaut_id"]))
+    for rank, row in enumerate(rows, start=1):
+        row["rank"] = rank
+    return JsonResponse({"count": len(rows), "leaderboard": rows})

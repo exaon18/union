@@ -104,6 +104,25 @@
   }
 
   // Run a mock call asynchronously so callers behave the same in both modes.
+  /* Mock-mode leaderboard, same scoring as health/views.py (_pvt_score). */
+  function mockLeaderboard() {
+    var crew = {}; MockAPI.getCrew().astronauts.forEach(function (a) { crew[a.id] = a; });
+    var runs = {};
+    MockAPI.getPvt({ limit: 500 }).results.slice().sort(function (a, b) { return Date.parse(b.created_at) - Date.parse(a.created_at); })
+      .forEach(function (p) { (runs[p.astronaut_id] = runs[p.astronaut_id] || []).push(p); });
+    var score = function (p) { return Math.max(0, Math.min(1000, Math.round(1000 - (p.mean_rt_ms - 150) * 2.5 - p.lapses * 40 - (p.false_starts || 0) * 20))); };
+    var tier = function (s) { return s >= 800 ? 'Ace' : s >= 650 ? 'Sharp' : s >= 500 ? 'Steady' : 'Needs rest'; };
+    var rows = Object.keys(runs).map(function (id) {
+      var r = runs[id], sc = r.map(score), best = sc.indexOf(Math.max.apply(null, sc)), a = crew[id] || {};
+      return { astronaut_id: Number(id), astronaut: a.name || ('Astronaut ' + id), role: a.role || '', score: sc[0], tier: tier(sc[0]),
+        best_score: sc[best], best_mean_rt_ms: r[best].mean_rt_ms, personal_best: best === 0, change: r.length > 1 ? sc[0] - sc[1] : null,
+        attempts: r.length, streak_days: 1, mean_rt_ms: r[0].mean_rt_ms, fastest_ms: r[0].fastest_ms, lapses: r[0].lapses,
+        false_starts: r[0].false_starts, trials: r[0].trials, created_at: r[0].created_at };
+    }).sort(function (a, b) { return b.score - a.score || a.mean_rt_ms - b.mean_rt_ms; });
+    rows.forEach(function (r, i) { r.rank = i + 1; });
+    return { count: rows.length, leaderboard: rows };
+  }
+
   function mock(fn) {
     if (global.MockAPI && MockAPI._start) MockAPI._start();
     return new Promise(function (resolve, reject) {
@@ -142,10 +161,12 @@
     getAlerts: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getAlerts(opts); }) : get('/alerts/', opts); },
     getCheckins: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getCheckins(opts); }) : get('/checkins/', opts); },
     getPvt: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getPvt(opts); }) : get('/pvt/', opts); },
-    // POST /api/voice-alert/ {astronaut_id} -> WAV audio (requires a login token)
-    voiceAlert: function (astronautId) { return postAudio('/voice-alert/', { astronaut_id: astronautId }); },
+    // GET /api/leaderboard/ -> {count, leaderboard:[{rank, astronaut_id, astronaut, score, tier, best_score, streak_days, ...}]}
+    getLeaderboard: function () { return USE_MOCK ? mock(mockLeaderboard) : get('/leaderboard/'); },
 
     /* ---- write endpoints (Authorization: Token <key>) ---- */
+    // POST /api/voice-alert/ {astronaut_id} -> WAV audio (requires a login token)
+    voiceAlert: function (astronautId) { return postAudio('/voice-alert/', { astronaut_id: astronautId }); },
     // POST /api/checkins/ -> {checkin, alerts, status}
     submitCheckin: function (data) { return USE_MOCK ? mock(function () { return MockAPI.submitCheckin(data); }) : post('/checkins/', data); },
     // POST /api/pvt/ {astronaut_id, mean_rt_ms, fastest_ms, lapses, false_starts, trials} -> {pvt, alerts, status}
