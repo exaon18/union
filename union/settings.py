@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'union.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASE_URL = 'postgresql://uniondb_e7tr_user:BMCU2ons7vqDaOPePXnHIrUQ0yqFLufb@dpg-dbsnrhmk1f9s739q5okg-a.oregon-postgres.render.com/uniondb_e7tr'
+DATABASE_URL = os.environ.get('DATABASE_URL', '')   # vps branch: SQLite unless DATABASE_URL is set
 if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.parse(
