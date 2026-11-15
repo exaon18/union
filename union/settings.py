@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -83,18 +85,29 @@ WSGI_APPLICATION = 'union.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        # Wait up to 20 s for a write lock instead of failing with "database is locked".
-        # WAL mode (set in health/apps.py) lets the API read while the simulator writes.
-        'OPTIONS': {
-            'timeout': 20,
-            'transaction_mode': 'IMMEDIATE',
-        },
+DATABASE_URL = 'postgresql://uniondb_e7tr_user:BMCU2ons7vqDaOPePXnHIrUQ0yqFLufb@dpg-dbsnrhmk1f9s739q5okg-a.oregon-postgres.render.com/uniondb_e7tr'
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            # Wait up to 20 s for a write lock instead of failing with "database is locked".
+            # WAL mode (set in health/apps.py) lets the API read while the simulator writes.
+            'OPTIONS': {
+                'timeout': 20,
+                'transaction_mode': 'IMMEDIATE',
+            },
+        }
+    }
 
 
 # Password validation
