@@ -182,3 +182,21 @@ class ApiTests(TestCase):
         self.assertEqual(self.client.get("/app/").status_code, 200)
         self.assertEqual(self.client.get("/app/js/api.js").status_code, 200)
         self.assertEqual(self.client.get("/app/../manage.py").status_code, 404)
+
+    def test_simulation_lab_served_separately(self):
+        for url in ("/lab/", "/lab/index.html"):
+            r = self.client.get(url)
+            self.assertEqual(r.status_code, 200, url)
+            body = b"".join(r.streaming_content)
+            self.assertIn(b"ASTRA Simulation Lab", body)
+            self.assertIn(b"not part of the crew system", body)
+        self.assertEqual(self.client.get("/lab/lab.js").status_code, 200)
+        r = self.client.get("/lab")
+        self.assertEqual((r.status_code, r["Location"]), (302, "/lab/"))
+        self.assertEqual(self.client.get("/lab/../manage.py").status_code, 404)
+        # the old crew-app URL now points to the lab; the crew app has no Scenario Control page
+        r = self.client.get("/app/scenarios.html")
+        self.assertEqual((r.status_code, r["Location"]), (302, "/lab/"))
+        common = b"".join(self.client.get("/app/js/common.js").streaming_content)
+        self.assertNotIn(b"scenarios.html", common)
+        self.assertIn(b"Science / Sources", common)

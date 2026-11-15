@@ -64,12 +64,13 @@ Readings grow by ~1.7 million rows a day at one batch every 3 s. Prune hourly wi
 0 * * * * cd /home/USER/astra && venv/bin/python manage.py prune_readings --keep-hours 48 >> /tmp/prune.log 2>&1
 ```
 
-## The frontend: one URL
+## The frontend: one URL (crew app at `/app/`, Simulation Lab at `/lab/`)
 
 Django serves the static frontend (`frontend/`) at **`/app/`**:
 
 ```
-http://2.24.53.231:8000/app/
+http://2.24.53.231:8000/app/      crew health app (astronauts, flight surgeon, public dashboard)
+http://2.24.53.231:8000/lab/      Simulation Lab: testing tool, own sign-in (flight surgeon), from lab/
 ```
 
 Served from there, the frontend calls the same server's `/api` automatically (no CORS or
@@ -81,12 +82,69 @@ Teammates can also host `frontend/` anywhere else (or run `python3 -m http.serve
 another backend, open any page once with `?api_base=http://127.0.0.1:8000/api` (saved in
 the browser; `?api_base=reset` goes back to the default).
 
-## Simulator options worth knowing
+## Simulator and the Simulation Lab
 
-`astra-sim` needs no change. By default it now sends UTC timestamps with an offset and a low
-random-anomaly rate (`--anomaly-rate 0.0005`), so healthy crew stay mostly green and only
-occasionally blip. For the emergency demo, add `--emergency 2` to the service's `ExecStart` and
-run `sudo systemctl daemon-reload && sudo systemctl restart astra-sim`.
+`astra-sim` now follows the **active scenario** stored on the server. Before every batch it calls
+`GET http://127.0.0.1:8000/api/sim/scenario/` (derived from its `--url`), so nothing else needs
+configuring. The flight surgeon picks a scenario in the **Simulation Lab** at
+**`http://2.24.53.231:8000/lab/`** (a testing tool with its own header and login, kept out of the
+crew app; the old `/app/scenarios.html` redirects there)
+(All nominal, One caution, One critical, Several caution, All critical, Cabin CO2, Radiation storm,
+Random / realistic, Custom). The change shows up within one tick (3 s); "Apply" can also resolve
+old alerts and push a batch at once. The default is "Random / realistic" (mostly green).
+
+After pulling this update:
+
+```bash
+cd ~/astra && git pull \
+  && venv/bin/python manage.py migrate \
+  && sudo systemctl restart astra astra-sim
+sudo journalctl -u astra-sim -n 5 --no-pager      # "scenario v0: Random / realistic", then "sent ... alerts 0"
+curl -s http://127.0.0.1:8000/api/sim/scenario/ | head -c 200; echo
+```
+
+`migrate` adds one small table (`health_simscenario`). If the service's `ExecStart` still has
+`--emergency 2` or `--anomaly-rate`, those flags are now ignored (they only apply with `--legacy`).
+You can remove them with `sudo systemctl edit --full astra-sim`, then
+`sudo systemctl daemon-reload && sudo systemctl restart astra-sim`.
+
+To clear everything the old simulator left open, open the Simulation Lab (`/lab/`) and press **Reset alerts**,
+or:
+
+```bash
+TOKEN=$(curl -s -X POST http://127.0.0.1:8000/api/auth/login/ -H 'Content-Type: application/json' \
+  -d '{"username":"surgeon","password":"astra2026"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
+curl -s -X POST http://127.0.0.1:8000/api/sim/scenario/ -H "Authorization: Token $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"preset":"nominal","reset":true,"apply_now":true}' | head -c 200; echo
+```
+
+## NASA data (OSDR + DONKI)
+
+After pulling the NASA data update:
+
+```bash
+cd ~/astra && git pull \
+  && venv/bin/python manage.py migrate \
+  && venv/bin/python manage.py fetch_donki --days 30 \
+  && sudo systemctl restart astra astra-sim
+curl -s http://127.0.0.1:8000/api/space-weather/ | head -c 300; echo
+sudo journalctl -u astra-sim -n 5 --no-pager
+```
+
+* `migrate` adds the `health_spaceweatherevent` table.
+* `fetch_donki` downloads real flares, SEP events, CMEs and geomagnetic storms. It tries
+  `api.nasa.gov` with `NASA_API_KEY` (falls back to `DEMO_KEY`), then the CCMC DONKI service (no key
+  needed). If both fail it loads the bundled snapshot and says so. A new SEP event or X-class flare
+  from the last 48 h raises a cabin radiation alert.
+* Keep it fresh with cron (`crontab -e`), e.g. every 3 hours:
+
+  ```
+  0 */3 * * * cd /home/USER/astra && NASA_API_KEY=your_key venv/bin/python manage.py fetch_donki --days 7 >> /home/USER/donki.log 2>&1
+  ```
+
+  A free key: https://api.nasa.gov/ (leave `NASA_API_KEY=` out to use `DEMO_KEY`).
+* The OSDR bands are committed (`health/data/nasa_reference.json`, `frontend/js/nasa-reference.js`);
+  nothing to download on the VPS. To rebuild them: `venv/bin/python scripts/build_nasa_reference.py`.
 
 ## Optional tuning (`.env.prod`)
 
@@ -97,3 +155,4 @@ run `sudo systemctl daemon-reload && sudo systemctl restart astra-sim`.
 | `ASTRA_ALERT_AUTO_RESOLVE_MINUTES` | 30 | open sensor alerts older than this close automatically |
 | `ASTRA_TOKEN_TTL_HOURS` | 72 | login token lifetime |
 | `DJANGO_CORS_ALLOWED_ORIGINS` | (all) | comma-separated origins allowed to call the API |
+| `NASA_API_KEY` | `DEMO_KEY` | api.nasa.gov key for `fetch_donki` (CCMC fallback needs none) |

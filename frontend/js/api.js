@@ -5,7 +5,7 @@
  * Where the API is:
  *   1. ?api_base=http://127.0.0.1:8000/api   (saved in localStorage; ?api_base=reset clears it)
  *   2. localStorage "astra_api_base"
- *   3. same origin "/api" when this page is served by Django at /app/
+ *   3. same origin "/api" when this page is served by Django at /app/ (or the lab at /lab/)
  *   4. DEFAULT_API_BASE (the VPS)
  * Mock data (no backend): add ?api=mock (saved; ?api=real switches back).
  */
@@ -13,7 +13,7 @@
   'use strict';
 
   var DEFAULT_API_BASE = 'http://2.24.53.231:8000/api';   // no trailing slash
-  var BASE_KEY = 'astra_api_base', MODE_KEY = 'astra_api_mode', SESSION_KEY = 'astra_session';
+  var BASE_KEY = 'astra_api_base', MODE_KEY = 'astra_api_mode', SESSION_KEY = global.ASTRA_SESSION_KEY || 'astra_session';   // the Simulation Lab uses its own key
 
   function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -31,7 +31,7 @@
     if (qBase === 'reset') store(BASE_KEY, null);
     else store(BASE_KEY, qBase.replace(/\/+$/, ''));
   }
-  var servedByDjango = /^https?:$/.test(location.protocol) && /^\/app(\/|$)/.test(location.pathname);
+  var servedByDjango = /^https?:$/.test(location.protocol) && /^\/(app|lab)(\/|$)/.test(location.pathname);
   var API_BASE = read(BASE_KEY) || (servedByDjango ? location.origin + '/api' : DEFAULT_API_BASE);
 
   function qs(p) {
@@ -116,7 +116,7 @@
     },
     getAlerts: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getAlerts(opts); }) : get('/alerts/', opts); },
     getCheckins: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getCheckins(opts); }) : get('/checkins/', opts); },
-    getPvt: function (opts) { return USE_MOCK ? mock(function () { return { count: 0, results: [] }; }) : get('/pvt/', opts); },
+    getPvt: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getPvt(opts); }) : get('/pvt/', opts); },
 
     /* ---- write endpoints (Authorization: Token <key>) ---- */
     // POST /api/checkins/ -> {checkin, alerts, status}
@@ -128,7 +128,21 @@
     },
     // POST /api/alerts/<id>/acknowledge/ and /resolve/ (flight surgeon) -> {alert}
     resolveAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.resolveAlert(id); }) : post('/alerts/' + id + '/resolve/'); },
-    acknowledgeAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.acknowledgeAlert(id); }) : post('/alerts/' + id + '/acknowledge/'); }
+    acknowledgeAlert: function (id) { return USE_MOCK ? mock(function () { return MockAPI.acknowledgeAlert(id); }) : post('/alerts/' + id + '/acknowledge/'); },
+
+    /* ---- simulation lab (used by the Simulation Lab at /lab/, not by the crew app) ---- */
+    // GET /api/sim/scenario/ (public) -> {preset, label, config, resolved, expected_status, version, presets, ...}
+    getScenario: function () { return USE_MOCK ? mock(MockAPI.getScenario) : get('/sim/scenario/'); },
+    // POST /api/sim/scenario/ (surgeon) {preset, target, system, custom, cabin, reset, apply_now} -> {scenario, reset?, batch?}
+    setScenario: function (data) { return USE_MOCK ? mock(function () { return MockAPI.setScenario(data); }) : post('/sim/scenario/', data); },
+    // POST /api/sim/reset/ (surgeon) -> {resolved: n}
+    resetSim: function () { return USE_MOCK ? mock(MockAPI.resetSim) : post('/sim/reset/'); },
+    // POST /api/sim/tick/ (surgeon) -> {saved, alerts, errors}
+    simTick: function () { return USE_MOCK ? mock(MockAPI.simTick) : post('/sim/tick/'); },
+
+    /* ---- NASA data ---- */
+    // GET /api/space-weather/ (public) -> {source, fetched_at, state, latest, replay, ...} (real NASA DONKI events)
+    getSpaceWeather: function () { return USE_MOCK ? mock(MockAPI.getSpaceWeather) : get('/space-weather/'); }
   };
 
   global.Api = Api;

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import auth, views, webhook
+from . import auth, sim, views, webhook
 
 urlpatterns = [
     path("", views.api_index, name="api-index"),
@@ -17,5 +17,10 @@ urlpatterns = [
     path("alerts/<str:pk>/resolve/", views.alert_resolve, name="alert-resolve"),
     path("checkins/", views.checkins_view, name="checkins"),
     path("pvt/", views.pvt_view, name="pvt"),
+    path("sim/scenario/", sim.scenario_view, name="sim-scenario"),
+    path("sim/reset/", sim.reset_view, name="sim-reset"),
+    path("sim/tick/", sim.tick_view, name="sim-tick"),
+    path("space-weather/", sim.space_weather_view, name="space-weather"),
+    path("nasa/reference/", sim.nasa_reference_view, name="nasa-reference"),
     path("webhook/readings/", webhook.receive_readings, name="webhook-readings"),
 ]

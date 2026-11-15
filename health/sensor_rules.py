@@ -36,8 +36,10 @@ RULES = {
     ]),
     "body_temperature": ("immune", [
         (RED, lambda v: v > 38, "Fever", "Possible infection: isolate if possible and contact mission support."),
+        (YELLOW, lambda v: v > 37.5, "Raised body temperature", "Rest, drink water and re-measure in an hour."),
     ]),
     "respiration_rate": ("cardiovascular", [
+        (RED, lambda v: v > 28, "Very fast breathing", "Check SpO2 and cabin CO2 now; contact mission support."),
         (YELLOW, lambda v: v > 22, "Fast breathing", "Rest and check cabin CO2 levels."),
     ]),
     "blood_glucose": ("immune", [
@@ -45,10 +47,12 @@ RULES = {
         (YELLOW, lambda v: v > 140, "Blood glucose high", "Review recent meals and re-test in 2 hours."),
     ]),
     "stress_level": ("behavioral", [
+        (RED, lambda v: v > 90, "Very high stress level", "Stop critical tasks; contact the flight surgeon and psychologist."),
         (YELLOW, lambda v: v > 75, "High stress level", "Take a break; schedule a call with the flight psychologist."),
     ]),
     "radiation_dose": ("radiation", [
-        (RED, lambda v: v > 1, "High personal radiation dose", "Move to the shielded area and contact mission support."),
+        (RED, lambda v: v > 1, "High personal radiation dose", "Go to the storm shelter (most shielded module) and contact mission support."),
+        (YELLOW, lambda v: v > 0.8, "Elevated personal radiation dose", "Limit time in unshielded modules today."),
     ]),
     "sleep_total": ("behavioral", [
         (YELLOW, lambda v: v < 5, "Short sleep", "Adjust the schedule to allow a full sleep period."),
@@ -71,14 +75,24 @@ RULES = {
     ]),
     "o2": ("environment", [
         (RED, lambda v: v < 19.5, "Cabin O2 low", "Check life support and alert mission control."),
+        (YELLOW, lambda v: v < 20, "Cabin O2 slightly low", "Check the oxygen generator."),
     ]),
     "cabin_radiation": ("radiation", [
-        (RED, lambda v: v > 1, "Cabin radiation spike (possible solar event)", "All crew to the shielded area."),
+        (RED, lambda v: v > 1, "Cabin radiation spike (possible solar event)", "All crew to the storm shelter now."),
+        (YELLOW, lambda v: v > 0.8, "Cabin radiation elevated", "Watch space-weather reports; prepare the shielded area."),
     ]),
     "noise": ("environment", [
+        (RED, lambda v: v > 85, "Cabin noise dangerously high", "Hearing protection on now; find the source (fan or pump fault)."),
         (YELLOW, lambda v: v > 70, "Cabin noise high", "Use hearing protection; affects sleep and stress."),
     ]),
 }
+
+
+# Lab markers (serum CMP/cytokines from OSD-575, urine proteins from OSD-656): bands derived
+# from real NASA OSDR data, see health/nasa.py and health/data/nasa_reference.json.
+from .nasa import lab_rules  # noqa: E402
+
+RULES.update(lab_rules())
 
 
 def match_reading(reading):
@@ -134,6 +148,9 @@ def evaluate_readings(readings, dedup_minutes=None):
         seen.add(key)
         new.append(alert)
     if new:
+        # Radiation alerts caused by a real NASA DONKI event cite it (see health/donki.py).
+        from .donki import annotate_radiation_alerts
+        annotate_radiation_alerts(new)
         Alert.objects.bulk_create(new)
     return new
 

@@ -5,65 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My Health · ASTRA HEALTH</title>
 <meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2322d3ee' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236fd3ff' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="preload" href="vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="page-my-health">
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
 <header id="topnav"></header>
-<main>
-<section class="panel profile reveal" id="profile">
-  <div class="avatar lg" id="pAvatar">—</div>
-  <div>
-    <div class="row wrap" style="gap:10px"><h1 id="pName">Loading…</h1><span id="pStatus"></span></div>
-    <div class="meta"><span id="pRole"></span><span id="pMission"></span><span id="pDay"></span><span id="pUpdated"></span></div>
-  </div>
-  <div class="actions" id="pActions">
-    <a class="btn btn-primary" href="checkin.html" id="actCheckin">Daily check-in</a>
-    <a class="btn btn-ghost" href="pvt.html" id="actPvt">PVT test</a>
-    <a class="btn btn-ghost" href="history.html" id="actHistory">History</a>
-  </div>
-</section>
-<div class="crew-switch mt hidden" id="crewSwitch"></div>
-
-<div class="mt" id="callout"></div>
-
-<section>
-  <div class="panel-head" style="margin-bottom:12px"><h2 id="vitalsTitle">Live vitals</h2><span class="live" data-conn><i></i><span>LIVE</span></span></div>
-  <div class="vitals" id="vitals"></div>
-</section>
-
-<section class="split mt">
-  <div>
-    <div class="panel-head" style="margin-bottom:12px"><h2 id="modulesTitle">Health modules</h2><span class="sub">status = worst reading or open alert in that system</span></div>
-    <div class="modules" id="modules"></div>
-  </div>
-  <div class="panel">
-    <div class="panel-head"><h2 id="recsTitle">Recommendations</h2><span class="sub" id="recsCount"></span></div>
-    <div class="alert-list" id="recs"></div>
-  </div>
-</section>
-
-<section class="grid g3 mt">
-  <div class="panel">
-    <div class="panel-head"><h3 id="hrTitle">Heart rate · 24 h</h3><span class="sub" id="hrSub"></span></div>
-    <div class="chart-wrap"><canvas id="hrChart"></canvas></div>
-  </div>
-  <div class="panel">
-    <div class="panel-head"><h3 id="sleepTitle">Sleep · 7 days</h3><span class="sub">target ≥ 7 h</span></div>
-    <div class="chart-wrap"><canvas id="sleepChart"></canvas></div>
-  </div>
-  <div class="panel">
-    <div class="panel-head"><h3 id="radTitle">Radiation · cumulative</h3><span class="sub" id="radSub"></span></div>
-    <div class="chart-wrap"><canvas id="radChart"></canvas></div>
-  </div>
-</section>
+<main class="page" id="main">
+<div id="view"></div>
 </main>
 <footer id="footer"></footer>
+<script src="js/nasa-reference.js"></script>
 <script src="js/rules.js"></script>
+<script src="js/scenarios.js"></script>
 <script src="js/mock-data.js"></script>
 <script src="js/api.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/common.js"></script>
+<script src="js/health-view.js"></script>
 <script src="js/pages/my-health.js"></script>
 </body>
 </html>

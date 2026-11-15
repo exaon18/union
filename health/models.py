@@ -168,3 +168,46 @@ class AuthToken(models.Model):
 
     def __str__(self):
         return f"token for {self.user} ({self.created_at:%Y-%m-%d %H:%M})"
+
+
+class SimScenario(models.Model):
+    """
+    The device simulator's active scenario (one row, pk=1). The simulator reads it from
+    GET /api/sim/scenario/ every tick; the flight surgeon changes it in the Simulation Lab (/lab/).
+    `config` is validated by device_simulator/scenarios.py:
+      {"preset": "one_critical", "target": 2, "system": "cardiovascular",
+       "custom": {"1": {"level": "caution", "system": "behavioral"}}, "cabin": {"level", "system"},
+       "anomaly_rate": 0.002}
+    """
+    config = models.JSONField(default=dict)
+    version = models.PositiveIntegerField(default=0)   # +1 on every change (the simulator logs it)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+")
+
+    def __str__(self):
+        return f"scenario v{self.version}: {self.config.get('preset', 'realistic')}"
+
+
+class SpaceWeatherEvent(models.Model):
+    """
+    A real space-weather event from NASA DONKI (https://kauai.ccmc.gsfc.nasa.gov/DONKI/):
+    FLR (solar flare), SEP (solar energetic particles), CME, GST (geomagnetic storm).
+    Filled by `python manage.py fetch_donki`; `source` says whether it came from the live API
+    or the bundled snapshot (health/data/donki_snapshot.json).
+    """
+    event_id = models.CharField(max_length=80, unique=True)      # e.g. 2026-07-04T20:29:00-FLR-001
+    event_type = models.CharField(max_length=4, db_index=True)   # FLR, SEP, CME, GST
+    start_time = models.DateTimeField(db_index=True)
+    class_type = models.CharField(max_length=10, blank=True)     # flare class (X1.3) / max Kp for GST
+    speed = models.FloatField(null=True, blank=True)             # CME speed km/s
+    link = models.URLField(max_length=300, blank=True)
+    data = models.JSONField(default=dict)                        # normalised fields (see health/donki.py)
+    source = models.CharField(max_length=10, default="live")     # live | snapshot
+    fetched_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-start_time"]
+
+    def __str__(self):
+        return f"{self.event_type} {self.event_id} {self.class_type}"

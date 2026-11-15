@@ -5,45 +5,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>History · ASTRA HEALTH</title>
 <meta name="description" content="ASTRA HEALTH - astronaut health monitoring and early-warning system (NASA Space Apps 2026 prototype).">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2322d3ee' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236fd3ff' stroke-width='3'/%3E%3Cpath d='M8 17h4l2-5 3 9 2-6h5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="preload" href="vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="page-history">
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
 <header id="topnav"></header>
-<main>
+<main class="page" id="main">
 <div class="page-head">
   <div>
-    <span class="eyebrow">Trends &amp; audit trail</span>
-    <h1 id="hTitle">History</h1>
-    <p>Pick a metric and a time range. Dashed lines are the alert thresholds used by the rule engine.</p>
+    <div class="eyebrow reveal">Trends over time</div>
+    <h1 class="reveal" id="hTitle">History</h1>
+    <p class="muted reveal">Pick a metric and a time range. Dashed lines are the alert thresholds; coloured points crossed them.</p>
   </div>
-  <div class="row wrap">
-    <select id="astroSel" class="hidden" style="width:auto"></select>
-    <select id="metricSel" style="width:auto"></select>
-    <div class="seg" id="rangeSeg"><button data-h="6">6 h</button><button data-h="24">24 h</button><button data-h="168">7 d</button></div>
+  <div class="row wrap reveal">
+    <select class="chip select-chip" id="astroSel" aria-label="Astronaut" hidden></select>
+    <select class="chip select-chip" id="metricSel" aria-label="Metric"></select>
+    <div class="seg" role="group" aria-label="Range" id="rangeSeg">
+      <button type="button" data-h="1">1 h</button><button type="button" data-h="6">6 h</button><button type="button" data-h="24">24 h</button><button type="button" data-h="168">7 days</button>
+    </div>
   </div>
 </div>
-
-<section class="grid g4" id="stats"></section>
-
-<section class="panel mt">
-  <div class="panel-head"><h2 id="chartTitle">—</h2><span class="sub" id="chartSub"></span></div>
-  <div class="chart-wrap tall"><canvas id="histChart"></canvas></div>
-</section>
-
-<section class="split mt">
-  <div class="panel">
-    <div class="panel-head"><h2 id="tableTitle">Readings</h2><span class="sub" id="tableSub"></span></div>
-    <div class="table-wrap" style="max-height:460px;overflow:auto"><table id="readTable"></table></div>
+<div class="kv reveal" id="stats" style="margin-bottom:16px"></div>
+<section class="grid g-12">
+  <div class="panel span-12 reveal">
+    <div class="panel-head"><h2 id="chartTitle">Chart</h2><span class="sub" id="chartSub"></span></div>
+    <div class="chart-box lg"><canvas id="histChart"></canvas></div>
   </div>
-  <div class="panel">
-    <div class="panel-head"><h2 id="alertTitle">Alerts</h2><div class="seg" id="alertSeg"><button data-f="all" class="active">All</button><button data-f="false">Open</button><button data-f="true">Resolved</button></div></div>
-    <div class="alert-list" id="alertHist" style="max-height:460px;overflow:auto"></div>
+  <div class="panel span-7 lg-12 reveal">
+    <div class="panel-head"><h2>Readings <span class="sub" id="tableSub"></span></h2></div>
+    <div class="table-wrap" style="max-height:520px;overflow:auto"><table class="table" id="readTable"></table></div>
+  </div>
+  <div class="panel span-5 lg-12 reveal">
+    <div class="panel-head"><h2>Alert history</h2>
+      <div class="seg" role="group" aria-label="Alert filter" id="alertSeg"><button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="false" aria-pressed="false">Open</button><button type="button" data-f="true" aria-pressed="false">Resolved</button></div>
+    </div>
+    <ul class="feed tall" id="alertHist"></ul>
   </div>
 </section>
 </main>
 <footer id="footer"></footer>
+<script src="js/nasa-reference.js"></script>
 <script src="js/rules.js"></script>
+<script src="js/scenarios.js"></script>
 <script src="js/mock-data.js"></script>
 <script src="js/api.js"></script>
 <script src="js/charts.js"></script>
