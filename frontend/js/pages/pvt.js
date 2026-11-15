@@ -100,7 +100,7 @@
     Api.submitPvt(aid, { mean_rt_ms: mean, fastest_ms: fastest, lapses: lapses, false_starts: st.falseStarts, trials: n }).then(function (res) {
       var fired = (res && res.alerts) || [];
       A.toast('Result saved', fired.length ? R.worst(fired.map(function (a) { return a.level; })) : 'green', fired.length ? fired[0].message : 'Sent to your flight surgeon.');
-      loadHistory();
+      loadHistory(); loadLeaderboard(true);
     }).catch(function (e) { A.toast('Could not save result', 'red', e.message); });
   }
 
@@ -128,5 +128,51 @@
       });
     }).catch(function (e) { console.warn('PVT history', e.message); });
   }
-  dots(); loadHistory();
+
+  /* ---- Crew leaderboard (GET /api/leaderboard/) ---- */
+  var TIER_C = { 'Ace': C.cyan, 'Sharp': C.green, 'Steady': C.yellow, 'Needs rest': C.red };
+  var lastRank = null;
+  function medal(r) { return r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : '#' + r; }
+  function loadLeaderboard(afterRun) {
+    Api.getLeaderboard().then(function (d) {
+      var rows = d.leaderboard || [];
+      $('lbMeta').textContent = rows.length + ' of 4 crew ranked';
+      if (!rows.length) { $('lbPodium').innerHTML = ''; $('lbList').innerHTML = '<li class="dim">No runs yet. Be the first on the board!</li>'; return; }
+      var podium = [rows[1], rows[0], rows[2]].filter(Boolean);
+      $('lbPodium').innerHTML = podium.map(function (r) {
+        return '<div class="lb-step lb-r' + r.rank + (r.astronaut_id === aid ? ' me' : '') + '">' +
+          '<div class="lb-medal">' + medal(r.rank) + '</div><div class="lb-av">' + A.esc(A.initials(r.astronaut)) + '</div>' +
+          '<b>' + A.esc(r.astronaut.split(' ')[0]) + '</b><span class="lb-score" data-v="' + r.score + '">0</span>' +
+          '<div class="lb-block"><span>' + r.rank + '</span></div></div>';
+      }).join('');
+      $('lbPodium').querySelectorAll('.lb-score').forEach(function (el) { A.countTo(el, Number(el.dataset.v)); });
+      $('lbList').innerHTML = rows.map(function (r) {
+        var me = r.astronaut_id === aid, ch = r.change;
+        var chg = ch === null || ch === undefined ? '<span class="dim">new</span>' : ch > 0 ? '<span class="up">▲ ' + ch + '</span>' : ch < 0 ? '<span class="down">▼ ' + (-ch) + '</span>' : '<span class="dim">=</span>';
+        return '<li class="' + (me ? 'me' : '') + '" style="--d:' + (r.rank * 60) + 'ms">' +
+          '<span class="lb-rank">' + medal(r.rank) + '</span>' +
+          '<span class="lb-name"><b>' + A.esc(r.astronaut) + (me ? ' <em>you</em>' : '') + '</b><small>' + A.esc(r.role || '') + ' · ' + r.mean_rt_ms + ' ms · ' + r.lapses + ' lapse' + (r.lapses === 1 ? '' : 's') + '</small></span>' +
+          '<span class="lb-tier" style="--c:' + (TIER_C[r.tier] || C.cyan) + '">' + A.esc(r.tier) + '</span>' +
+          '<span class="lb-bar"><i style="width:' + (r.score / 10) + '%;background:' + (TIER_C[r.tier] || C.cyan) + '"></i></span>' +
+          '<span class="lb-pts"><b>' + r.score + '</b>' + chg + '</span>' +
+          '<span class="lb-extra" title="Daily streak · best score · runs">' + (r.streak_days > 1 ? '🔥' + r.streak_days + ' · ' : '') + 'best ' + r.best_score + ' · ' + r.attempts + ' run' + (r.attempts === 1 ? '' : 's') + '</span></li>';
+      }).join('');
+      var mine = rows.filter(function (r) { return r.astronaut_id === aid; })[0];
+      if (afterRun && mine) {
+        var msg = 'You scored <b>' + mine.score + '</b> (' + A.esc(mine.tier) + ') and rank <b>' + medal(mine.rank) + '</b> of ' + rows.length + '.';
+        if (mine.personal_best && mine.attempts > 1) msg = '🎉 New personal best! ' + msg;
+        if (lastRank && mine.rank < lastRank) msg += ' You climbed ' + (lastRank - mine.rank) + ' place' + (lastRank - mine.rank === 1 ? '' : 's') + '!';
+        var above = rows[mine.rank - 2];
+        if (above) msg += ' ' + (above.score - mine.score + 1) + ' points to pass ' + A.esc(above.astronaut.split(' ')[0]) + '.';
+        else msg += ' You lead the crew. Keep it up!';
+        $('rRank').innerHTML = msg; $('rRank').hidden = false;
+        $('rRank').classList.remove('pop'); void $('rRank').offsetWidth; $('rRank').classList.add('pop');
+        if (mine.personal_best && mine.attempts > 1) A.toast('New personal best!', 'green', 'Score ' + mine.score + ' · rank ' + mine.rank);
+      }
+      if (mine) lastRank = mine.rank;
+    }).catch(function (e) { $('lbList').innerHTML = '<li class="dim">Leaderboard unavailable (' + A.esc(e.message) + ')</li>'; });
+  }
+
+  dots(); loadHistory(); loadLeaderboard(false);
+  setInterval(function () { if (st.phase === 'idle' || st.phase === 'done') loadLeaderboard(false); }, 20000);
 })();

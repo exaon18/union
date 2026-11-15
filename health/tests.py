@@ -112,6 +112,13 @@ class ApiTests(TestCase):
         self.assertEqual(response.json()["count"], 2)
         self.assertEqual([row["astronaut_id"] for row in response.json()["leaderboard"]], [1, 2])
         self.assertEqual(response.json()["leaderboard"][0]["mean_rt_ms"], 250)
+        top = response.json()["leaderboard"][0]
+        self.assertEqual(top["rank"], 1)
+        self.assertEqual(top["score"], 750)          # 1000 - (250-150)*2.5
+        self.assertEqual(top["attempts"], 2)
+        self.assertTrue(top["personal_best"])
+        self.assertEqual(top["change"], 750 - 125)   # previous run: 500 ms -> 125
+        self.assertEqual(top["tier"], "Sharp")
 
     # --- alerts ---
     def test_acknowledge_resolve_surgeon_only(self):
