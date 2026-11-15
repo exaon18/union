@@ -731,3 +731,31 @@ def pvt_create(request):
         "alerts": [_alert_json(a) for a in alerts],
         "status": _worst(a.level for a in alerts),
     }, status=201)
+
+def leaderboard_view(request):
+    if request.method != "GET":
+        return _error("Method not allowed", 405)
+    """Return crew ranked by each astronaut's latest PVT reaction time."""
+    latest_by_astronaut = {}
+    for result in PVTResult.objects.select_related("astronaut__user").order_by("-created_at", "-id"):
+        latest_by_astronaut.setdefault(result.astronaut_id, result)
+
+    leaderboard = []
+    for rank, result in enumerate(
+        sorted(latest_by_astronaut.values(), key=lambda p: (p.mean_rt_ms, p.lapses, p.false_starts, p.id)),
+        start=1,
+    ):
+        leaderboard.append({
+            "rank": rank,
+            "astronaut_id": result.astronaut_id,
+            "astronaut": _astronaut_name(result.astronaut),
+            "role": result.astronaut.role,
+            "mean_rt_ms": result.mean_rt_ms,
+            "fastest_ms": result.fastest_ms,
+            "lapses": result.lapses,
+            "false_starts": result.false_starts,
+            "trials": result.trials,
+            "created_at": _iso(result.created_at),
+        })
+        print(f"Rank {rank}: {result.astronaut_id} ({_astronaut_name(result.astronaut)}) - mean_rt_ms: {result.mean_rt_ms}, lapses: {result.lapses}, false_starts: {result.false_starts}, trials: {result.trials}, created_at: {_iso(result.created_at)}")
+    return JsonResponse({"count": len(leaderboard), "leaderboard": leaderboard})

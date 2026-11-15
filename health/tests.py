@@ -7,7 +7,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from .models import Alert, AuthToken, DailyCheckIn, PVTResult, SensorReading
+from .models import Alert, Astronaut, AuthToken, DailyCheckIn, PVTResult, SensorReading
 
 SECRET = "test-secret"
 
@@ -99,6 +99,19 @@ class ApiTests(TestCase):
         self.assertEqual(set(SensorReading.objects.values_list("metric", flat=True)), {"pvt_lapses", "pvt_reaction_time"})
         self.assertEqual(self.client.get("/api/pvt/?astronaut=2").json()["results"][0]["lapses"], 6)
         self.assertEqual(self.post("/api/pvt/", {"mean_rt_ms": 300, "lapses": 11, "trials": 10}, tok).status_code, 400)
+
+    def test_leaderboard_uses_latest_pvt_result_per_astronaut(self):
+        astronauts = list(Astronaut.objects.order_by("id"))
+        PVTResult.objects.create(astronaut=astronauts[0], mean_rt_ms=500, trials=10)
+        PVTResult.objects.create(astronaut=astronauts[0], mean_rt_ms=250, trials=10)
+        PVTResult.objects.create(astronaut=astronauts[1], mean_rt_ms=300, lapses=1, trials=10)
+
+        response = self.client.get("/api/leaderboard/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 2)
+        self.assertEqual([row["astronaut_id"] for row in response.json()["leaderboard"]], [1, 2])
+        self.assertEqual(response.json()["leaderboard"][0]["mean_rt_ms"], 250)
 
     # --- alerts ---
     def test_acknowledge_resolve_surgeon_only(self):
