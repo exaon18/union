@@ -64,12 +64,13 @@ Readings grow by ~1.7 million rows a day at one batch every 3 s. Prune hourly wi
 0 * * * * cd /home/USER/astra && venv/bin/python manage.py prune_readings --keep-hours 48 >> /tmp/prune.log 2>&1
 ```
 
-## The frontend: one URL
+## The frontend: one URL (crew app at `/app/`, Simulation Lab at `/lab/`)
 
 Django serves the static frontend (`frontend/`) at **`/app/`**:
 
 ```
-http://2.24.53.231:8000/app/
+http://2.24.53.231:8000/app/      crew health app (astronauts, flight surgeon, public dashboard)
+http://2.24.53.231:8000/lab/      Simulation Lab: testing tool, own sign-in (flight surgeon), from lab/
 ```
 
 Served from there, the frontend calls the same server's `/api` automatically (no CORS or
@@ -81,11 +82,13 @@ Teammates can also host `frontend/` anywhere else (or run `python3 -m http.serve
 another backend, open any page once with `?api_base=http://127.0.0.1:8000/api` (saved in
 the browser; `?api_base=reset` goes back to the default).
 
-## Simulator and Scenario Control
+## Simulator and the Simulation Lab
 
 `astra-sim` now follows the **active scenario** stored on the server. Before every batch it calls
 `GET http://127.0.0.1:8000/api/sim/scenario/` (derived from its `--url`), so nothing else needs
-configuring. The flight surgeon picks a scenario at `http://2.24.53.231:8000/app/scenarios.html`
+configuring. The flight surgeon picks a scenario in the **Simulation Lab** at
+**`http://2.24.53.231:8000/lab/`** (a testing tool with its own header and login, kept out of the
+crew app; the old `/app/scenarios.html` redirects there)
 (All nominal, One caution, One critical, Several caution, All critical, Cabin CO2, Radiation storm,
 Random / realistic, Custom). The change shows up within one tick (3 s); "Apply" can also resolve
 old alerts and push a batch at once. The default is "Random / realistic" (mostly green).
@@ -105,7 +108,7 @@ curl -s http://127.0.0.1:8000/api/sim/scenario/ | head -c 200; echo
 You can remove them with `sudo systemctl edit --full astra-sim`, then
 `sudo systemctl daemon-reload && sudo systemctl restart astra-sim`.
 
-To clear everything the old simulator left open, open Scenario Control and press **Reset alerts**,
+To clear everything the old simulator left open, open the Simulation Lab (`/lab/`) and press **Reset alerts**,
 or:
 
 ```bash

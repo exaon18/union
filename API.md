@@ -10,7 +10,7 @@ The backend stores live sensor readings, daily check-ins, PVT results and alerts
 http://2.24.53.231:8000/api
 ```
 
-Plain HTTP (an IP, no HTTPS or domain yet). If your page is served over HTTPS the browser will block these calls (mixed content); serve the frontend over HTTP, or open it from Django itself at **`http://2.24.53.231:8000/app/`** (same server, so no CORS or mixed-content problems).
+Plain HTTP (an IP, no HTTPS or domain yet). If your page is served over HTTPS the browser will block these calls (mixed content); serve the frontend over HTTP, or open it from Django itself at **`http://2.24.53.231:8000/app/`** (same server, so no CORS or mixed-content problems). The Simulation Lab (testing tool) is at **`http://2.24.53.231:8000/lab/`**.
 
 * **Times** are ISO 8601 with an offset, in mission-control time (EAT, `+03:00`), e.g. `2026-11-14T22:35:06+03:00`. `new Date(...)` in JavaScript handles them.
 * **Reading** (`GET`) is public: no login. The public mission dashboard uses only GETs.
@@ -642,6 +642,9 @@ Also saves two sensor readings, `pvt_reaction_time` (ms) and `pvt_lapses`, so th
 ## Simulation lab (`/api/sim/`)
 
 Controls what the device simulator sends, so you can test the system in a chosen situation.
+The UI for it is the separate **Simulation Lab** at **`http://2.24.53.231:8000/lab/`** (a testing
+tool with its own header and flight-surgeon sign-in, not part of the crew app; `/app/scenarios.html`
+redirects there). The crew app does not call the POST endpoints below.
 Presets and value bands live in `device_simulator/scenarios.py` (the simulator and the server share it).
 
 | level | what the simulator sends for the chosen system |

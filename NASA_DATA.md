@@ -6,7 +6,7 @@ The crew is simulated, but three things come from real NASA data:
 |------|--------|----------------|
 | Serum lab bands: IL-6, TNF-α, IL-10, MCP-1, CRP, calcium, albumin, glucose | NASA OSDR **OSD-575** (SpaceX Inspiration4 serum: metabolic panel + Eve cytokine arrays) | normal range, yellow and red alert levels; immune scenario shift; Immune risk card |
 | Urine inflammation bands: IL-6, IL-8 (CXCL8), MPO, NGAL (LCN2) | NASA OSDR **OSD-656** (Inspiration4 urine, Alamar NULISA panel) | same |
-| Stress / DNA-repair genes on landing day | NASA OSDR **OSD-53** (6 Shuttle astronauts, whole-blood microarray, GSE47126) | context on the Immune risk card and the NASA Data page |
+| Stress / DNA-repair genes on landing day | NASA OSDR **OSD-53** (6 Shuttle astronauts, whole-blood microarray, GSE47126) | context on the Immune risk card and the Science / Sources page |
 | Solar flares, solar energetic particle (SEP) events, CMEs, geomagnetic storms | **NASA DONKI** | when crew radiation goes up, alert citations, "Replay real event" |
 
 Vitals (heart rate, SpO₂, BP, sleep, stress, cabin air) stay **simulated from published normal
@@ -69,7 +69,7 @@ BAG1 ×0.37, HSP90 ×0.41, c-fos ×3.11, GPX1 ×0.52, XRCC1 ×0.45.
   `frontend/js/rules.js` builds the same rules from `window.ASTRA_NASA`.
 * `device_simulator/scenarios.py`: normal lab values inside green; an `immune` problem shifts every
   cytokine/CRP/urine marker by 1.05-1.6× (caution) or 2.1-2.8× (critical) the real shift.
-* Immune risk card (My Health / Support Console detail) and the **NASA Data** page (`science.html`).
+* Immune risk card (My Health / Support Console detail) and the **Science / Sources** page (`/app/science.html`).
 
 ## DONKI: space weather (`health/donki.py`, `manage.py fetch_donki`)
 
@@ -103,11 +103,11 @@ Mapping (prototype):
 | Geomagnetic storm | info only (Earth / low orbit) | n/a |
 
 * In **Random / realistic**, an event inside its window raises everyone's radiation (crew + cabin).
-* **Replay real space weather** (Scenario Control) replays any SEP or M/X flare by its DONKI id.
+* **Replay real space weather** in the Simulation Lab (`/lab/`, testing tool) replays any SEP or M/X flare by its DONKI id.
 * New radiation alerts get the cause appended: *"… Cause: NASA DONKI X1.3 solar flare,
   2026-07-04T20:29:00-FLR-001 (2026-07-04 20:29 UTC)."*
 * `fetch_donki` raises one cabin alert for a new SEP / X event from the last 48 h.
-* Panels: Mission dashboard, Support Console, Scenario Control, NASA Data page; every event links to DONKI.
+* Panels: Mission dashboard, Support Console, Science / Sources page and the Simulation Lab; every event links to DONKI.
 
 **Limit:** DONKI gives event times and classes, not the dose our crew would get. Dose values are
 still simulated (radiation bands in `scenarios.py`).

@@ -27,8 +27,8 @@ python device_simulator/simulator.py --legacy --emergency 2   # the old random g
 ## Scenarios (what gets sent)
 
 Before every batch the simulator reads `GET /api/sim/scenario/` (derived from `--url`, or set
-`--scenario-url`). The flight surgeon changes it on the **Scenario Control** page
-(`/app/scenarios.html`) or with `POST /api/sim/scenario/`, so a change shows up on the next tick.
+`--scenario-url`). The flight surgeon changes it in the **Simulation Lab**
+(`http://<host>:8000/lab/`, a separate testing tool, not part of the crew app) or with `POST /api/sim/scenario/`, so a change shows up on the next tick.
 If the server can't be reached it keeps the last scenario it saw (or "Random / realistic").
 
 `scenarios.py` holds the presets and value bands:
