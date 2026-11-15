@@ -318,40 +318,186 @@
     var back = document.createElement('div');
     back.className = 'modal-backdrop'; back.setAttribute('role', 'dialog'); back.setAttribute('aria-modal', 'true');
     back.innerHTML = '<div class="modal' + (opts.red ? ' red' : '') + '">' + html + '</div>';
-    var key = function (e) { if (e.key === 'Escape') close(); };
+    var key = function (e) { if (e.key === 'Escape' && !opts.requireExplicitClose) close(); };
     function close() { back.remove(); document.removeEventListener('keydown', key); if (last && last.focus) last.focus(); if (opts.onClose) opts.onClose(); }
-    back.addEventListener('click', function (e) { if (e.target === back || (e.target.closest && e.target.closest('[data-close]'))) close(); });
+    back.addEventListener('click', function (e) {
+      if ((e.target === back && !opts.requireExplicitClose) || (e.target.closest && e.target.closest('[data-close]'))) close();
+    });
     document.addEventListener('keydown', key);
     ensureRoot('modal-root').appendChild(back);
     var f = back.querySelector('[autofocus]') || back.querySelector('button, input, textarea'); if (f) f.focus();
     return { close: close, node: back };
   }
 
-  /* ---------- alarm: red frame + optional beep (off by default; toggle in the top bar) ---------- */
-  var audio = null, soundOn = false, alarmTimer = null;
+  /* ---------- alarm: red frame + optional spoken alert (off by default; toggle in the top bar) ---------- */
+  var soundOn = false, activeAlarmName = 'Crew member', activeAlarmAstronautId = null, activeAlarmSound = true;
+  var lastAlarmAnnouncement = '', alarmAudio = null, alarmAudioUrl = null, voiceRequest = 0;
+  var currentPublicAlert = null, lastPublicAnnouncement = null, publicRepeatTimer = null;
+  var publicAlertGeneration = 0, publicAlertAcknowledged = false;
   try { soundOn = localStorage.getItem('astra_sound') === 'on'; } catch (e) { /* ignore */ }
-  function beep() {
-    if (!soundOn) return;
-    try {
-      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-      if (audio.state === 'suspended') audio.resume();
-      [0, 0.22].forEach(function (d, i) {
-        var o = audio.createOscillator(), g = audio.createGain(), at = audio.currentTime + d;
-        o.type = 'sine'; o.frequency.value = i ? 660 : 880;
-        g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(0.11, at + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.2);
-        o.connect(g).connect(audio.destination); o.start(at); o.stop(at + 0.22);
+  function firstName(name) {
+    var value = String(name || '').trim();
+    return value ? value.split(/\s+/)[0] : 'Crew member';
+  }
+  function speak(text) {
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
+    window.speechSynthesis.cancel();
+    var utterance = new window.SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    window.speechSynthesis.speak(utterance);
+    return true;
+  }
+  function announcementKey(id, name) {
+    return id ? 'astronaut:' + id : firstName(name).toLowerCase();
+  }
+  function releaseAlarmAudio() {
+    if (alarmAudio) {
+      alarmAudio.pause();
+      alarmAudio.onended = null;
+      alarmAudio.onerror = null;
+      alarmAudio.src = '';
+      alarmAudio = null;
+    }
+    if (alarmAudioUrl) {
+      window.URL.revokeObjectURL(alarmAudioUrl);
+      alarmAudioUrl = null;
+    }
+  }
+  function stopAlarmVoice() {
+    voiceRequest++;
+    releaseAlarmAudio();
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+  function browserWarning(text) {
+    toast('Gemini voice unavailable; using browser speech', 'yellow');
+    if (!speak(text)) toast('No supported voice playback is available', 'red');
+  }
+  function announceWarning(id, name) {
+    var text = firstName(name) + ' is warning';
+    stopAlarmVoice();
+    if (Api && Api.voiceAlert && !Api.USE_MOCK && id) {
+      var requestId = voiceRequest;
+      Api.voiceAlert(id).then(function (blob) {
+        if (!soundOn || requestId !== voiceRequest) return;
+        if (!window.URL || !window.URL.createObjectURL || !window.Audio) {
+          browserWarning(text);
+          return;
+        }
+        alarmAudioUrl = window.URL.createObjectURL(blob);
+        alarmAudio = new window.Audio(alarmAudioUrl);
+        alarmAudio.onerror = function () {
+          if (!soundOn || requestId !== voiceRequest) return;
+          releaseAlarmAudio();
+          browserWarning(text);
+        };
+        var playback = alarmAudio.play();
+        if (playback && playback.catch) playback.catch(function () {
+          if (!soundOn || requestId !== voiceRequest) return;
+          releaseAlarmAudio();
+          browserWarning(text);
+        });
+      }).catch(function () {
+        if (soundOn && requestId === voiceRequest) browserWarning(text);
       });
-    } catch (e) { /* audio not available */ }
+      return true;
+    }
+    return speak(text);
+  }
+  function announcePublicAlert(force) {
+    if (!soundOn || !currentPublicAlert || !currentPublicAlert.text || publicAlertAcknowledged) return;
+    if (!force && currentPublicAlert.key === lastPublicAnnouncement) return;
+    stopPublicAlertRepetition();
+    lastPublicAnnouncement = currentPublicAlert.key;
+    if (!speakPublicAlert(currentPublicAlert.text, publicAlertGeneration)) {
+      toast('Speech is not supported by this browser', 'red');
+    }
+  }
+  function stopPublicAlertRepetition() {
+    clearTimeout(publicRepeatTimer);
+    publicRepeatTimer = null;
+    publicAlertGeneration++;
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+  function speakPublicAlert(text, generation) {
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return false;
+    var utterance = new window.SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.onend = function () {
+      if (generation !== publicAlertGeneration || !soundOn || publicAlertAcknowledged ||
+          !currentPublicAlert || !currentPublicAlert.repeat) return;
+      publicRepeatTimer = setTimeout(function () {
+        speakPublicAlert(currentPublicAlert.text, generation);
+      }, 5000);
+    };
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    return true;
   }
   var alarm = {
     set: function (on, opts) {
       opts = opts || {};
       on = !!on;
-      if (on === document.body.classList.contains('alarm')) return;
+      var wasOn = document.body.classList.contains('alarm');
+      if (on) {
+        activeAlarmName = firstName(opts.name);
+        activeAlarmAstronautId = opts.astronautId || null;
+        activeAlarmSound = opts.sound !== false;
+      }
+      if (on === wasOn) {
+        var key = announcementKey(activeAlarmAstronautId, activeAlarmName);
+        if (on && soundOn && activeAlarmSound && key !== lastAlarmAnnouncement && announceWarning(activeAlarmAstronautId, activeAlarmName)) {
+          lastAlarmAnnouncement = key;
+        }
+        return;
+      }
       document.body.classList.toggle('alarm', on);
-      clearInterval(alarmTimer);
-      if (on && opts.sound !== false) { beep(); alarmTimer = setInterval(beep, 2600); }
+      if (on) {
+        if (soundOn && activeAlarmSound && announceWarning(activeAlarmAstronautId, activeAlarmName)) {
+          lastAlarmAnnouncement = announcementKey(activeAlarmAstronautId, activeAlarmName);
+        }
+      } else {
+        stopAlarmVoice();
+        activeAlarmName = 'Crew member';
+        activeAlarmAstronautId = null;
+        activeAlarmSound = true;
+        lastAlarmAnnouncement = '';
+      }
     }
+  };
+  alarm.repeat = function () {
+    if (!soundOn || !document.body.classList.contains('alarm') || !activeAlarmSound) return;
+    var text = firstName(activeAlarmName) + ' is warning';
+    if (!alarmAudio) {
+      if (!speak(text)) toast('No supported voice playback is available', 'red');
+      return;
+    }
+    alarmAudio.currentTime = 0;
+    var playback = alarmAudio.play();
+    if (playback && playback.catch) playback.catch(function () {
+      if (!soundOn || !document.body.classList.contains('alarm')) return;
+      releaseAlarmAudio();
+      browserWarning(text);
+    });
+  };
+  alarm.silence = stopAlarmVoice;
+  alarm.publicAlert = function (text, key, repeat) {
+    var next = { text: String(text || ''), key: String(key || ''), repeat: !!repeat };
+    var changed = !currentPublicAlert || next.key !== currentPublicAlert.key;
+    currentPublicAlert = next;
+    if (changed) {
+      publicAlertAcknowledged = false;
+      lastPublicAnnouncement = null;
+      stopPublicAlertRepetition();
+      announcePublicAlert(true);
+    } else {
+      announcePublicAlert(false);
+    }
+    return soundOn && currentPublicAlert.repeat && !publicAlertAcknowledged &&
+      !!window.speechSynthesis && !!window.SpeechSynthesisUtterance;
+  };
+  alarm.acknowledgePublicAlert = function () {
+    publicAlertAcknowledged = true;
+    stopPublicAlertRepetition();
   };
 
   /* ---------- top bar ---------- */
@@ -379,7 +525,7 @@
         '<span class="chip st-green" id="conn" title="Connection to ' + esc(Api.API_BASE) + '"><span class="dot"></span><span id="conn-text">' + (Api.USE_MOCK ? 'Simulated link' : 'Link nominal') + '</span></span>' +
         '<div class="met"><small>EARTH · EAT</small><span class="mono" data-clock>--:--:--</span></div>' +
         (Api.USE_MOCK ? '<button class="chip demo-chip" id="demo-chip" type="button" title="Mock mode: data generated in your browser"><span class="dot dot-warn"></span><span>Demo data</span></button>' : '') +
-        '<button class="icon-btn" id="sound-btn" type="button" aria-label="Alarm sound on/off" title="Alarm sound">' + ICONS.soundOn + ICONS.soundOff + '</button>' +
+        '<button class="icon-btn" id="sound-btn" type="button" aria-label="Voice alert on/off" title="Voice alert">' + ICONS.soundOn + ICONS.soundOff + '</button>' +
         '<span id="user-slot">' + user + '</span>' +
         '<button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false">' + ICONS.menu + '</button>' +
       '</div>';
@@ -394,8 +540,21 @@
       soundOn = !soundOn;
       try { localStorage.setItem('astra_sound', soundOn ? 'on' : 'off'); } catch (e) { /* ignore */ }
       snd.classList.toggle('muted-snd', !soundOn);
-      if (soundOn) beep();
-      toast(soundOn ? 'Alarm sound on' : 'Alarm sound off', 'green');
+      if (soundOn) {
+        if (currentPublicAlert && currentPublicAlert.text) {
+          announcePublicAlert(true);
+        } else if (document.body.classList.contains('alarm') && activeAlarmSound) {
+          if (announceWarning(activeAlarmAstronautId, activeAlarmName)) {
+            lastAlarmAnnouncement = announcementKey(activeAlarmAstronautId, activeAlarmName);
+          }
+        } else if (!document.body.classList.contains('alarm')) {
+          if (!speak('Alarm voice enabled')) toast('Speech is not supported by this browser', 'red');
+        }
+      } else {
+        stopAlarmVoice();
+        stopPublicAlertRepetition();
+      }
+      toast(soundOn ? 'Voice alert on' : 'Voice alert off', 'green');
     });
     var demo = document.getElementById('demo-chip');
     if (demo) demo.addEventListener('click', function () {

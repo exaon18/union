@@ -77,6 +77,31 @@
   }
   function get(path, params) { return request('GET', path, params); }
   function post(path, data) { return request('POST', path, null, data); }
+  function postAudio(path, data) {
+    var headers = { Accept: 'audio/wav, application/json', 'Content-Type': 'application/json' };
+    var t = token(); if (t) headers.Authorization = 'Token ' + t;
+    var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, timer;
+    var init = { method: 'POST', headers: headers, body: JSON.stringify(data || {}) };
+    if (ctl) { init.signal = ctl.signal; timer = setTimeout(function () { ctl.abort(); }, 45000); }
+    return fetch(API_BASE + path, init).then(function (res) {
+      clearTimeout(timer);
+      if (!res.ok) {
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          var e = new Error(body.error || ('HTTP ' + res.status)); e.status = res.status; e.body = body;
+          if (res.status === 401 && t) Api.onUnauthorized(e);
+          throw e;
+        });
+      }
+      return res.blob();
+    }, function (err) {
+      clearTimeout(timer);
+      var e = new Error(err && err.name === 'AbortError'
+        ? 'voice service did not answer within 45 s'
+        : 'cannot reach the voice service (' + API_BASE + ')');
+      e.status = 0; e.offline = true;
+      throw e;
+    });
+  }
 
   // Run a mock call asynchronously so callers behave the same in both modes.
   function mock(fn) {
@@ -117,6 +142,8 @@
     getAlerts: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getAlerts(opts); }) : get('/alerts/', opts); },
     getCheckins: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getCheckins(opts); }) : get('/checkins/', opts); },
     getPvt: function (opts) { return USE_MOCK ? mock(function () { return MockAPI.getPvt(opts); }) : get('/pvt/', opts); },
+    // POST /api/voice-alert/ {astronaut_id} -> WAV audio (requires a login token)
+    voiceAlert: function (astronautId) { return postAudio('/voice-alert/', { astronaut_id: astronautId }); },
 
     /* ---- write endpoints (Authorization: Token <key>) ---- */
     // POST /api/checkins/ -> {checkin, alerts, status}

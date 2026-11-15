@@ -41,6 +41,18 @@
   $('station-reset').addEventListener('click', function (e) { if (station) station.reset(); e.currentTarget.hidden = true; });
 
   var cards = {}, latestById = {}, crewById = {};
+  var previousCrewAlertSignature = null;
+  var publicAlertAck = $('public-alert-ack');
+  publicAlertAck.addEventListener('click', function () {
+    A.alarm.acknowledgePublicAlert();
+    publicAlertAck.hidden = true;
+  });
+  var NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+  function publicStatusSentence(count, level) {
+    var countText = count < NUMBER_WORDS.length ? NUMBER_WORDS[count] : String(count);
+    return countText + (count === 1 ? ' crew member has a ' : ' crew members have a ') +
+      level + ' health alert' + (count === 1 ? '.' : 's.');
+  }
   function crewCard(a) {
     var n = document.createElement('button');
     n.type = 'button'; n.className = 'crew-card st-green';
@@ -71,12 +83,14 @@
     return Api.getCrew().then(function (crew) {
       var list = crew.astronauts;
       return Promise.all(list.map(function (a) { return Api.getLatest(a.id); })).then(function (latest) {
-        var ok = 0, open = 0, worst = [];
+        var ok = 0, open = 0, critical = 0, caution = 0, worst = [];
         if (list[0]) $('mission-name').textContent = list[0].mission;
         list.forEach(function (a, i) {
           crewById[a.id] = a; latestById[a.id] = A.byMetric(latest[i].readings);
           var m = latestById[a.id], n = cards[a.id] || crewCard(a);
           if (a.status === 'green') ok++;
+          if (a.status === 'red') critical++;
+          if (a.status === 'yellow') caution++;
           open += a.open_alerts; worst.push(a.status);
           A.setStatus(n, a.status);
           n.querySelector('.cc-badge').innerHTML = A.badge(a.status);
@@ -95,6 +109,16 @@
         lastCrew = list.map(function (a, i) { return { id: a.id, name: a.name, status: a.status, location: MODULES[i % MODULES.length] }; });
         if (station) station.setCrew(lastCrew);
         A.alarm.set(overall === 'red', { sound: false });
+        var signature = critical + ':' + caution, announcement = '';
+        if (critical || caution) {
+          announcement = 'Simulation update. ' + (critical ? 'Attention. ' : 'Caution. ');
+          if (critical) announcement += publicStatusSentence(critical, 'critical');
+          if (caution) announcement += (critical ? ' ' : '') + publicStatusSentence(caution, 'caution-level');
+        } else if (previousCrewAlertSignature && previousCrewAlertSignature !== '0:0') {
+          announcement = 'Simulation update. All crew health indicators are nominal.';
+        }
+        publicAlertAck.hidden = !A.alarm.publicAlert(announcement, signature, critical > 0 || caution > 0);
+        previousCrewAlertSignature = signature;
       });
     });
   }

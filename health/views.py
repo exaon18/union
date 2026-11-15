@@ -267,6 +267,8 @@ ENDPOINTS = [
     {"method": "GET", "path": "/api/pvt/", "auth": "public", "description": "PVT results, newest first. Optional ?astronaut=<id>&limit=30."},
     {"method": "POST", "path": "/api/pvt/", "auth": "token (astronaut: own data)",
      "description": "Save a PVT run; also stores pvt_reaction_time and pvt_lapses readings so sensor rules fire."},
+    {"method": "POST", "path": "/api/voice-alert/", "auth": "token",
+     "description": "Generate cached Gemini warning audio for an astronaut. Body {\"astronaut_id\"}; returns audio/wav."},
     {"method": "GET", "path": "/api/sim/scenario/", "auth": "public",
      "description": "Active simulation scenario (what the device simulator sends), resolved per astronaut, and the presets."},
     {"method": "POST", "path": "/api/sim/scenario/", "auth": "token (surgeon)",

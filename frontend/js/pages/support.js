@@ -135,7 +135,14 @@
           if (fresh.length) A.toast((fresh[0].astronaut || 'Cabin') + ': ' + fresh[0].message, 'red', fresh.length > 1 ? '+' + (fresh.length - 1) + ' more critical' : 'New critical alert');
         }
         seen = {}; allAlerts.forEach(function (al) { seen[al.id] = 1; });
-        A.alarm.set(n.red > 0 || allAlerts.some(function (al) { return al.level === 'red' && !al.acknowledged; }));
+        var redAlerts = allAlerts.filter(function (al) { return al.level === 'red'; });
+        var unacknowledgedRed = redAlerts.filter(function (al) { return !al.acknowledged; });
+        var redCrew = list.filter(function (a) { return a.status === 'red'; })[0];
+        var redAlert = unacknowledgedRed[0] || redAlerts[0];
+        A.alarm.set(n.red > 0 || unacknowledgedRed.length > 0, {
+          name: redCrew ? redCrew.name : redAlert && redAlert.astronaut,
+          astronautId: redCrew ? redCrew.id : redAlert && redAlert.astronaut_id
+        });
       });
     });
   }
@@ -152,7 +159,10 @@
     detailView = AstraHealthView.mount(box, {
       aid: id, isSurgeon: true,
       onBack: function () { history.pushState({}, '', 'support.html'); closeDetail(); },
-      onUpdate: function (m) { document.title = m.name + ' · Support Console · ASTRA HEALTH'; A.alarm.set(m.status === 'red'); }
+      onUpdate: function (m) {
+        document.title = m.name + ' · Support Console · ASTRA HEALTH';
+        A.alarm.set(m.status === 'red', { name: m.name, astronautId: m.id });
+      }
     });
   }
   function closeDetail() {

@@ -48,6 +48,7 @@ Demo accounts (password for all: `astra2026`):
 | POST | `/api/checkins/` | token (astronaut: own data) | Submit a daily check-in. Runs the check-in rules and returns the alerts it created. |
 | GET | `/api/pvt/` | public | PVT results, newest first. Optional ?astronaut=<id>&limit=30. |
 | POST | `/api/pvt/` | token (astronaut: own data) | Save a PVT run; also stores pvt_reaction_time and pvt_lapses readings so sensor rules fire. |
+| POST | `/api/voice-alert/` | token | Body `{"astronaut_id": 2}` -> Gemini-generated `audio/wav` warning for that astronaut. |
 | GET | `/api/sim/scenario/` | public | Active simulation scenario, resolved per astronaut, plus presets. The simulator reads it every tick. |
 | POST | `/api/sim/scenario/` | token (surgeon) | Change the scenario. Optional `reset` (resolve open alerts) and `apply_now` (push one batch). |
 | POST | `/api/sim/reset/` | token (surgeon) | Resolve every open alert. |
@@ -824,3 +825,22 @@ curl -X POST http://2.24.53.231:8000/api/auth/login/ -H "Content-Type: applicati
 ## What the frontend should not call
 
 `POST /api/webhook/readings/` is only for the device simulator (or a real device). It needs an HMAC signature made with the server's secret. See `device_simulator/README.md`.
+
+## Gemini voice alerts
+
+`POST /api/voice-alert/` requires a login token and a JSON body containing an `astronaut_id`.
+It returns a WAV phrase such as “Sara is warning”. The Django server reads `GEMINI_API_KEY`
+from its environment, calls Gemini TTS, and caches each astronaut's audio for 24 hours. The key
+must never be put in frontend code. If Gemini is unavailable or not configured, the frontend
+falls back to the browser's built-in speech voice.
+On the astronaut's critical-alert popup, the warning repeats every 5 seconds until **I understand**
+is clicked; repeats replay the cached audio.
+On the public dashboard, opted-in voice announcements use neutral crew counts only, speak when
+counts/severity change, and do not include astronaut names or medical details. The full active
+count report repeats 5 seconds after each announcement until the visitor clicks **I understand**.
+That button silences voice on that device only; it does not resolve the alert. A nominal
+announcement is spoken once.
+
+On Windows, add `GEMINI_API_KEY` as a user environment variable and restart VS Code/the terminal
+before starting Django with `python manage.py runserver`. This endpoint uses Python's standard
+library for the Gemini REST request, so no additional Python package is required.

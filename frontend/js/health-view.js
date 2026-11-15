@@ -155,11 +155,19 @@
       if (isSurgeon || popup) return;
       var seen; try { seen = JSON.parse(sessionStorage.getItem(ACK)) || []; } catch (e) { seen = []; }
       if (seen.indexOf(al.id) >= 0) return;
-      A.alarm.set(true);
+      A.alarm.set(true, { name: member && member.name, astronautId: member && member.id });
+      var repeatTimer;
       popup = A.modal(A.badge('red') + '<h2>' + A.esc(al.message) + '</h2><p>A critical rule fired for you just now.</p>' +
         '<div class="label" style="margin-top:16px">What to do</div><ol><li>' + A.esc(al.recommendation) + '</li><li>Stop any critical task (EVA, docking, piloting).</li><li>Contact mission support on the voice loop.</li></ol>' +
         '<div class="modal-actions"><button class="btn btn-danger btn-lg" data-close autofocus>I understand</button></div>',
-        { red: true, onClose: function () { seen.push(al.id); try { sessionStorage.setItem(ACK, JSON.stringify(seen)); } catch (e) { /* ignore */ } popup = null; } });
+        { red: true, requireExplicitClose: true, onClose: function () {
+          clearInterval(repeatTimer);
+          A.alarm.silence();
+          seen.push(al.id);
+          try { sessionStorage.setItem(ACK, JSON.stringify(seen)); } catch (e) { /* ignore */ }
+          popup = null;
+        } });
+      repeatTimer = setInterval(function () { A.alarm.repeat(); }, 5000);
     }
 
     function renderTiles() {
@@ -253,7 +261,7 @@
         renderImmune();
         var red = openAlerts.filter(function (a) { return a.level === 'red'; })[0];
         if (red) redPopup(red);
-        if (!isSurgeon) A.alarm.set(member.status === 'red', { sound: true });
+        if (!isSurgeon) A.alarm.set(member.status === 'red', { sound: true, name: member.name, astronautId: member.id });
         if (opts.onUpdate) opts.onUpdate(member);
       });
     }
