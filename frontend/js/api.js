@@ -12,7 +12,7 @@
 (function (global) {
   'use strict';
 
-  var DEFAULT_API_BASE = 'http://2.24.53.231:8000/api';   // no trailing slash
+  var DEFAULT_API_BASE = 'https://union-5cp2.onrender.com/api';   // no trailing slash
   var BASE_KEY = 'astra_api_base', MODE_KEY = 'astra_api_mode', SESSION_KEY = global.ASTRA_SESSION_KEY || 'astra_session';   // the Simulation Lab uses its own key
 
   function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
